@@ -3,7 +3,7 @@ import { Question } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Card, CardBody, CardFooter } from '../ui/Card';
-import { ArrowLeft, ArrowRight, CheckCircle, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, Volume2, VolumeX, BookOpen } from 'lucide-react';
 import { speechService } from '../../services/speech';
 
 interface QuizQuestionProps {
@@ -33,6 +33,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer || '');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
   
   useEffect(() => {
     setSelectedAnswer(userAnswer || '');
@@ -40,11 +41,13 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   
   const handleNext = () => {
     onAnswer(selectedAnswer);
+    setShowExplanation(false);
     onNext();
   };
   
   const handlePrevious = () => {
     onAnswer(selectedAnswer);
+    setShowExplanation(false);
     onPrevious();
   };
   
@@ -61,13 +64,21 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
       speechService.speak(question.text, language);
       setIsSpeaking(true);
       
-      // Reset speaking state when speech is done
       const checkSpeakingInterval = setInterval(() => {
         if (!speechService.isSpeaking()) {
           setIsSpeaking(false);
           clearInterval(checkSpeakingInterval);
         }
       }, 100);
+    }
+  };
+  
+  const getDifficultyColor = () => {
+    switch (question.difficulty) {
+      case 'basic': return 'text-green-600';
+      case 'intermediate': return 'text-yellow-600';
+      case 'advanced': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
   
@@ -156,30 +167,56 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     <Card className="w-full">
       <CardBody className="space-y-4">
         <div className="flex justify-between items-center">
-          <div className="text-sm font-medium text-gray-500">
-            Question {questionNumber} of {totalQuestions}
+          <div className="flex items-center space-x-4">
+            <div className="text-sm font-medium text-gray-500">
+              Question {questionNumber} of {totalQuestions}
+            </div>
+            <span className={`text-sm font-medium capitalize ${getDifficultyColor()}`}>
+              {question.difficulty}
+            </span>
           </div>
-          <button
-            type="button"
-            onClick={playQuestionAudio}
-            className={`p-2 rounded-full ${
-              isSpeaking 
-                ? 'bg-purple-100 text-purple-600' 
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            } transition-colors`}
-            aria-label={isSpeaking ? 'Stop speaking' : 'Speak question'}
-          >
-            {isSpeaking ? (
-              <VolumeX className="w-5 h-5" />
-            ) : (
-              <Volume2 className="w-5 h-5" />
-            )}
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setShowExplanation(!showExplanation)}
+              className={`p-2 rounded-full ${
+                showExplanation 
+                  ? 'bg-purple-100 text-purple-600' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              } transition-colors`}
+              aria-label="Show explanation"
+            >
+              <BookOpen className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={playQuestionAudio}
+              className={`p-2 rounded-full ${
+                isSpeaking 
+                  ? 'bg-purple-100 text-purple-600' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              } transition-colors`}
+              aria-label={isSpeaking ? 'Stop speaking' : 'Speak question'}
+            >
+              {isSpeaking ? (
+                <VolumeX className="w-5 h-5" />
+              ) : (
+                <Volume2 className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
         
         <div className="py-4">
           <h3 className="text-xl font-medium text-gray-800 mb-2">{question.text}</h3>
           {renderQuestionContent()}
+          
+          {showExplanation && question.explanation && (
+            <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+              <h4 className="font-medium text-purple-800 mb-2">Explanation:</h4>
+              <p className="text-gray-700">{question.explanation}</p>
+            </div>
+          )}
         </div>
         
         <div className="w-full bg-gray-200 rounded-full h-1.5 mt-6">

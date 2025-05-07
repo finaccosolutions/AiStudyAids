@@ -23,6 +23,8 @@ export type Question = {
   type: QuestionType;
   options?: string[];
   correctAnswer: string;
+  explanation?: string;
+  difficulty: 'basic' | 'intermediate' | 'advanced';
   userAnswer?: string;
 };
 
