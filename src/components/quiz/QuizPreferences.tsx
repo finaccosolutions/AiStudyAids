@@ -16,6 +16,16 @@ interface QuizPreferencesFormProps {
   onSave?: () => void;
 }
 
+const timeOptions = [
+  { value: 'none', label: 'No Time Limit' },
+  { value: '15', label: '15 Seconds' },
+  { value: '30', label: '30 Seconds' },
+  { value: '45', label: '45 Seconds' },
+  { value: '60', label: '1 Minute' },
+  { value: '90', label: '1.5 Minutes' },
+  { value: '120', label: '2 Minutes' },
+];
+
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
   userId, 
   initialPreferences,
@@ -47,12 +57,6 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
     { value: 'en', label: 'English' },
     { value: 'hi', label: 'Hindi' },
     { value: 'ml', label: 'Malayalam' },
-  ];
-  
-  const timeOptions = [
-    { value: 'none', label: 'No Time Limit' },
-    { value: '30', label: '30 Seconds' },
-    { value: '60', label: '1 Minute' },
   ];
   
   const handleSubmit = async (e: React.FormEvent) => {

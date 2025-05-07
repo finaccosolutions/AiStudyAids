@@ -5,21 +5,22 @@ export const generateQuiz = async (
   preferences: QuizPreferences
 ): Promise<Question[]> => {
   try {
-    const { topic, questionCount, questionTypes, language } = preferences;
+    const { topic, subtopic, questionCount, questionTypes, language, difficulty } = preferences;
     
-    const prompt = `Generate a ${language} quiz about "${topic}" with exactly ${questionCount} questions.
+    const prompt = `Generate a ${language} quiz about "${topic}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
 
-The questions should follow a progressive difficulty curve:
-- Start with basic concept questions (30% of questions)
-- Move to intermediate application questions (40% of questions)
-- End with advanced analysis questions (30% of questions)
-
-Include the following question types: ${questionTypes.join(', ')}.
+The questions should follow these requirements:
+- Difficulty level: ${difficulty}
+- Question types to include: ${questionTypes.join(', ')}
+- Each question should be unique and not repetitive
+- Cover different aspects and concepts of the topic
+- Include practical applications and real-world scenarios
+- Ensure progressive complexity within the chosen difficulty level
 
 For each question:
-1. The question text
-2. The type of question (multiple-choice, yes-no, or short-answer)
-3. For multiple-choice questions, provide exactly 4 options
+1. The question text should be clear and well-formulated
+2. The type of question (${questionTypes.join(', ')})
+3. For multiple-choice questions, provide exactly 4 distinct options
 4. The correct answer
 5. A detailed explanation of why this answer is correct
 6. The difficulty level (basic, intermediate, or advanced)
@@ -37,7 +38,12 @@ Format your response as a JSON array with the following structure:
   }
 ]
 
-Ensure questions build upon each other and cover different aspects of the topic.`;
+Ensure questions:
+1. Are diverse and cover different subtopics
+2. Include practical applications
+3. Test different cognitive levels (understanding, application, analysis)
+4. Are culturally neutral and accessible
+5. Have clear, unambiguous answers`;
     
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',

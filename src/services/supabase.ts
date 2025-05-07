@@ -60,8 +60,7 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
       negative_marks: preferences.negativeMarks,
       mode: preferences.mode,
       answer_mode: preferences.answerMode
-    })
-    .select();
+    }, { onConflict: 'user_id' });
 };
 
 export const getQuizPreferences = async (userId: string) => {

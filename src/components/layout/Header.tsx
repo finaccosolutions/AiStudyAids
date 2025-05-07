@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
-import { Brain, ChevronDown, LogOut, User, BookOpen, Home, PlusCircle } from 'lucide-react';
+import { Brain, ChevronDown, LogOut, User, BookOpen, Home, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -49,11 +49,11 @@ const Header: React.FC = () => {
               <>
                 <Link to="/quiz" className="nav-link">
                   <BookOpen className="w-4 h-4 inline-block mr-1" />
-                  My Quizzes
+                  Quiz Preferences
                 </Link>
                 <Link to="/quiz" className="nav-link">
-                  <PlusCircle className="w-4 h-4 inline-block mr-1" />
-                  Create Quiz
+                  <Settings className="w-4 h-4 inline-block mr-1" />
+                  API Settings
                 </Link>
               </>
             )}

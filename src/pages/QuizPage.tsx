@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import ApiKeyForm from '../components/quiz/ApiKeyForm';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import QuizQuestion from '../components/quiz/QuizQuestion';
 import QuizResults from '../components/quiz/QuizResults';
 import { Button } from '../components/ui/Button';
-import { Settings } from 'lucide-react';
+import { Settings, Home, BookOpen, RefreshCw } from 'lucide-react';
 
 const QuizPage: React.FC = () => {
   const { user, isLoggedIn } = useAuthStore();
@@ -25,7 +25,6 @@ const QuizPage: React.FC = () => {
   
   useEffect(() => {
     if (user) {
-      // Load API key and preferences
       loadApiKey(user.id);
       loadPreferences(user.id);
     }
@@ -95,7 +94,9 @@ const QuizPage: React.FC = () => {
                 onClick={handleStartQuiz}
                 size="lg"
                 disabled={!preferences?.topic}
+                className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105"
               >
+                <RefreshCw className="w-5 h-5 mr-2" />
                 Generate Quiz
               </Button>
             </div>
@@ -146,21 +147,41 @@ const QuizPage: React.FC = () => {
   
   return (
     <div className="relative">
-      {step !== 'api-key' && (
-        <div className="absolute top-0 right-0">
+      {/* Navigation Bar */}
+      <div className="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-100 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link 
+            to="/"
+            className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
+          >
+            <Home className="w-5 h-5" />
+            <span className="font-medium">Home</span>
+          </Link>
+          
+          <button
+            onClick={handleChangePreferences}
+            className="flex items-center space-x-2 text-gray-600 hover:text-purple-600 transition-colors"
+          >
+            <BookOpen className="w-5 h-5" />
+            <span className="font-medium">Quiz Preferences</span>
+          </button>
+        </div>
+        
+        {step !== 'api-key' && (
           <Button
             variant="ghost"
             onClick={() => setShowSettings(!showSettings)}
+            className="hover:bg-purple-50 transition-colors"
             aria-label="Settings"
           >
             <Settings className="h-5 w-5" />
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       
       {showSettings && step !== 'api-key' && (
-        <div className="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100">
-          <h2 className="text-xl font-semibold mb-4">Settings</h2>
+        <div className="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100 transition-all duration-300">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">API Key Settings</h2>
           <div className="space-y-4">
             <ApiKeyForm userId={user!.id} />
           </div>
