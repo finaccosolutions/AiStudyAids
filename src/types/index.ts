@@ -10,12 +10,19 @@ export type ApiKeyData = {
 
 export type QuizPreferences = {
   topic: string;
+  subtopic?: string;
+  difficulty: 'easy' | 'medium' | 'hard';
   questionCount: number;
-  questionTypes: QuestionType[];
+  questionTypes: string[];
   language: string;
+  timeLimit?: string;
+  negativeMarking?: boolean;
+  negativeMarks?: number;
+  mode: 'practice' | 'exam';
+  answerMode: 'immediate' | 'end';
 };
 
-export type QuestionType = 'multiple-choice' | 'yes-no' | 'short-answer';
+export type QuestionType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'matching' | 'code-output' | 'assertion-reason';
 
 export type Question = {
   id: number;

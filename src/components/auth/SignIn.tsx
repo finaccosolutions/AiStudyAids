@@ -20,26 +20,24 @@ const SignIn: React.FC<SignInProps> = ({ onToggleForm }) => {
   };
   
   return (
-    <div className="w-full max-w-md">
-      <h2 className="text-3xl font-bold text-center mb-6 text-purple-700">Sign In</h2>
-      
+    <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
             Email
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Mail className="h-5 w-5 text-gray-400" />
             </div>
-            <Input
+            <input
               id="email"
               type="email"
               placeholder="your.email@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="pl-10"
+              className="auth-input pl-11"
             />
           </div>
         </div>
@@ -49,17 +47,17 @@ const SignIn: React.FC<SignInProps> = ({ onToggleForm }) => {
             Password
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <Lock className="h-5 w-5 text-gray-400" />
             </div>
-            <Input
+            <input
               id="password"
               type="password"
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="pl-10"
+              className="auth-input pl-11"
             />
           </div>
         </div>
@@ -72,19 +70,19 @@ const SignIn: React.FC<SignInProps> = ({ onToggleForm }) => {
         
         <Button
           type="submit"
-          className="w-full"
+          className="w-full gradient-bg hover:opacity-90 transition-opacity"
           disabled={isLoading}
         >
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
       
-      <div className="mt-4 text-center">
+      <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Don't have an account?{' '}
           <button
             onClick={onToggleForm}
-            className="text-purple-600 hover:text-purple-800 font-medium transition-colors"
+            className="text-purple-600 hover:text-purple-800 font-medium transition-colors hover:underline"
           >
             Sign Up
           </button>

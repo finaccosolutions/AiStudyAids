@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
-import { Brain, ChevronDown, LogOut, User } from 'lucide-react';
+import { Brain, ChevronDown, LogOut, User, BookOpen, Home, PlusCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -27,41 +27,46 @@ const Header: React.FC = () => {
   };
   
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-50">
+    <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="flex items-center space-x-2 group">
-            <Brain className="h-8 w-8 text-purple-600 transition-transform group-hover:scale-110" />
-            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
+            <div className="relative">
+              <Brain className="h-8 w-8 text-purple-600 transition-all duration-300 group-hover:scale-110" />
+              <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl transition-all duration-300 group-hover:blur-2xl" />
+            </div>
+            <span className="text-xl font-bold gradient-text">
               QuizGenius
             </span>
           </Link>
           
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link 
-              to="/" 
-              className="text-gray-600 hover:text-purple-600 transition-colors font-medium"
-            >
+          <nav className="hidden md:flex items-center space-x-8">
+            <Link to="/" className="nav-link">
+              <Home className="w-4 h-4 inline-block mr-1" />
               Home
             </Link>
             {isLoggedIn && (
-              <Link 
-                to="/quiz" 
-                className="text-gray-600 hover:text-purple-600 transition-colors font-medium"
-              >
-                Create Quiz
-              </Link>
+              <>
+                <Link to="/quiz" className="nav-link">
+                  <BookOpen className="w-4 h-4 inline-block mr-1" />
+                  My Quizzes
+                </Link>
+                <Link to="/quiz" className="nav-link">
+                  <PlusCircle className="w-4 h-4 inline-block mr-1" />
+                  Create Quiz
+                </Link>
+              </>
             )}
           </nav>
           
           <div className="relative" ref={dropdownRef}>
             <Button
               variant="ghost"
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 hover:bg-purple-50"
               onClick={() => setShowDropdown(!showDropdown)}
             >
               <User className="h-5 w-5" />
-              <ChevronDown className={`h-4 w-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
             </Button>
             
             <AnimatePresence>
@@ -100,7 +105,7 @@ const Header: React.FC = () => {
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
                         onClick={() => setShowDropdown(false)}
                       >
-                        Create Account
+                        Sign Up
                       </Link>
                     </>
                   )}

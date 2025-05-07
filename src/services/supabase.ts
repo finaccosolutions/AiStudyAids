@@ -50,9 +50,16 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
     .upsert({ 
       user_id: userId, 
       topic: preferences.topic,
+      subtopic: preferences.subtopic,
       question_count: preferences.questionCount,
       question_types: preferences.questionTypes,
-      language: preferences.language
+      language: preferences.language,
+      difficulty: preferences.difficulty,
+      time_limit: preferences.timeLimit,
+      negative_marking: preferences.negativeMarking,
+      negative_marks: preferences.negativeMarks,
+      mode: preferences.mode,
+      answer_mode: preferences.answerMode
     })
     .select();
 };
@@ -69,9 +76,16 @@ export const getQuizPreferences = async (userId: string) => {
   if (data) {
     return {
       topic: data.topic,
+      subtopic: data.subtopic,
       questionCount: data.question_count,
       questionTypes: data.question_types,
-      language: data.language
+      language: data.language,
+      difficulty: data.difficulty,
+      timeLimit: data.time_limit,
+      negativeMarking: data.negative_marking,
+      negativeMarks: data.negative_marks,
+      mode: data.mode,
+      answerMode: data.answer_mode
     };
   }
   
