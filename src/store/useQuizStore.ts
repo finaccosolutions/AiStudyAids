@@ -35,9 +35,16 @@ interface QuizState {
 
 export const defaultPreferences: QuizPreferences = {
   topic: '',
+  subtopic: null,
   questionCount: 5,
   questionTypes: ['multiple-choice', 'yes-no', 'short-answer'],
-  language: 'en'
+  language: 'en',
+  difficulty: 'medium',
+  timeLimit: null,
+  negativeMarking: false,
+  negativeMarks: 0,
+  mode: 'practice',
+  answerMode: 'single'
 };
 
 export const useQuizStore = create<QuizState>((set, get) => ({

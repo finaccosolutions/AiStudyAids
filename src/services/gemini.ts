@@ -9,9 +9,11 @@ export const generateQuiz = async (
     
     const prompt = `Generate a ${language} quiz about "${topic}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
 
-The questions should follow these requirements:
+The questions MUST follow these strict requirements:
 - Difficulty level: ${difficulty}
-- Question types to include: ${questionTypes.join(', ')}
+- ONLY use these question types: ${questionTypes.join(', ')}
+- Each question must be one of these types: ${questionTypes.join(', ')}
+- DO NOT generate any question types that are not in the list above
 - Each question should be unique and not repetitive
 - Cover different aspects and concepts of the topic
 - Include practical applications and real-world scenarios
@@ -19,7 +21,7 @@ The questions should follow these requirements:
 
 For each question:
 1. The question text should be clear and well-formulated
-2. The type of question (${questionTypes.join(', ')})
+2. The type MUST be one of: ${questionTypes.join(', ')}
 3. For multiple-choice questions, provide exactly 4 distinct options
 4. The correct answer
 5. A detailed explanation of why this answer is correct
@@ -30,8 +32,8 @@ Format your response as a JSON array with the following structure:
   {
     "id": 1,
     "text": "Question text here",
-    "type": "multiple-choice",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "type": "${questionTypes[0]}", // Must be one of the allowed types
+    "options": ["Option A", "Option B", "Option C", "Option D"], // Only for multiple-choice
     "correctAnswer": "Correct option here",
     "explanation": "Detailed explanation of the correct answer",
     "difficulty": "basic"
@@ -131,11 +133,18 @@ const parseGeminiResponse = (response: any, questionTypes: string[]): Question[]
     
     const questions: Question[] = JSON.parse(jsonString);
     
+    // Validate and filter questions to ensure they match allowed types
+    const validQuestions = questions.filter(q => questionTypes.includes(q.type));
+    
+    if (validQuestions.length !== questions.length) {
+      console.warn('Some questions were filtered out due to invalid types');
+    }
+    
     // Sort questions by difficulty
     const difficultyOrder = { 'basic': 0, 'intermediate': 1, 'advanced': 2 };
-    questions.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
+    validQuestions.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
     
-    return questions.map((q, index) => ({
+    return validQuestions.map((q, index) => ({
       id: index + 1,
       text: q.text,
       type: q.type as any,

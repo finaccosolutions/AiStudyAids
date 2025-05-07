@@ -126,6 +126,7 @@ const QuizPage: React.FC = () => {
               isLastQuestion={currentQuestionIndex === questions.length - 1}
               onFinish={handleFinishQuiz}
               language={preferences?.language || 'en'}
+              timeLimit={preferences?.timeLimit}
             />
           </div>
         );
@@ -193,4 +194,4 @@ const QuizPage: React.FC = () => {
   );
 };
 
-export default QuizPage;
+export default QuizPage

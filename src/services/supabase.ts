@@ -55,7 +55,7 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
       question_types: preferences.questionTypes,
       language: preferences.language,
       difficulty: preferences.difficulty,
-      time_limit: preferences.timeLimit,
+      time_limit: preferences.timeLimit?.toString() || null,
       negative_marking: preferences.negativeMarking,
       negative_marks: preferences.negativeMarks,
       mode: preferences.mode,

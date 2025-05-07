@@ -18,6 +18,7 @@ interface QuizQuestionProps {
   isLastQuestion: boolean;
   onFinish: () => void;
   language: string;
+  timeLimit?: string | null;
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({
@@ -31,11 +32,14 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   isLastQuestion,
   onFinish,
   language,
+  timeLimit,
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer || '');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(30);
+  const [timeLeft, setTimeLeft] = useState<number | null>(
+    timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null
+  );
   
   useEffect(() => {
     setSelectedAnswer(userAnswer || '');
@@ -56,14 +60,14 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const handleNext = () => {
     onAnswer(selectedAnswer);
     setShowExplanation(false);
-    setTimeLeft(30);
+    setTimeLeft(timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null);
     onNext();
   };
   
   const handlePrevious = () => {
     onAnswer(selectedAnswer);
     setShowExplanation(false);
-    setTimeLeft(30);
+    setTimeLeft(timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null);
     onPrevious();
   };
   
