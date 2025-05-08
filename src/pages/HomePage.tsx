@@ -7,9 +7,7 @@ import { Brain, CheckCircle, LightbulbIcon, User, ArrowRight, Star, Sparkles, Tr
 const HomePage: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
   
-  if (isLoggedIn) {
-    return <Navigate to="/quiz" />;
-  }
+
   
   return (
     <div className="flex flex-col items-center">

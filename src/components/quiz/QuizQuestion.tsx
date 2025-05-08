@@ -41,9 +41,15 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer || '');
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [timeLeft, setTimeLeft] = useState<number | null>(
-    timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null
-  );
+  const [timeLeft, setTimeLeft] = useState<number | null>(() => {
+    if (!timeLimit || timeLimit === 'none') return null;
+    if (timeLimit === 'custom') {
+      // Get custom time limit from preferences
+      const customTimeLimit = question.customTimeLimit;
+      return customTimeLimit || 30; // Default to 30 seconds if not set
+    }
+    return parseInt(timeLimit);
+  });
   const [hasAnswered, setHasAnswered] = useState(false);
   
   useEffect(() => {
@@ -86,7 +92,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   
   const handleAnswerSubmit = () => {
     setHasAnswered(true);
-    if (mode === 'practice' && answerMode === 'immediate') {
+    if (mode === 'practice' || answerMode === 'immediate') {
       setShowExplanation(true);
     }
   };

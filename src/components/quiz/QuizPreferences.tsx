@@ -7,7 +7,7 @@ import { Card, CardBody, CardFooter, CardHeader } from '../ui/Card';
 import { 
   BookOpen, Save, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2
+  CheckCircle2, AlarmClock
 } from 'lucide-react';
 
 interface QuizPreferencesFormProps {
@@ -34,6 +34,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
 }) => {
   const [preferences, setPreferences] = useState<QuizPreferences>(initialPreferences);
   const { savePreferences, isLoading, error } = useQuizStore();
+  const [timingMode, setTimingMode] = useState<'per-question' | 'total'>('per-question');
   
   useEffect(() => {
     setPreferences(initialPreferences);
@@ -92,65 +93,74 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   const isQuestionTypeSelected = (type: string) => {
     return preferences.questionTypes.includes(type);
   };
+
+  const calculateTotalTime = () => {
+    if (preferences.timeLimit === 'none') return 'No time limit';
+    if (preferences.timeLimit === 'custom') {
+      return `${preferences.customTimeLimit || 30} seconds`;
+    }
+    const perQuestionTime = parseInt(preferences.timeLimit || '30');
+    return `${perQuestionTime * preferences.questionCount} seconds`;
+  };
   
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden transform transition-all duration-300 hover:shadow-xl">
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
-          <h2 className="text-2xl font-bold gradient-text">Quiz Preferences</h2>
-          <p className="text-gray-600 mt-1">Customize your quiz settings</p>
+      <div className="bg-white rounded-2xl shadow-xl border border-purple-100 overflow-hidden transform transition-all duration-300 hover:shadow-2xl">
+        <div className="p-8 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50">
+          <h2 className="text-3xl font-bold gradient-text mb-2">Quiz Preferences</h2>
+          <p className="text-gray-600">Customize your learning experience</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="divide-y divide-gray-100">
+        <form onSubmit={handleSubmit} className="divide-y divide-purple-100">
           {/* Basic Preferences */}
-          <div className="p-6 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Settings className="w-5 h-5 mr-2 text-purple-600" />
-              Basic Preferences
+          <div className="p-8 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
+            <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+              <Settings className="w-6 h-6 mr-3 text-purple-600" />
+              Basic Settings
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="group">
-                <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
                   Topic / Subject
                 </label>
                 <Input
                   type="text"
-                  placeholder="e.g., Python, Mathematics, History"
+                  placeholder="e.g., Python Programming"
                   value={preferences.topic}
                   onChange={(e) => setPreferences({ ...preferences, topic: e.target.value })}
                   required
-                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
                 />
               </div>
               
-              <div className="group">
-                <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
                   Sub-topic (Optional)
                 </label>
                 <Input
                   type="text"
-                  placeholder="e.g., Data Types, Calculus, World War II"
+                  placeholder="e.g., Data Structures"
                   value={preferences.subtopic || ''}
                   onChange={(e) => setPreferences({ ...preferences, subtopic: e.target.value })}
-                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
                 />
               </div>
               
-              <div className="group">
-                <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
                   Difficulty Level
                 </label>
                 <Select
                   options={difficultyOptions}
                   value={preferences.difficulty}
                   onChange={(e) => setPreferences({ ...preferences, difficulty: e.target.value })}
-                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
                 />
               </div>
               
-              <div className="group">
-                <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
                   Number of Questions
                 </label>
                 <Input
@@ -162,35 +172,35 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                     ...preferences, 
                     questionCount: parseInt(e.target.value) || 5 
                   })}
-                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
                 />
               </div>
             </div>
           </div>
           
           {/* Question Types */}
-          <div className="p-6 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <ListChecks className="w-5 h-5 mr-2 text-purple-600" />
+          <div className="p-8 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
+            <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+              <ListChecks className="w-6 h-6 mr-3 text-purple-600" />
               Question Types
             </h3>
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {questionTypeOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => handleQuestionTypeToggle(option.value)}
-                  className={`p-3 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${
+                  className={`p-4 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-102 ${
                     isQuestionTypeSelected(option.value)
                       ? 'bg-purple-100 text-purple-700 border-2 border-purple-300 shadow-md hover:bg-purple-200'
                       : 'bg-gray-50 text-gray-600 border-2 border-gray-100 hover:bg-gray-100 hover:border-purple-200'
                   }`}
                 >
                   {isQuestionTypeSelected(option.value) ? (
-                    <CheckCircle2 className="w-4 h-4 mr-2 inline-block" />
+                    <CheckCircle2 className="w-5 h-5 mb-2 mx-auto text-purple-600" />
                   ) : (
-                    <div className="w-4 h-4 mr-2 inline-block" />
+                    <div className="w-5 h-5 mb-2" />
                   )}
                   {option.label}
                 </button>
@@ -198,147 +208,136 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
             </div>
           </div>
           
-          {/* Quiz Settings */}
-          <div className="p-6 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <Timer className="w-5 h-5 mr-2 text-purple-600" />
-              Quiz Settings
+          {/* Time Settings */}
+          <div className="p-8 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
+            <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+              <Timer className="w-6 h-6 mr-3 text-purple-600" />
+              Time Settings
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="group">
-                <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
-                  Time Limit per Question
-                </label>
-                <Select
-                  options={timeOptions}
-                  value={preferences.timeLimit || 'none'}
-                  onChange={(e) => setPreferences({ 
-                    ...preferences, 
-                    timeLimit: e.target.value,
-                    customTimeLimit: e.target.value === 'custom' ? 30 : undefined
-                  })}
-                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
-                />
+            <div className="space-y-6">
+              <div className="flex items-center space-x-6">
+                <button
+                  type="button"
+                  onClick={() => setTimingMode('per-question')}
+                  className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
+                    timingMode === 'per-question'
+                      ? 'border-purple-300 bg-purple-50 text-purple-700'
+                      : 'border-gray-200 hover:border-purple-200'
+                  }`}
+                >
+                  <Clock className="w-6 h-6 mx-auto mb-2" />
+                  <div className="font-medium">Time per Question</div>
+                </button>
                 
-                {preferences.timeLimit === 'custom' && (
-                  <div className="mt-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={3600}
-                      value={preferences.customTimeLimit || 30}
-                      onChange={(e) => setPreferences({
-                        ...preferences,
-                        customTimeLimit: parseInt(e.target.value) || 30
+                <button
+                  type="button"
+                  onClick={() => setTimingMode('total')}
+                  className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
+                    timingMode === 'total'
+                      ? 'border-purple-300 bg-purple-50 text-purple-700'
+                      : 'border-gray-200 hover:border-purple-200'
+                  }`}
+                >
+                  <AlarmClock className="w-6 h-6 mx-auto mb-2" />
+                  <div className="font-medium">Total Quiz Time</div>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                {timingMode === 'per-question' ? (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Time Limit per Question
+                    </label>
+                    <Select
+                      options={timeOptions}
+                      value={preferences.timeLimit || 'none'}
+                      onChange={(e) => setPreferences({ 
+                        ...preferences, 
+                        timeLimit: e.target.value,
+                        customTimeLimit: e.target.value === 'custom' ? 30 : undefined
                       })}
-                      placeholder="Enter time in seconds"
                       className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Enter a value between 1 and 3600 seconds
-                    </p>
+                    
+                    {preferences.timeLimit === 'custom' && (
+                      <div className="mt-4">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={3600}
+                          value={preferences.customTimeLimit || 30}
+                          onChange={(e) => setPreferences({
+                            ...preferences,
+                            customTimeLimit: parseInt(e.target.value) || 30
+                          })}
+                          placeholder="Enter time in seconds"
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Enter a value between 1 and 3600 seconds
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Total Quiz Time
+                    </label>
+                    <div className="text-lg font-medium text-purple-700 bg-purple-50 p-4 rounded-xl border border-purple-200">
+                      {calculateTotalTime()}
+                    </div>
                   </div>
                 )}
               </div>
-              
-              <div className="group">
-                <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
-                  Quiz Language
-                </label>
-                <Select
-                  options={languageOptions}
-                  value={preferences.language}
-                  onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
-                  className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
-                />
-              </div>
-              
-              <div className="flex items-center space-x-4">
-                <label className="flex items-center space-x-2 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={preferences.negativeMarking}
-                    onChange={(e) => setPreferences({ 
-                      ...preferences, 
-                      negativeMarking: e.target.checked 
-                    })}
-                    className="w-4 h-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 transition-colors group-hover:border-purple-400"
-                  />
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-purple-700 transition-colors">
-                    Enable Negative Marking
-                  </span>
-                </label>
-              </div>
-              
-              {preferences.negativeMarking && (
-                <div className="group">
-                  <label className="block text-sm font-medium text-gray-700 mb-1 group-hover:text-purple-700 transition-colors">
-                    Negative Marks (per wrong answer)
-                  </label>
-                  <Input
-                    type="number"
-                    step="0.25"
-                    min="-5"
-                    max="0"
-                    value={preferences.negativeMarks || -0.25}
-                    onChange={(e) => setPreferences({ 
-                      ...preferences, 
-                      negativeMarks: parseFloat(e.target.value) 
-                    })}
-                    className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
-                  />
-                </div>
-              )}
             </div>
           </div>
           
           {/* Quiz Mode */}
-          <div className="p-6 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
-            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-              <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
+          <div className="p-8 space-y-6 hover:bg-purple-50/30 transition-colors duration-300">
+            <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+              <BarChart3 className="w-6 h-6 mr-3 text-purple-600" />
               Quiz Mode
             </h3>
             
-            <div className="grid grid-cols-1 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Quiz Type
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-all duration-300 hover:bg-purple-50 hover:border-purple-300 hover:shadow-md">
-                    <input
-                      type="radio"
-                      name="quizMode"
-                      value="practice"
-                      checked={preferences.mode === 'practice'}
-                      onChange={(e) => setPreferences({ 
-                        ...preferences, 
-                        mode: e.target.value 
-                      })}
-                      className="w-4 h-4 text-purple-600"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Practice Mode</span>
-                    <span className="text-xs text-gray-500 ml-2">(Show answers after each question)</span>
-                  </label>
-                  
-                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-all duration-300 hover:bg-purple-50 hover:border-purple-300 hover:shadow-md">
-                    <input
-                      type="radio"
-                      name="quizMode"
-                      value="exam"
-                      checked={preferences.mode === 'exam'}
-                      onChange={(e) => setPreferences({ 
-                        ...preferences, 
-                        mode: e.target.value 
-                      })}
-                      className="w-4 h-4 text-purple-600"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Exam Mode</span>
-                    <span className="text-xs text-gray-500 ml-2">(Show results at end)</span>
-                  </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                type="button"
+                onClick={() => setPreferences({ ...preferences, mode: 'practice' })}
+                className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+                  preferences.mode === 'practice'
+                    ? 'border-purple-300 bg-purple-50 shadow-md'
+                    : 'border-gray-200 hover:border-purple-200'
+                }`}
+              >
+                <div className="flex items-center mb-2">
+                  <BookOpen className="w-6 h-6 mr-2 text-purple-600" />
+                  <span className="font-semibold text-lg">Practice Mode</span>
                 </div>
-              </div>
+                <p className="text-sm text-gray-600">
+                  Get immediate feedback after each question. Perfect for learning and understanding concepts.
+                </p>
+              </button>
+              
+              <button
+                type="button"
+                onClick={() => setPreferences({ ...preferences, mode: 'exam' })}
+                className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+                  preferences.mode === 'exam'
+                    ? 'border-purple-300 bg-purple-50 shadow-md'
+                    : 'border-gray-200 hover:border-purple-200'
+                }`}
+              >
+                <div className="flex items-center mb-2">
+                  <BarChart3 className="w-6 h-6 mr-2 text-purple-600" />
+                  <span className="font-semibold text-lg">Exam Mode</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  See results only at the end. Simulates real exam conditions for better preparation.
+                </p>
+              </button>
             </div>
           </div>
           
@@ -351,14 +350,14 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
             </div>
           )}
           
-          <div className="p-6 bg-gray-50 flex justify-end">
+          <div className="p-8 bg-gray-50 flex justify-end">
             <Button
               type="submit"
               disabled={isLoading || !preferences.topic}
-              className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group"
+              className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group text-lg px-8 py-3"
             >
               {isLoading ? 'Saving...' : 'Save Preferences'}
-              <Save className="ml-2 h-4 w-4 group-hover:rotate-12 transition-transform" />
+              <Save className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
             </Button>
           </div>
         </form>

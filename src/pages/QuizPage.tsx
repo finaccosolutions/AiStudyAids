@@ -112,10 +112,15 @@ const QuizPage: React.FC = () => {
           return null;
         }
         
+        const questionWithTime = {
+          ...currentQuestion,
+          customTimeLimit: preferences?.timeLimit === 'custom' ? preferences.customTimeLimit : null
+        };
+        
         return (
           <div className="max-w-3xl mx-auto">
             <QuizQuestion
-              question={currentQuestion}
+              question={questionWithTime}
               questionNumber={currentQuestionIndex + 1}
               totalQuestions={questions.length}
               userAnswer={answers[currentQuestion.id]}
@@ -127,7 +132,7 @@ const QuizPage: React.FC = () => {
               language={preferences?.language || 'en'}
               timeLimit={preferences?.timeLimit}
               mode={preferences?.mode || 'practice'}
-              answerMode={preferences?.answerMode || 'immediate'}
+              answerMode={preferences?.mode === 'practice' ? 'immediate' : 'end'}
             />
           </div>
         );

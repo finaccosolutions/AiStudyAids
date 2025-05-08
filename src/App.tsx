@@ -23,13 +23,13 @@ function App() {
           <Route 
             path="quiz" 
             element={
-              isLoggedIn ? <QuizPage /> : <Navigate to="/auth" />
+              isLoggedIn ? <QuizPage /> : <Navigate to="/auth" replace />
             } 
           />
           <Route 
             path="api-settings" 
             element={
-              isLoggedIn ? <ApiSettingsPage /> : <Navigate to="/auth" />
+              isLoggedIn ? <ApiSettingsPage /> : <Navigate to="/auth" replace />
             } 
           />
         </Route>

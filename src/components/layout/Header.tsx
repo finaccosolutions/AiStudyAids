@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { Brain, ChevronDown, LogOut, User, BookOpen, Home, Settings } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header: React.FC = () => {
@@ -10,6 +10,7 @@ const Header: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -27,6 +28,8 @@ const Header: React.FC = () => {
     setShowDropdown(false);
     navigate('/');
   };
+
+  const isActive = (path: string) => location.pathname === path;
   
   return (
     <header className="bg-gradient-to-r from-purple-100 to-indigo-100 sticky top-0 z-50 border-b border-purple-200 shadow-sm">
@@ -45,7 +48,9 @@ const Header: React.FC = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
+              className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 ${
+                isActive('/') ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
+              }`}
             >
               <Home className="w-4 h-4 inline-block mr-1" />
               Home
@@ -54,14 +59,18 @@ const Header: React.FC = () => {
               <>
                 <Link 
                   to="/quiz" 
-                  className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
+                  className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 ${
+                    isActive('/quiz') ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
+                  }`}
                 >
                   <BookOpen className="w-4 h-4 inline-block mr-1" />
                   Quiz Preferences
                 </Link>
                 <Link 
                   to="/api-settings" 
-                  className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
+                  className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 ${
+                    isActive('/api-settings') ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
+                  }`}
                 >
                   <Settings className="w-4 h-4 inline-block mr-1" />
                   API Settings
