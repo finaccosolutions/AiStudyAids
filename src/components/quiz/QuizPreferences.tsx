@@ -5,15 +5,15 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Card, CardBody, CardFooter, CardHeader } from '../ui/Card';
 import { 
-  BookOpen, Clock, Languages, ListChecks, 
+  BookOpen, Save, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2, Loader2, RefreshCw
+  CheckCircle2, Loader2, Play
 } from 'lucide-react';
 
 interface QuizPreferencesFormProps {
   userId: string;
   initialPreferences: QuizPreferences;
-  onGenerate?: () => void;
+  onSave?: () => void;
   isLoading?: boolean;
 }
 
@@ -31,11 +31,11 @@ const timeOptions = [
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
   userId, 
   initialPreferences,
-  onGenerate,
+  onSave,
   isLoading = false
 }) => {
   const [preferences, setPreferences] = useState<QuizPreferences>(initialPreferences);
-  const { error } = useQuizStore();
+  const { savePreferences, error } = useQuizStore();
   
   useEffect(() => {
     setPreferences(initialPreferences);
@@ -65,7 +65,8 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onGenerate) onGenerate();
+    await savePreferences(userId, preferences);
+    if (onSave) onSave();
   };
   
   const handleQuestionTypeToggle = (type: string) => {
@@ -341,11 +342,11 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
             </div>
           )}
           
-          <div className="p-6 bg-gray-50 flex justify-center">
+          <div className="p-6 bg-gray-50 flex justify-end">
             <Button
               type="submit"
               disabled={isLoading || !preferences.topic}
-              className="gradient-bg hover:opacity-90 transition-opacity flex items-center space-x-2 group"
+              className="gradient-bg hover:opacity-90 transition-opacity flex items-center space-x-2"
             >
               {isLoading ? (
                 <>
@@ -354,8 +355,8 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                 </>
               ) : (
                 <>
-                  <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-                  <span>Generate Quiz</span>
+                  <Play className="w-5 h-5" />
+                  <span>Start Quiz</span>
                 </>
               )}
             </Button>

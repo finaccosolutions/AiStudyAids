@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
@@ -7,19 +7,10 @@ import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 const PreferencesPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const { preferences, loadPreferences, savePreferences, generateQuiz, isLoading } = useQuizStore();
+  const { preferences, generateQuiz, isLoading } = useQuizStore();
 
-  useEffect(() => {
-    if (user) {
-      loadPreferences(user.id);
-    }
-  }, [user]);
-
-  const handleGenerateQuiz = async (prefs: QuizPreferences) => {
+  const handleSaveAndStart = async () => {
     if (!user) return;
-    
-    // Save preferences and generate quiz in sequence
-    await savePreferences(user.id, prefs);
     await generateQuiz(user.id);
     navigate('/quiz');
   };
@@ -31,7 +22,7 @@ const PreferencesPage: React.FC = () => {
       <QuizPreferencesForm
         userId={user.id}
         initialPreferences={preferences || defaultPreferences}
-        onGenerate={handleGenerateQuiz}
+        onSave={handleSaveAndStart}
         isLoading={isLoading}
       />
     </div>
