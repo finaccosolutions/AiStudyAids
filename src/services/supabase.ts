@@ -76,24 +76,43 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
   } else if (timeLimit && timeLimit !== 'none' && timeLimit !== 'custom') {
     timeLimit = timeLimit.toString();
   }
-  
-  return supabase
+
+  // Check if a record already exists for this user
+  const { data: existingPrefs } = await supabase
     .from('quiz_preferences')
-    .upsert({ 
-      user_id: userId, 
-      topic: preferences.topic,
-      subtopic: preferences.subtopic,
-      question_count: preferences.questionCount,
-      question_types: questionTypes,
-      language: preferences.language,
-      difficulty: preferences.difficulty,
-      time_limit: timeLimit,
-      custom_time_limit: customTimeLimit,
-      negative_marking: preferences.negativeMarking,
-      negative_marks: preferences.negativeMarks,
-      mode: preferences.mode
-    })
-    .select();
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+
+  const preferencesData = {
+    user_id: userId,
+    topic: preferences.topic,
+    subtopic: preferences.subtopic,
+    question_count: preferences.questionCount,
+    question_types: questionTypes,
+    language: preferences.language,
+    difficulty: preferences.difficulty,
+    time_limit: timeLimit,
+    custom_time_limit: customTimeLimit,
+    negative_marking: preferences.negativeMarking,
+    negative_marks: preferences.negativeMarks,
+    mode: preferences.mode
+  };
+
+  if (existingPrefs) {
+    // Update existing record
+    return supabase
+      .from('quiz_preferences')
+      .update(preferencesData)
+      .eq('user_id', userId)
+      .select();
+  } else {
+    // Insert new record
+    return supabase
+      .from('quiz_preferences')
+      .insert(preferencesData)
+      .select();
+  }
 };
 
 export const getQuizPreferences = async (userId: string) => {
