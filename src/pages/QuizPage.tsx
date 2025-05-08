@@ -127,6 +127,8 @@ const QuizPage: React.FC = () => {
               onFinish={handleFinishQuiz}
               language={preferences?.language || 'en'}
               timeLimit={preferences?.timeLimit}
+              mode={preferences?.mode || 'practice'}
+              answerMode={preferences?.answerMode || 'immediate'}
             />
           </div>
         );
@@ -194,4 +196,4 @@ const QuizPage: React.FC = () => {
   );
 };
 
-export default QuizPage
+export default QuizPage;

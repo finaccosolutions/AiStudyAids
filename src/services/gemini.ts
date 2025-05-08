@@ -12,7 +12,7 @@ export const generateQuiz = async (
 The questions MUST follow these strict requirements:
 - Difficulty level: ${difficulty}
 - ONLY use these question types: ${questionTypes.join(', ')}
-- Each question must be one of these types: ${questionTypes.join(', ')}
+- Each question MUST be one of these types: ${questionTypes.join(', ')}
 - DO NOT generate any question types that are not in the list above
 - Each question should be unique and not repetitive
 - Cover different aspects and concepts of the topic

@@ -19,6 +19,8 @@ interface QuizQuestionProps {
   onFinish: () => void;
   language: string;
   timeLimit?: string | null;
+  mode: 'practice' | 'exam';
+  answerMode: 'immediate' | 'end';
 }
 
 const QuizQuestion: React.FC<QuizQuestionProps> = ({
@@ -33,6 +35,8 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   onFinish,
   language,
   timeLimit,
+  mode,
+  answerMode,
 }) => {
   const [selectedAnswer, setSelectedAnswer] = useState(userAnswer || '');
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -40,9 +44,11 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [timeLeft, setTimeLeft] = useState<number | null>(
     timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null
   );
+  const [hasAnswered, setHasAnswered] = useState(false);
   
   useEffect(() => {
     setSelectedAnswer(userAnswer || '');
+    setHasAnswered(!!userAnswer);
   }, [userAnswer, question.id]);
   
   useEffect(() => {
@@ -61,6 +67,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     onAnswer(selectedAnswer);
     setShowExplanation(false);
     setTimeLeft(timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null);
+    setHasAnswered(false);
     onNext();
   };
   
@@ -68,12 +75,20 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     onAnswer(selectedAnswer);
     setShowExplanation(false);
     setTimeLeft(timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null);
+    setHasAnswered(false);
     onPrevious();
   };
   
   const handleFinish = () => {
     onAnswer(selectedAnswer);
     onFinish();
+  };
+  
+  const handleAnswerSubmit = () => {
+    setHasAnswered(true);
+    if (mode === 'practice' && answerMode === 'immediate') {
+      setShowExplanation(true);
+    }
   };
   
   const playQuestionAudio = () => {
@@ -102,6 +117,10 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     }
   };
   
+  const isAnswerCorrect = () => {
+    return selectedAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
+  };
+  
   const renderQuestionContent = () => {
     switch (question.type) {
       case 'multiple-choice':
@@ -119,11 +138,17 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
                 className={`p-4 rounded-lg border-2 ${
-                  selectedAnswer === option
-                    ? 'border-purple-500 bg-purple-50 shadow-md'
-                    : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                  hasAnswered && mode === 'practice' && answerMode === 'immediate'
+                    ? option.toLowerCase() === question.correctAnswer.toLowerCase()
+                      ? 'border-green-500 bg-green-50'
+                      : selectedAnswer === option
+                        ? 'border-red-500 bg-red-50'
+                        : 'border-gray-200'
+                    : selectedAnswer === option
+                      ? 'border-purple-500 bg-purple-50 shadow-md'
+                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
                 } cursor-pointer transition-all duration-300 transform hover:scale-102 hover:shadow-md`}
-                onClick={() => setSelectedAnswer(option)}
+                onClick={() => !hasAnswered && setSelectedAnswer(option)}
               >
                 <div className="flex items-center">
                   <div 
@@ -144,7 +169,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           </motion.div>
         );
       
-      case 'yes-no':
+      case 'true-false':
         return (
           <motion.div 
             className="flex space-x-4 mt-6"
@@ -152,28 +177,27 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <button
-              type="button"
-              className={`flex-1 py-4 px-6 rounded-lg font-medium transform transition-all duration-300 ${
-                selectedAnswer === 'Yes'
-                  ? 'bg-purple-600 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-purple-50 hover:scale-102'
-              }`}
-              onClick={() => setSelectedAnswer('Yes')}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              className={`flex-1 py-4 px-6 rounded-lg font-medium transform transition-all duration-300 ${
-                selectedAnswer === 'No'
-                  ? 'bg-purple-600 text-white scale-105 shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-purple-50 hover:scale-102'
-              }`}
-              onClick={() => setSelectedAnswer('No')}
-            >
-              No
-            </button>
+            {['True', 'False'].map((option) => (
+              <button
+                key={option}
+                type="button"
+                disabled={hasAnswered}
+                className={`flex-1 py-4 px-6 rounded-lg font-medium transform transition-all duration-300 ${
+                  hasAnswered && mode === 'practice' && answerMode === 'immediate'
+                    ? option.toLowerCase() === question.correctAnswer.toLowerCase()
+                      ? 'bg-green-600 text-white'
+                      : selectedAnswer === option
+                        ? 'bg-red-600 text-white'
+                        : 'bg-gray-100 text-gray-700'
+                    : selectedAnswer === option
+                      ? 'bg-purple-600 text-white scale-105 shadow-lg'
+                      : 'bg-gray-100 text-gray-700 hover:bg-purple-50 hover:scale-102'
+                }`}
+                onClick={() => setSelectedAnswer(option)}
+              >
+                {option}
+              </button>
+            ))}
           </motion.div>
         );
       
@@ -190,8 +214,15 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
               placeholder="Type your answer here..."
               value={selectedAnswer}
               onChange={(e) => setSelectedAnswer(e.target.value)}
+              disabled={hasAnswered}
               isFullWidth
-              className="py-3 text-lg focus:ring-purple-500 focus:border-purple-500 transition-all duration-300"
+              className={`py-3 text-lg transition-all duration-300 ${
+                hasAnswered && mode === 'practice' && answerMode === 'immediate'
+                  ? isAnswerCorrect()
+                    ? 'border-green-500 bg-green-50'
+                    : 'border-red-500 bg-red-50'
+                  : 'focus:ring-purple-500 focus:border-purple-500'
+              }`}
             />
           </motion.div>
         );
@@ -231,6 +262,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                   : 'bg-gray-100 text-gray-600 hover:bg-purple-50 hover:scale-105'
               }`}
               aria-label="Show explanation"
+              disabled={!hasAnswered || (mode === 'exam' && answerMode === 'end')}
             >
               <BookOpen className="w-5 h-5" />
             </button>
@@ -258,7 +290,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           {renderQuestionContent()}
           
           <AnimatePresence>
-            {showExplanation && question.explanation && (
+            {showExplanation && question.explanation && hasAnswered && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -266,8 +298,16 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
                 transition={{ duration: 0.3 }}
                 className="mt-6 overflow-hidden"
               >
-                <div className="p-4 bg-purple-50 rounded-lg border border-purple-100">
-                  <h4 className="font-medium text-purple-800 mb-2">Explanation:</h4>
+                <div className={`p-4 rounded-lg border ${
+                  isAnswerCorrect()
+                    ? 'bg-green-50 border-green-100'
+                    : 'bg-red-50 border-red-100'
+                }`}>
+                  <h4 className={`font-medium mb-2 ${
+                    isAnswerCorrect() ? 'text-green-800' : 'text-red-800'
+                  }`}>
+                    {isAnswerCorrect() ? 'Correct!' : 'Incorrect'}
+                  </h4>
                   <p className="text-gray-700">{question.explanation}</p>
                 </div>
               </motion.div>
@@ -297,25 +337,34 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           Previous
         </Button>
         
-        {isLastQuestion ? (
+        {!hasAnswered ? (
           <Button
             type="button"
-            onClick={handleFinish}
+            onClick={handleAnswerSubmit}
             disabled={!selectedAnswer}
-            className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105"
+            className="gradient-bg hover:opacity-90 transition-all duration-300"
           >
-            Finish Quiz
+            Submit Answer
           </Button>
         ) : (
-          <Button
-            type="button"
-            onClick={handleNext}
-            disabled={!selectedAnswer}
-            className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105"
-          >
-            Next
-            <ArrowRight className="w-4 h-4 ml-2" />
-          </Button>
+          isLastQuestion ? (
+            <Button
+              type="button"
+              onClick={handleFinish}
+              className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105"
+            >
+              Finish Quiz
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={handleNext}
+              className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105"
+            >
+              Next
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          )
         )}
       </CardFooter>
     </Card>
