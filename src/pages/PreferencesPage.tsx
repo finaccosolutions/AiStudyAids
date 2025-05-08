@@ -15,11 +15,10 @@ const PreferencesPage: React.FC = () => {
     }
   }, [user]);
 
-  const handleGenerateQuiz = async (prefs: QuizPreferences) => {
+  const handleGenerateQuiz = async () => {
     if (!user) return;
     
     // Save preferences and generate quiz in sequence
-    await savePreferences(user.id, prefs);
     await generateQuiz(user.id);
     navigate('/quiz');
   };
@@ -38,4 +37,4 @@ const PreferencesPage: React.FC = () => {
   );
 };
 
-export default PreferencesPage;
+export default PreferencesPage
