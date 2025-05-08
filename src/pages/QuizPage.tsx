@@ -14,47 +14,31 @@ const QuizPage: React.FC = () => {
     questions, 
     currentQuestionIndex, answers, answerQuestion, 
     nextQuestion, prevQuestion, 
-    finishQuiz, resetQuiz, result 
+    finishQuiz, resetQuiz, result,
+    isLoading
   } = useQuizStore();
   
   const [step, setStep] = useState<'api-key' | 'quiz' | 'results'>('quiz');
-  const [isLoadingApiKey, setIsLoadingApiKey] = useState(true);
   
   useEffect(() => {
-    const initializeData = async () => {
-      if (user) {
-        setIsLoadingApiKey(true);
-        await loadApiKey(user.id);
-        await loadPreferences(user.id);
-        setIsLoadingApiKey(false);
-      }
-    };
-    
-    initializeData();
+    if (user) {
+      loadApiKey(user.id);
+      loadPreferences(user.id);
+    }
   }, [user]);
   
   useEffect(() => {
-    if (!isLoadingApiKey) {
-      if (!apiKey) {
-        setStep('api-key');
-      } else if (result) {
-        setStep('results');
-      } else if (questions.length > 0) {
-        setStep('quiz');
-      }
+    if (!apiKey) {
+      setStep('api-key');
+    } else if (result) {
+      setStep('results');
+    } else {
+      setStep('quiz');
     }
-  }, [apiKey, questions, result, isLoadingApiKey]);
+  }, [apiKey, result]);
   
   if (!isLoggedIn) {
     return <Navigate to="/auth" />;
-  }
-  
-  if (isLoadingApiKey) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
-      </div>
-    );
   }
   
   const handleApiKeySaved = () => {
@@ -79,13 +63,22 @@ const QuizPage: React.FC = () => {
         return <ApiKeyForm userId={user.id} onSave={handleApiKeySaved} />;
       
       case 'quiz':
-        if (questions.length === 0) {
+        if (isLoading) {
           return (
             <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center text-gray-600">
-                <p>No quiz questions available.</p>
-                <p className="mt-2">Please generate a quiz from the preferences page.</p>
+              <div className="text-center">
+                <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-gray-600">Generating your quiz...</p>
               </div>
+            </div>
+          );
+        }
+        
+        if (!questions.length) {
+          return (
+            <div className="text-center py-12">
+              <p className="text-gray-600 mb-4">No quiz questions available.</p>
+              <p className="text-gray-600">Please go to Quiz Preferences to generate a new quiz.</p>
             </div>
           );
         }
