@@ -356,7 +356,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               ) : (
                 <>
                   <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-                  <span>Generate Quizzz</span>
+                  <span>Generate Quiz</span>
                 </>
               )}
             </Button>

@@ -17,27 +17,44 @@ const QuizPage: React.FC = () => {
     finishQuiz, resetQuiz, result 
   } = useQuizStore();
   
-  const [step, setStep] = useState<'api-key' | 'quiz' | 'results'>('api-key');
+  const [step, setStep] = useState<'api-key' | 'quiz' | 'results'>('quiz');
+  const [isLoadingApiKey, setIsLoadingApiKey] = useState(true);
   
   useEffect(() => {
-    if (user) {
-      loadApiKey(user.id);
-      loadPreferences(user.id);
-    }
+    const initializeData = async () => {
+      if (user) {
+        setIsLoadingApiKey(true);
+        await loadApiKey(user.id);
+        await loadPreferences(user.id);
+        setIsLoadingApiKey(false);
+      }
+    };
+    
+    initializeData();
   }, [user]);
   
   useEffect(() => {
-    if (!apiKey) {
-      setStep('api-key');
-    } else if (questions.length > 0 && !result) {
-      setStep('quiz');
-    } else if (result) {
-      setStep('results');
+    if (!isLoadingApiKey) {
+      if (!apiKey) {
+        setStep('api-key');
+      } else if (result) {
+        setStep('results');
+      } else if (questions.length > 0) {
+        setStep('quiz');
+      }
     }
-  }, [apiKey, questions, result]);
+  }, [apiKey, questions, result, isLoadingApiKey]);
   
   if (!isLoggedIn) {
     return <Navigate to="/auth" />;
+  }
+  
+  if (isLoadingApiKey) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+      </div>
+    );
   }
   
   const handleApiKeySaved = () => {
@@ -62,6 +79,17 @@ const QuizPage: React.FC = () => {
         return <ApiKeyForm userId={user.id} onSave={handleApiKeySaved} />;
       
       case 'quiz':
+        if (questions.length === 0) {
+          return (
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center text-gray-600">
+                <p>No quiz questions available.</p>
+                <p className="mt-2">Please generate a quiz from the preferences page.</p>
+              </div>
+            </div>
+          );
+        }
+        
         if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) {
           return null;
         }
@@ -113,4 +141,4 @@ const QuizPage: React.FC = () => {
   );
 };
 
-export default QuizPage
+export default QuizPage;
