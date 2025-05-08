@@ -10,13 +10,13 @@ export type ApiKeyData = {
 
 export type QuizPreferences = {
   topic: string;
-  subtopic?: string;
+  subtopic?: string | null;
   difficulty: 'easy' | 'medium' | 'hard';
   questionCount: number;
   questionTypes: string[];
   language: string;
-  timeLimit?: string;
-  customTimeLimit?: number;
+  timeLimit?: string | null;
+  customTimeLimit?: number | null;
   negativeMarking?: boolean;
   negativeMarks?: number;
   mode: 'practice' | 'exam';

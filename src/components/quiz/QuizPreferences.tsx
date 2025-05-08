@@ -7,7 +7,7 @@ import { Card, CardBody, CardFooter, CardHeader } from '../ui/Card';
 import { 
   BookOpen, Save, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2, Loader2
+  CheckCircle2, Loader2, Play
 } from 'lucide-react';
 
 interface QuizPreferencesFormProps {
@@ -346,17 +346,17 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
             <Button
               type="submit"
               disabled={isLoading || !preferences.topic}
-              className="gradient-bg hover:opacity-90 transition-opacity"
+              className="gradient-bg hover:opacity-90 transition-opacity flex items-center space-x-2"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Generating Quiz...
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Generating Quiz...</span>
                 </>
               ) : (
                 <>
-                  <Save className="ml-2 h-4 w-4" />
-                  Start Quiz
+                  <Play className="w-5 h-5" />
+                  <span>Start Quiz</span>
                 </>
               )}
             </Button>

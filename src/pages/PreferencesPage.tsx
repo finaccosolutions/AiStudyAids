@@ -9,7 +9,7 @@ const PreferencesPage: React.FC = () => {
   const navigate = useNavigate();
   const { preferences, generateQuiz, isLoading } = useQuizStore();
 
-  const handleStartQuiz = async () => {
+  const handleSaveAndStart = async () => {
     if (!user) return;
     await generateQuiz(user.id);
     navigate('/quiz');
@@ -22,7 +22,7 @@ const PreferencesPage: React.FC = () => {
       <QuizPreferencesForm
         userId={user.id}
         initialPreferences={preferences || defaultPreferences}
-        onSave={handleStartQuiz}
+        onSave={handleSaveAndStart}
         isLoading={isLoading}
       />
     </div>
