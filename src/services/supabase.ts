@@ -67,16 +67,6 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
     questionTypes.push('multiple-choice');
   }
   
-  // Handle time limit conversion
-  let timeLimit = preferences.timeLimit;
-  let customTimeLimit = null;
-  
-  if (timeLimit === 'custom' && preferences.customTimeLimit) {
-    customTimeLimit = preferences.customTimeLimit;
-  } else if (timeLimit && timeLimit !== 'none' && timeLimit !== 'custom') {
-    timeLimit = timeLimit.toString();
-  }
-  
   return supabase
     .from('quiz_preferences')
     .upsert({ 
@@ -87,13 +77,12 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
       question_types: questionTypes,
       language: preferences.language,
       difficulty: preferences.difficulty,
-      time_limit: timeLimit,
-      custom_time_limit: customTimeLimit,
+      time_limit: preferences.timeLimit?.toString() || null,
       negative_marking: preferences.negativeMarking,
       negative_marks: preferences.negativeMarks,
-      mode: preferences.mode
-    })
-    .select();
+      mode: preferences.mode,
+      answer_mode: preferences.answerMode
+    }, { onConflict: 'user_id' });
 };
 
 export const getQuizPreferences = async (userId: string) => {
@@ -106,14 +95,6 @@ export const getQuizPreferences = async (userId: string) => {
   if (error) return null;
   
   if (data) {
-    // Convert time limit back to the correct format
-    let timeLimit = data.time_limit;
-    let customTimeLimit = data.custom_time_limit;
-    
-    if (customTimeLimit) {
-      timeLimit = 'custom';
-    }
-    
     return {
       topic: data.topic,
       subtopic: data.subtopic,
@@ -121,11 +102,11 @@ export const getQuizPreferences = async (userId: string) => {
       questionTypes: data.question_types,
       language: data.language,
       difficulty: data.difficulty,
-      timeLimit,
-      customTimeLimit,
+      timeLimit: data.time_limit,
       negativeMarking: data.negative_marking,
       negativeMarks: data.negative_marks,
-      mode: data.mode
+      mode: data.mode,
+      answerMode: data.answer_mode
     };
   }
   
