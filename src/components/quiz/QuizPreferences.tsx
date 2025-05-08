@@ -5,9 +5,9 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Card, CardBody, CardFooter, CardHeader } from '../ui/Card';
 import { 
-  BookOpen, Save, Clock, Languages, ListChecks, 
+  BookOpen, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2, Loader2, Play, RefreshCw
+  CheckCircle2, Loader2, RefreshCw
 } from 'lucide-react';
 
 interface QuizPreferencesFormProps {
@@ -35,7 +35,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   isLoading = false
 }) => {
   const [preferences, setPreferences] = useState<QuizPreferences>(initialPreferences);
-  const { savePreferences, error } = useQuizStore();
+  const { error } = useQuizStore();
   
   useEffect(() => {
     setPreferences(initialPreferences);
@@ -65,7 +65,6 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await savePreferences(userId, preferences);
     if (onGenerate) onGenerate();
   };
   
