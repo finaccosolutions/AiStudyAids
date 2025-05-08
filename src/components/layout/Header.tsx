@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { Brain, ChevronDown, LogOut, User, BookOpen, Home, Settings } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header: React.FC = () => {
   const { user, logout, isLoggedIn } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -24,6 +25,7 @@ const Header: React.FC = () => {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
+    navigate('/');
   };
   
   return (
@@ -58,7 +60,7 @@ const Header: React.FC = () => {
                   Quiz Preferences
                 </Link>
                 <Link 
-                  to="/quiz" 
+                  to="/api-settings" 
                   className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
                 >
                   <Settings className="w-4 h-4 inline-block mr-1" />
