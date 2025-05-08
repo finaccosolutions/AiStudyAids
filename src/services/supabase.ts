@@ -66,25 +66,46 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
   if (questionTypes.length === 0) {
     questionTypes.push('multiple-choice');
   }
-  
-  return supabase
+
+  // Prepare the preferences data
+  const preferencesData = {
+    user_id: userId, 
+    topic: preferences.topic,
+    subtopic: preferences.subtopic,
+    question_count: preferences.questionCount,
+    question_types: questionTypes,
+    language: preferences.language,
+    difficulty: preferences.difficulty,
+    time_limit: preferences.timeLimit,
+    custom_time_limit: preferences.timeLimit === 'custom' ? preferences.customTimeLimit : null,
+    total_time_limit: preferences.totalTimeLimit,
+    custom_total_time_limit: preferences.totalTimeLimit === 'custom' ? preferences.customTotalTimeLimit : null,
+    negative_marking: preferences.negativeMarking,
+    negative_marks: preferences.negativeMarks,
+    mode: preferences.mode
+  };
+
+  // First check if preferences already exist for this user
+  const { data: existingPreferences } = await supabase
     .from('quiz_preferences')
-    .upsert({ 
-      user_id: userId, 
-      topic: preferences.topic,
-      subtopic: preferences.subtopic,
-      question_count: preferences.questionCount,
-      question_types: questionTypes,
-      language: preferences.language,
-      difficulty: preferences.difficulty,
-      time_limit: preferences.timeLimit,
-      custom_time_limit: preferences.timeLimit === 'custom' ? preferences.customTimeLimit : null,
-      total_time_limit: preferences.totalTimeLimit,
-      custom_total_time_limit: preferences.totalTimeLimit === 'custom' ? preferences.customTotalTimeLimit : null,
-      negative_marking: preferences.negativeMarking,
-      negative_marks: preferences.negativeMarks,
-      mode: preferences.mode
-    }, { onConflict: 'user_id' });
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+
+  if (existingPreferences) {
+    // Update existing preferences
+    return supabase
+      .from('quiz_preferences')
+      .update(preferencesData)
+      .eq('user_id', userId)
+      .select();
+  } else {
+    // Insert new preferences
+    return supabase
+      .from('quiz_preferences')
+      .insert(preferencesData)
+      .select();
+  }
 };
 
 export const getQuizPreferences = async (userId: string) => {
