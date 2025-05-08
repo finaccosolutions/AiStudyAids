@@ -2,15 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { Brain, ChevronDown, LogOut, User, BookOpen, Home, Settings } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Header: React.FC = () => {
   const { user, logout, isLoggedIn } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
-  const navigate = useNavigate();
   
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -26,7 +24,6 @@ const Header: React.FC = () => {
   const handleLogout = async () => {
     await logout();
     setShowDropdown(false);
-    navigate('/');
   };
   
   return (
@@ -46,9 +43,7 @@ const Header: React.FC = () => {
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               to="/" 
-              className={`nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300 ${
-                location.pathname === '/' ? 'text-purple-700' : ''
-              }`}
+              className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
             >
               <Home className="w-4 h-4 inline-block mr-1" />
               Home
@@ -56,19 +51,15 @@ const Header: React.FC = () => {
             {isLoggedIn && (
               <>
                 <Link 
-                  to="/preferences" 
-                  className={`nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300 ${
-                    location.pathname === '/preferences' ? 'text-purple-700' : ''
-                  }`}
+                  to="/quiz" 
+                  className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
                 >
                   <BookOpen className="w-4 h-4 inline-block mr-1" />
                   Quiz Preferences
                 </Link>
                 <Link 
-                  to="/api-settings" 
-                  className={`nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300 ${
-                    location.pathname === '/api-settings' ? 'text-purple-700' : ''
-                  }`}
+                  to="/quiz" 
+                  className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
                 >
                   <Settings className="w-4 h-4 inline-block mr-1" />
                   API Settings

@@ -10,16 +10,16 @@ export type ApiKeyData = {
 
 export type QuizPreferences = {
   topic: string;
-  subtopic?: string | null;
+  subtopic?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   questionCount: number;
   questionTypes: string[];
   language: string;
-  timeLimit?: string | null;
-  customTimeLimit?: number | null;
+  timeLimit?: string;
   negativeMarking?: boolean;
   negativeMarks?: number;
   mode: 'practice' | 'exam';
+  answerMode: 'immediate' | 'end';
 };
 
 export type QuestionType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'matching' | 'code-output' | 'assertion-reason';

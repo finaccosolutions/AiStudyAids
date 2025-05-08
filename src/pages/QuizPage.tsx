@@ -3,22 +3,25 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 import { Navigate } from 'react-router-dom';
 import ApiKeyForm from '../components/quiz/ApiKeyForm';
+import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import QuizQuestion from '../components/quiz/QuizQuestion';
 import QuizResults from '../components/quiz/QuizResults';
+import { Button } from '../components/ui/Button';
+import { RefreshCw } from 'lucide-react';
 
 const QuizPage: React.FC = () => {
   const { user, isLoggedIn } = useAuthStore();
   const { 
     apiKey, loadApiKey, 
     preferences, loadPreferences, 
-    questions, 
+    questions, generateQuiz, 
     currentQuestionIndex, answers, answerQuestion, 
     nextQuestion, prevQuestion, 
-    finishQuiz, resetQuiz, result,
-    isLoading
+    finishQuiz, resetQuiz, result 
   } = useQuizStore();
   
-  const [step, setStep] = useState<'api-key' | 'quiz' | 'results'>('quiz');
+  const [showSettings, setShowSettings] = useState(false);
+  const [step, setStep] = useState<'api-key' | 'preferences' | 'quiz' | 'results'>('api-key');
   
   useEffect(() => {
     if (user) {
@@ -28,21 +31,31 @@ const QuizPage: React.FC = () => {
   }, [user]);
   
   useEffect(() => {
-    if (!apiKey) {
-      setStep('api-key');
+    if (apiKey && !preferences) {
+      setStep('preferences');
+    } else if (apiKey && preferences && questions.length === 0 && !result) {
+      setStep('preferences');
+    } else if (questions.length > 0 && !result) {
+      setStep('quiz');
     } else if (result) {
       setStep('results');
-    } else {
-      setStep('quiz');
+    } else if (!apiKey) {
+      setStep('api-key');
     }
-  }, [apiKey, result]);
+  }, [apiKey, preferences, questions, result]);
   
   if (!isLoggedIn) {
     return <Navigate to="/auth" />;
   }
   
-  const handleApiKeySaved = () => {
+  const handleStartQuiz = async () => {
+    if (!user) return;
+    await generateQuiz(user.id);
     setStep('quiz');
+  };
+  
+  const handleApiKeySaved = () => {
+    setStep('preferences');
   };
   
   const handleFinishQuiz = () => {
@@ -52,7 +65,12 @@ const QuizPage: React.FC = () => {
   
   const handleNewQuiz = () => {
     resetQuiz();
-    setStep('quiz');
+    setStep('preferences');
+  };
+  
+  const handleChangePreferences = () => {
+    resetQuiz();
+    setStep('preferences');
   };
   
   const renderContent = () => {
@@ -62,27 +80,29 @@ const QuizPage: React.FC = () => {
       case 'api-key':
         return <ApiKeyForm userId={user.id} onSave={handleApiKeySaved} />;
       
+      case 'preferences':
+        return (
+          <div className="space-y-6">
+            <QuizPreferencesForm
+              userId={user.id}
+              initialPreferences={preferences || defaultPreferences}
+            />
+            
+            <div className="flex justify-center">
+              <Button
+                onClick={handleStartQuiz}
+                size="lg"
+                disabled={!preferences?.topic}
+                className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group"
+              >
+                <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
+                Generate Quiz
+              </Button>
+            </div>
+          </div>
+        );
+      
       case 'quiz':
-        if (isLoading) {
-          return (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <div className="text-center">
-                <div className="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-                <p className="text-gray-600">Generating your quiz...</p>
-              </div>
-            </div>
-          );
-        }
-        
-        if (!questions.length) {
-          return (
-            <div className="text-center py-12">
-              <p className="text-gray-600 mb-4">No quiz questions available.</p>
-              <p className="text-gray-600">Please go to Quiz Preferences to generate a new quiz.</p>
-            </div>
-          );
-        }
-        
         if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) {
           return null;
         }
@@ -107,7 +127,7 @@ const QuizPage: React.FC = () => {
               language={preferences?.language || 'en'}
               timeLimit={preferences?.timeLimit}
               mode={preferences?.mode || 'practice'}
-              answerMode={preferences?.mode === 'practice' ? 'immediate' : 'end'}
+              answerMode={preferences?.answerMode || 'immediate'}
             />
           </div>
         );
@@ -120,7 +140,7 @@ const QuizPage: React.FC = () => {
             <QuizResults
               result={result}
               onNewQuiz={handleNewQuiz}
-              onChangePreferences={() => resetQuiz()}
+              onChangePreferences={handleChangePreferences}
             />
           </div>
         );
@@ -129,6 +149,15 @@ const QuizPage: React.FC = () => {
   
   return (
     <div className="relative">
+      {showSettings && step !== 'api-key' && (
+        <div className="mb-8 bg-white p-6 rounded-xl shadow-md border border-gray-100 transition-all duration-300">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">API Key Settings</h2>
+          <div className="space-y-4">
+            <ApiKeyForm userId={user!.id} />
+          </div>
+        </div>
+      )}
+      
       {renderContent()}
     </div>
   );

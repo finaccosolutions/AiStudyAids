@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
             }]
           }],
           generationConfig: {
-            temperature: 0.2,
+            temperature: 0.2, // Reduced temperature for more predictable JSON output
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 2048,
