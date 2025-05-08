@@ -40,7 +40,8 @@ export const defaultPreferences: QuizPreferences = {
   questionTypes: ['multiple-choice'],
   language: 'en',
   difficulty: 'medium',
-  timeLimit: null,
+  timeLimit: 'none',
+  customTimeLimit: null,
   negativeMarking: false,
   negativeMarks: 0,
   mode: 'practice',
@@ -100,6 +101,11 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       // Ensure at least one question type is selected
       if (!preferences.questionTypes || preferences.questionTypes.length === 0) {
         preferences.questionTypes = ['multiple-choice'];
+      }
+      
+      // Handle custom time limit
+      if (preferences.timeLimit === 'custom' && (!preferences.customTimeLimit || preferences.customTimeLimit < 1)) {
+        preferences.customTimeLimit = 30; // Default to 30 seconds if invalid
       }
       
       await saveQuizPreferences(userId, preferences);

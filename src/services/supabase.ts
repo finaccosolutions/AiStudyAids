@@ -77,11 +77,11 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
       question_types: questionTypes,
       language: preferences.language,
       difficulty: preferences.difficulty,
-      time_limit: preferences.timeLimit?.toString() || null,
+      time_limit: preferences.timeLimit,
+      custom_time_limit: preferences.timeLimit === 'custom' ? preferences.customTimeLimit : null,
       negative_marking: preferences.negativeMarking,
       negative_marks: preferences.negativeMarks,
-      mode: preferences.mode,
-      answer_mode: preferences.answerMode
+      mode: preferences.mode
     }, { onConflict: 'user_id' });
 };
 
@@ -103,10 +103,10 @@ export const getQuizPreferences = async (userId: string) => {
       language: data.language,
       difficulty: data.difficulty,
       timeLimit: data.time_limit,
+      customTimeLimit: data.custom_time_limit,
       negativeMarking: data.negative_marking,
       negativeMarks: data.negative_marks,
-      mode: data.mode,
-      answerMode: data.answer_mode
+      mode: data.mode
     };
   }
   
