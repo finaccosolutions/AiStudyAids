@@ -5,8 +5,6 @@ import MainLayout from './components/layout/MainLayout';
 import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import QuizPage from './pages/QuizPage';
-import PreferencesPage from './pages/PreferencesPage';
-import ApiSettingsPage from './pages/ApiSettingsPage';
 
 function App() {
   const { loadUser, isLoggedIn } = useAuthStore();
@@ -25,18 +23,6 @@ function App() {
             path="quiz" 
             element={
               isLoggedIn ? <QuizPage /> : <Navigate to="/auth" />
-            } 
-          />
-          <Route 
-            path="preferences" 
-            element={
-              isLoggedIn ? <PreferencesPage /> : <Navigate to="/auth" />
-            } 
-          />
-          <Route 
-            path="api-settings" 
-            element={
-              isLoggedIn ? <ApiSettingsPage /> : <Navigate to="/auth" />
             } 
           />
         </Route>

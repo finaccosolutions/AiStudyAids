@@ -7,14 +7,13 @@ import { Card, CardBody, CardFooter, CardHeader } from '../ui/Card';
 import { 
   BookOpen, Save, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2, Loader2
+  CheckCircle2, XCircle
 } from 'lucide-react';
 
 interface QuizPreferencesFormProps {
   userId: string;
   initialPreferences: QuizPreferences;
   onSave?: () => void;
-  isLoading?: boolean;
 }
 
 const timeOptions = [
@@ -22,20 +21,18 @@ const timeOptions = [
   { value: '15', label: '15 Seconds' },
   { value: '30', label: '30 Seconds' },
   { value: '45', label: '45 Seconds' },
-  { value: '60', label: '60 Seconds' },
-  { value: '90', label: '90 Seconds' },
-  { value: '120', label: '120 Seconds' },
-  { value: 'custom', label: 'Custom Time' }
+  { value: '60', label: '60 Second' },
+  { value: '90', label: '90 Second' },
+  { value: '120', label: '120 Second' },
 ];
 
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
   userId, 
   initialPreferences,
-  onSave,
-  isLoading = false
+  onSave
 }) => {
   const [preferences, setPreferences] = useState<QuizPreferences>(initialPreferences);
-  const { savePreferences, error } = useQuizStore();
+  const { savePreferences, isLoading, error } = useQuizStore();
   
   useEffect(() => {
     setPreferences(initialPreferences);
@@ -218,23 +215,6 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                   onChange={(e) => setPreferences({ ...preferences, timeLimit: e.target.value })}
                   className="w-full"
                 />
-                
-                {preferences.timeLimit === 'custom' && (
-                  <div className="mt-2">
-                    <Input
-                      type="number"
-                      min={1}
-                      max={3600}
-                      value={preferences.customTimeLimit || ''}
-                      onChange={(e) => setPreferences({ 
-                        ...preferences, 
-                        customTimeLimit: parseInt(e.target.value) || undefined 
-                      })}
-                      placeholder="Enter time in seconds (1-3600)"
-                      className="w-full"
-                    />
-                  </div>
-                )}
               </div>
               
               <div>
@@ -247,53 +227,6 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                   onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
                   className="w-full"
                 />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Quiz Mode
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-colors hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="quizMode"
-                      value="practice"
-                      checked={preferences.mode === 'practice'}
-                      onChange={(e) => setPreferences({ 
-                        ...preferences, 
-                        mode: e.target.value 
-                      })}
-                      className="w-4 h-4 text-purple-600"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Practice Mode</span>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Get immediate feedback after each question with detailed explanations
-                      </p>
-                    </div>
-                  </label>
-                  
-                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-colors hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="quizMode"
-                      value="exam"
-                      checked={preferences.mode === 'exam'}
-                      onChange={(e) => setPreferences({ 
-                        ...preferences, 
-                        mode: e.target.value 
-                      })}
-                      className="w-4 h-4 text-purple-600"
-                    />
-                    <div>
-                      <span className="text-sm font-medium text-gray-700">Exam Mode</span>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Complete all questions first, then review answers and explanations
-                      </p>
-                    </div>
-                  </label>
-                </div>
               </div>
               
               <div className="flex items-center space-x-4">
@@ -333,6 +266,92 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
             </div>
           </div>
           
+          {/* Quiz Mode */}
+          <div className="p-6 space-y-6">
+            <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+              <BarChart3 className="w-5 h-5 mr-2 text-purple-600" />
+              Quiz Mode
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Quiz Type
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-colors hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="quizMode"
+                      value="practice"
+                      checked={preferences.mode === 'practice'}
+                      onChange={(e) => setPreferences({ 
+                        ...preferences, 
+                        mode: e.target.value 
+                      })}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Practice Mode</span>
+                    <span className="text-xs text-gray-500 ml-2">(Show answers after each question)</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-colors hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="quizMode"
+                      value="exam"
+                      checked={preferences.mode === 'exam'}
+                      onChange={(e) => setPreferences({ 
+                        ...preferences, 
+                        mode: e.target.value 
+                      })}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Exam Mode</span>
+                    <span className="text-xs text-gray-500 ml-2">(Show results at end)</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Answer Feedback
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-colors hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="answerMode"
+                      value="immediate"
+                      checked={preferences.answerMode === 'immediate'}
+                      onChange={(e) => setPreferences({ 
+                        ...preferences, 
+                        answerMode: e.target.value 
+                      })}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Immediate Feedback</span>
+                  </label>
+                  
+                  <label className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border-2 transition-colors hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="answerMode"
+                      value="end"
+                      checked={preferences.answerMode === 'end'}
+                      onChange={(e) => setPreferences({ 
+                        ...preferences, 
+                        answerMode: e.target.value 
+                      })}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Show at End</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {error && (
             <div className="p-4 bg-red-50 border-l-4 border-red-500">
               <div className="flex items-center">
@@ -348,17 +367,8 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               disabled={isLoading || !preferences.topic}
               className="gradient-bg hover:opacity-90 transition-opacity"
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Generating Quiz...
-                </>
-              ) : (
-                <>
-                  <Save className="ml-2 h-4 w-4" />
-                  Start Quiz
-                </>
-              )}
+              {isLoading ? 'Saving...' : 'Save Preferences'}
+              <Save className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </form>

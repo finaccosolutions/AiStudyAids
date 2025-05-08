@@ -16,10 +16,10 @@ export type QuizPreferences = {
   questionTypes: string[];
   language: string;
   timeLimit?: string;
-  customTimeLimit?: number;
   negativeMarking?: boolean;
   negativeMarks?: number;
   mode: 'practice' | 'exam';
+  answerMode: 'immediate' | 'end';
 };
 
 export type QuestionType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'matching' | 'code-output' | 'assertion-reason';

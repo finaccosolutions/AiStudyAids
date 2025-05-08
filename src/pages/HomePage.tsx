@@ -1,24 +1,20 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/Button';
-import { Brain, ArrowRight, Star, Sparkles, Trophy } from 'lucide-react';
+import { Brain, CheckCircle, LightbulbIcon, User, ArrowRight, Star, Sparkles, Trophy } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
-  const navigate = useNavigate();
   
-  const handleStartQuiz = () => {
-    if (isLoggedIn) {
-      navigate('/preferences');
-    } else {
-      navigate('/auth');
-    }
-  };
+  if (isLoggedIn) {
+    return <Navigate to="/quiz" />;
+  }
   
   return (
     <div className="flex flex-col items-center">
       <div className="text-center max-w-4xl mx-auto relative">
+        {/* Decorative elements */}
         <div className="absolute -top-20 -left-20 w-40 h-40 bg-purple-200 rounded-full blur-3xl opacity-20" />
         <div className="absolute -top-10 right-0 w-32 h-32 bg-indigo-200 rounded-full blur-3xl opacity-20" />
         
@@ -40,7 +36,7 @@ const HomePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
           <Button 
             size="lg" 
-            onClick={handleStartQuiz}
+            onClick={() => window.location.href = '/auth'}
             className="group"
           >
             Start Learning Now
@@ -89,7 +85,7 @@ const HomePage: React.FC = () => {
               Join thousands of learners who are already using QuizGenius to master new subjects.
             </p>
             <Button
-              onClick={handleStartQuiz}
+              onClick={() => window.location.href = '/auth'}
               className="bg-white text-purple-700 hover:bg-purple-50 group"
             >
               Sign Up Free
@@ -97,6 +93,7 @@ const HomePage: React.FC = () => {
             </Button>
           </div>
           
+          {/* Animated background elements */}
           <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 backdrop-blur-3xl group-hover:scale-105 transition-transform duration-500" />
           <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
           <div className="absolute -left-10 -top-10 w-40 h-40 bg-purple-400/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
