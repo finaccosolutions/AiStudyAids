@@ -35,7 +35,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   isLoading = false
 }) => {
   const [preferences, setPreferences] = useState<QuizPreferences>(initialPreferences);
-  const { error } = useQuizStore();
+  const { error, savePreferences } = useQuizStore();
   
   useEffect(() => {
     setPreferences(initialPreferences);
@@ -65,6 +65,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    await savePreferences(userId, preferences);
     if (onGenerate) onGenerate();
   };
   
@@ -355,7 +356,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               ) : (
                 <>
                   <RefreshCw className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500" />
-                  <span>Generate Quiz</span>
+                  <span>Generate Quizzz</span>
                 </>
               )}
             </Button>
