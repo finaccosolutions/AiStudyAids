@@ -48,6 +48,25 @@ export const getApiKey = async (userId: string) => {
 
 // Quiz preferences functions
 export const saveQuizPreferences = async (userId: string, preferences: QuizPreferences) => {
+  // Ensure question_types is an array and contains valid values
+  const validQuestionTypes = [
+    'multiple-choice',
+    'true-false',
+    'fill-blank',
+    'matching',
+    'code-output',
+    'assertion-reason'
+  ];
+  
+  const questionTypes = preferences.questionTypes.filter(type => 
+    validQuestionTypes.includes(type)
+  );
+  
+  // Ensure at least one valid question type
+  if (questionTypes.length === 0) {
+    questionTypes.push('multiple-choice');
+  }
+  
   return supabase
     .from('quiz_preferences')
     .upsert({ 
@@ -55,7 +74,7 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
       topic: preferences.topic,
       subtopic: preferences.subtopic,
       question_count: preferences.questionCount,
-      question_types: preferences.questionTypes,
+      question_types: questionTypes,
       language: preferences.language,
       difficulty: preferences.difficulty,
       time_limit: preferences.timeLimit?.toString() || null,

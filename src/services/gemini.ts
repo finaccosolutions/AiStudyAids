@@ -18,6 +18,8 @@ The questions MUST follow these strict requirements:
 - Include practical applications and real-world scenarios
 - Ensure progressive complexity within the chosen difficulty level
 - CRITICAL: ONLY generate questions of the types specified in questionTypes array
+- CRITICAL: Ensure all JSON strings are properly escaped and terminated
+- CRITICAL: Do not include any special characters or line breaks within JSON strings
 
 For each question:
 1. The question text should be clear and well-formulated
@@ -27,20 +29,24 @@ For each question:
 5. A detailed explanation of why this answer is correct
 6. The difficulty level (basic, intermediate, or advanced)
 
-Format your response as a JSON array with the following structure:
+Format your response STRICTLY as a valid JSON array with this structure:
 [
   {
     "id": 1,
     "text": "Question text here",
-    "type": "${questionTypes[0]}", // Must be one of the allowed types
-    "options": ["Option A", "Option B", "Option C", "Option D"], // Only for multiple-choice
+    "type": "${questionTypes[0]}", 
+    "options": ["Option A", "Option B", "Option C", "Option D"],
     "correctAnswer": "Correct option here",
     "explanation": "Detailed explanation of the correct answer",
     "difficulty": "basic"
   }
 ]
 
-CRITICAL: Only generate questions of the types specified in the questionTypes array: ${questionTypes.join(', ')}. Any other question types will be rejected.`;
+CRITICAL: 
+- Ensure all JSON strings are properly escaped
+- Do not include line breaks within JSON strings
+- Use only basic ASCII characters in strings
+- Verify the JSON is valid before returning`;
     
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
@@ -120,28 +126,86 @@ const parseGeminiResponse = (response: any, questionTypes: string[]): Question[]
   try {
     const textResponse = response.candidates[0].content.parts[0].text;
     
-    const jsonMatch = textResponse.match(/```json\n([\s\S]*?)\n```/) || 
-                      textResponse.match(/```\n([\s\S]*?)\n```/) ||
-                      [null, textResponse];
+    // First, try to extract JSON from markdown code blocks
+    let jsonString = textResponse;
     
-    const jsonString = jsonMatch[1].trim();
+    // Try different markdown code block patterns
+    const patterns = [
+      /```json\n([\s\S]*?)\n```/,
+      /```javascript\n([\s\S]*?)\n```/,
+      /```\n([\s\S]*?)\n```/,
+      /\[([\s\S]*?)\]/  // Fallback: try to find array directly
+    ];
+
+    for (const pattern of patterns) {
+      const match = textResponse.match(pattern);
+      if (match && match[1]) {
+        try {
+          // Try parsing the extracted content
+          const extracted = match[1].trim();
+          JSON.parse(`[${extracted.replace(/^\[|\]$/g, '')}]`);
+          jsonString = extracted;
+          break;
+        } catch (e) {
+          continue; // Try next pattern if parsing fails
+        }
+      }
+    }
+
+    // Clean up and sanitize the JSON string
+    jsonString = jsonString
+      .replace(/^\s*```.*\n/, '') // Remove opening code fence
+      .replace(/\n\s*```\s*$/, '') // Remove closing code fence
+      .replace(/\/\/ .*$/gm, '') // Remove comments
+      .replace(/[\u2018\u2019]/g, "'") // Replace smart quotes
+      .replace(/[\u201C\u201D]/g, '"') // Replace smart double quotes
+      .replace(/[\u2013\u2014]/g, '-') // Replace em/en dashes
+      .replace(/[^\x20-\x7E]/g, '') // Remove non-ASCII characters
+      .replace(/\\\\/g, '\\') // Fix double escaped backslashes
+      .replace(/\\([^"\\\/bfnrt])/g, '$1') // Remove invalid escapes
+      .trim();
+
+    // Ensure we have array brackets
+    if (!jsonString.startsWith('[')) {
+      jsonString = `[${jsonString}]`;
+    }
     
-    const questions: Question[] = JSON.parse(jsonString);
+    let questions: Question[];
+    try {
+      questions = JSON.parse(jsonString);
+    } catch (parseError) {
+      // If parsing fails, try to fix common JSON issues
+      jsonString = jsonString
+        .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+        .replace(/([^\\])\\([^"\\\/bfnrt])/g, '$1$2') // Fix invalid escapes
+        .replace(/\s+/g, ' '); // Normalize whitespace
+      
+      try {
+        questions = JSON.parse(jsonString);
+      } catch (finalError) {
+        throw new Error(`Invalid JSON format in response: ${finalError.message}. Please try again.`);
+      }
+    }
     
-    // Validate and filter questions to ensure they match allowed types
-    const validQuestions = questions.filter(q => questionTypes.includes(q.type));
-    
-    if (validQuestions.length !== questions.length) {
-      console.warn('Some questions were filtered out due to invalid types');
-      // Generate new questions to replace invalid ones
-      throw new Error('Invalid question types generated. Please try again.');
+    if (!Array.isArray(questions)) {
+      throw new Error('Response is not an array of questions. Please try again.');
+    }
+
+    // Validate question structure and types
+    const invalidQuestions = questions.filter(q => !questionTypes.includes(q.type));
+    if (invalidQuestions.length > 0) {
+      const invalidTypes = [...new Set(invalidQuestions.map(q => q.type))];
+      throw new Error(
+        `Invalid question types detected: ${invalidTypes.join(', ')}. ` +
+        `Allowed types are: ${questionTypes.join(', ')}. Please try again.`
+      );
     }
     
     // Sort questions by difficulty
     const difficultyOrder = { 'basic': 0, 'intermediate': 1, 'advanced': 2 };
-    validQuestions.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
+    questions.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
     
-    return validQuestions.map((q, index) => ({
+    return questions.map((q, index) => ({
       id: index + 1,
       text: q.text,
       type: q.type as any,
@@ -152,6 +216,6 @@ const parseGeminiResponse = (response: any, questionTypes: string[]): Question[]
     }));
   } catch (error) {
     console.error('Error parsing Gemini response:', error);
-    throw new Error('Failed to parse quiz questions. Please try again.');
+    throw new Error(`Failed to parse quiz questions: ${error.message}`);
   }
 };

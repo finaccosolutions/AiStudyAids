@@ -37,14 +37,14 @@ export const defaultPreferences: QuizPreferences = {
   topic: '',
   subtopic: null,
   questionCount: 5,
-  questionTypes: ['multiple-choice', 'yes-no', 'short-answer'],
+  questionTypes: ['multiple-choice'],
   language: 'en',
   difficulty: 'medium',
   timeLimit: null,
   negativeMarking: false,
   negativeMarks: 0,
   mode: 'practice',
-  answerMode: 'single'
+  answerMode: 'immediate'
 };
 
 export const useQuizStore = create<QuizState>((set, get) => ({
@@ -97,6 +97,11 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   savePreferences: async (userId, preferences) => {
     set({ isLoading: true, error: null });
     try {
+      // Ensure at least one question type is selected
+      if (!preferences.questionTypes || preferences.questionTypes.length === 0) {
+        preferences.questionTypes = ['multiple-choice'];
+      }
+      
       await saveQuizPreferences(userId, preferences);
       set({ preferences });
     } catch (error: any) {
@@ -164,7 +169,6 @@ export const useQuizStore = create<QuizState>((set, get) => ({
   finishQuiz: () => {
     const { questions, answers } = get();
     
-    // Calculate score
     let correctAnswers = 0;
     
     const questionsWithAnswers = questions.map(question => {
