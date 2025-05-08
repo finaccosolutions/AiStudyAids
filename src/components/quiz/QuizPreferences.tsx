@@ -27,6 +27,17 @@ const timeOptions = [
   { value: '120', label: '120 Seconds' },
 ];
 
+const totalTimeOptions = [
+  { value: 'none', label: 'No Time Limit' },
+  { value: 'custom', label: 'Custom Time Limit' },
+  { value: '300', label: '5 Minutes' },
+  { value: '600', label: '10 Minutes' },
+  { value: '900', label: '15 Minutes' },
+  { value: '1200', label: '20 Minutes' },
+  { value: '1800', label: '30 Minutes' },
+  { value: '3600', label: '60 Minutes' },
+];
+
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
   userId, 
   initialPreferences,
@@ -95,12 +106,21 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   };
 
   const calculateTotalTime = () => {
-    if (preferences.timeLimit === 'none') return 'No time limit';
-    if (preferences.timeLimit === 'custom') {
-      return `${preferences.customTimeLimit || 30} seconds`;
+    if (timingMode === 'per-question') {
+      if (preferences.timeLimit === 'none') return 'No time limit';
+      if (preferences.timeLimit === 'custom') {
+        return `${preferences.customTimeLimit || 30} seconds per question`;
+      }
+      const perQuestionTime = parseInt(preferences.timeLimit || '30');
+      return `${perQuestionTime} seconds per question`;
+    } else {
+      if (preferences.totalTimeLimit === 'none') return 'No time limit';
+      if (preferences.totalTimeLimit === 'custom') {
+        return `${preferences.customTotalTimeLimit || 300} seconds total`;
+      }
+      const totalTime = parseInt(preferences.totalTimeLimit || '300');
+      return `${totalTime} seconds total`;
     }
-    const perQuestionTime = parseInt(preferences.timeLimit || '30');
-    return `${perQuestionTime * preferences.questionCount} seconds`;
   };
   
   return (
@@ -286,11 +306,43 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                     <label className="block text-sm font-medium text-gray-700">
                       Total Quiz Time
                     </label>
-                    <div className="text-lg font-medium text-purple-700 bg-purple-50 p-4 rounded-xl border border-purple-200">
-                      {calculateTotalTime()}
-                    </div>
+                    <Select
+                      options={totalTimeOptions}
+                      value={preferences.totalTimeLimit || 'none'}
+                      onChange={(e) => setPreferences({ 
+                        ...preferences, 
+                        totalTimeLimit: e.target.value,
+                        customTotalTimeLimit: e.target.value === 'custom' ? 300 : undefined
+                      })}
+                      className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                    />
+                    
+                    {preferences.totalTimeLimit === 'custom' && (
+                      <div className="mt-4">
+                        <Input
+                          type="number"
+                          min={1}
+                          max={7200}
+                          value={preferences.customTotalTimeLimit || 300}
+                          onChange={(e) => setPreferences({
+                            ...preferences,
+                            customTotalTimeLimit: parseInt(e.target.value) || 300
+                          })}
+                          placeholder="Enter time in seconds"
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Enter a value between 1 and 7200 seconds (2 hours)
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
+                
+                <div className="text-sm text-gray-600 bg-purple-50 p-4 rounded-lg">
+                  <p className="font-medium text-purple-700">Current Time Setting:</p>
+                  <p>{calculateTotalTime()}</p>
+                </div>
               </div>
             </div>
           </div>

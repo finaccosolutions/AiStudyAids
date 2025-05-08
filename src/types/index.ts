@@ -17,6 +17,8 @@ export type QuizPreferences = {
   language: string;
   timeLimit?: string;
   customTimeLimit?: number | null;
+  totalTimeLimit?: string;
+  customTotalTimeLimit?: number | null;
   negativeMarking?: boolean;
   negativeMarks?: number;
   mode: 'practice' | 'exam';

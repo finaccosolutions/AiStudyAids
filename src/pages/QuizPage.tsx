@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import ApiKeyForm from '../components/quiz/ApiKeyForm';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import QuizQuestion from '../components/quiz/QuizQuestion';
@@ -20,6 +20,7 @@ const QuizPage: React.FC = () => {
     finishQuiz, resetQuiz, result 
   } = useQuizStore();
   
+  const navigate = useNavigate();
   const [showSettings, setShowSettings] = useState(false);
   const [step, setStep] = useState<'api-key' | 'preferences' | 'quiz' | 'results'>('api-key');
   
@@ -70,7 +71,7 @@ const QuizPage: React.FC = () => {
   
   const handleChangePreferences = () => {
     resetQuiz();
-    setStep('preferences');
+    navigate('/quiz');
   };
   
   const renderContent = () => {

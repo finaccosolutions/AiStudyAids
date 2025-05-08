@@ -79,6 +79,8 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
       difficulty: preferences.difficulty,
       time_limit: preferences.timeLimit,
       custom_time_limit: preferences.timeLimit === 'custom' ? preferences.customTimeLimit : null,
+      total_time_limit: preferences.totalTimeLimit,
+      custom_total_time_limit: preferences.totalTimeLimit === 'custom' ? preferences.customTotalTimeLimit : null,
       negative_marking: preferences.negativeMarking,
       negative_marks: preferences.negativeMarks,
       mode: preferences.mode
@@ -104,6 +106,8 @@ export const getQuizPreferences = async (userId: string) => {
       difficulty: data.difficulty,
       timeLimit: data.time_limit,
       customTimeLimit: data.custom_time_limit,
+      totalTimeLimit: data.total_time_limit,
+      customTotalTimeLimit: data.custom_total_time_limit,
       negativeMarking: data.negative_marking,
       negativeMarks: data.negative_marks,
       mode: data.mode
