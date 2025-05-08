@@ -27,7 +27,7 @@ const Header: React.FC = () => {
   };
   
   return (
-    <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-100">
+    <header className="bg-gradient-to-r from-purple-100 to-indigo-100 sticky top-0 z-50 border-b border-purple-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="flex items-center space-x-2 group">
@@ -41,17 +41,26 @@ const Header: React.FC = () => {
           </Link>
           
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="nav-link">
+            <Link 
+              to="/" 
+              className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
+            >
               <Home className="w-4 h-4 inline-block mr-1" />
               Home
             </Link>
             {isLoggedIn && (
               <>
-                <Link to="/quiz" className="nav-link">
+                <Link 
+                  to="/quiz" 
+                  className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
+                >
                   <BookOpen className="w-4 h-4 inline-block mr-1" />
                   Quiz Preferences
                 </Link>
-                <Link to="/quiz" className="nav-link">
+                <Link 
+                  to="/quiz" 
+                  className="nav-link hover:text-purple-700 hover:bg-purple-50/50 px-3 py-2 rounded-lg transition-all duration-300"
+                >
                   <Settings className="w-4 h-4 inline-block mr-1" />
                   API Settings
                 </Link>
@@ -62,11 +71,11 @@ const Header: React.FC = () => {
           <div className="relative" ref={dropdownRef}>
             <Button
               variant="ghost"
-              className="flex items-center space-x-2 hover:bg-purple-50"
+              className="flex items-center space-x-2 hover:bg-purple-100 group transition-all duration-300"
               onClick={() => setShowDropdown(!showDropdown)}
             >
-              <User className="h-5 w-5" />
-              <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
+              <User className="h-5 w-5 group-hover:scale-110 transition-transform" />
+              <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''} group-hover:text-purple-600`} />
             </Button>
             
             <AnimatePresence>
@@ -76,16 +85,16 @@ const Header: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-gray-100"
+                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-purple-100"
                 >
                   {isLoggedIn ? (
                     <>
-                      <div className="px-4 py-2 border-b border-gray-100">
+                      <div className="px-4 py-2 border-b border-purple-100">
                         <div className="text-sm font-medium text-gray-900">{user?.email}</div>
                       </div>
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center space-x-2 transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center space-x-2 transition-all duration-300"
                       >
                         <LogOut className="h-4 w-4" />
                         <span>Sign Out</span>
@@ -95,14 +104,14 @@ const Header: React.FC = () => {
                     <>
                       <Link
                         to="/auth"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300"
                         onClick={() => setShowDropdown(false)}
                       >
                         Sign In
                       </Link>
                       <Link
                         to="/auth"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300"
                         onClick={() => setShowDropdown(false)}
                       >
                         Sign Up

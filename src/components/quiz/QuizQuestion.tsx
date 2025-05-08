@@ -201,6 +201,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
           </motion.div>
         );
       
+      case 'fill-blank':
       case 'short-answer':
         return (
           <motion.div 

@@ -15,9 +15,9 @@ The questions MUST follow these strict requirements:
 - Each question MUST be one of these types: ${questionTypes.join(', ')}
 - DO NOT generate any question types that are not in the list above
 - Each question should be unique and not repetitive
-- Cover different aspects and concepts of the topic
 - Include practical applications and real-world scenarios
 - Ensure progressive complexity within the chosen difficulty level
+- CRITICAL: ONLY generate questions of the types specified in questionTypes array
 
 For each question:
 1. The question text should be clear and well-formulated
@@ -40,12 +40,7 @@ Format your response as a JSON array with the following structure:
   }
 ]
 
-Ensure questions:
-1. Are diverse and cover different subtopics
-2. Include practical applications
-3. Test different cognitive levels (understanding, application, analysis)
-4. Are culturally neutral and accessible
-5. Have clear, unambiguous answers`;
+CRITICAL: Only generate questions of the types specified in the questionTypes array: ${questionTypes.join(', ')}. Any other question types will be rejected.`;
     
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
@@ -138,6 +133,8 @@ const parseGeminiResponse = (response: any, questionTypes: string[]): Question[]
     
     if (validQuestions.length !== questions.length) {
       console.warn('Some questions were filtered out due to invalid types');
+      // Generate new questions to replace invalid ones
+      throw new Error('Invalid question types generated. Please try again.');
     }
     
     // Sort questions by difficulty

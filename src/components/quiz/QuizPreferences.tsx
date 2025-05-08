@@ -21,9 +21,9 @@ const timeOptions = [
   { value: '15', label: '15 Seconds' },
   { value: '30', label: '30 Seconds' },
   { value: '45', label: '45 Seconds' },
-  { value: '60', label: '1 Minute' },
-  { value: '90', label: '1.5 Minutes' },
-  { value: '120', label: '2 Minutes' },
+  { value: '60', label: '60 Second' },
+  { value: '90', label: '90 Second' },
+  { value: '120', label: '120 Second' },
 ];
 
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
@@ -57,6 +57,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
     { value: 'en', label: 'English' },
     { value: 'hi', label: 'Hindi' },
     { value: 'ml', label: 'Malayalam' },
+    { value: 'tl', label: 'Tamil' },
   ];
   
   const handleSubmit = async (e: React.FormEvent) => {
