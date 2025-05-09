@@ -27,6 +27,26 @@
   }
   
   .gradient-bg {
-    @apply bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)];
+    @apply bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] text-white;
+  }
+
+  .tooltip {
+    @apply relative inline-block;
+  }
+
+  .tooltip .tooltiptext {
+    @apply invisible absolute z-10 w-48 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 
+    bottom-full left-1/2 transform -translate-x-1/2 mb-2
+    opacity-0 transition-all duration-200;
+  }
+
+  .tooltip .tooltiptext::after {
+    content: "";
+    @apply absolute top-full left-1/2 transform -translate-x-1/2
+    border-4 border-transparent border-t-gray-900;
+  }
+
+  .tooltip:hover .tooltiptext {
+    @apply visible opacity-100;
   }
 }
