@@ -51,21 +51,29 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
     if (totalTimeLimit) {
       return parseInt(totalTimeLimit);
     }
-    if (!timeLimit) return null;
-    return parseInt(timeLimit);
+    if (timeLimit) {
+      return parseInt(timeLimit);
+    }
+    return null;
   });
   const [hasAnswered, setHasAnswered] = useState(false);
-  
+
   useEffect(() => {
     setSelectedAnswer(userAnswer || '');
     setHasAnswered(!!userAnswer);
   }, [userAnswer, question.id]);
-  
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (timeLeft !== null && timeLeft > 0) {
       timer = setInterval(() => {
-        setTimeLeft(prev => prev !== null ? prev - 1 : null);
+        setTimeLeft(prev => {
+          if (prev === null || prev <= 0) {
+            clearInterval(timer);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
     } else if (timeLeft === 0) {
       handleNext();
