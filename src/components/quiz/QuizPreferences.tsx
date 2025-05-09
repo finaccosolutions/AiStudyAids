@@ -49,11 +49,11 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   ];
   
   const languageOptions = [
-    { value: 'en', label: 'English' },
-    { value: 'hi', label: 'Hindi' },
-    { value: 'ml', label: 'Malayalam' },
-    { value: 'ta', label: 'Tamil' },
-    { value: 'te', label: 'Telugu' },
+    { value: 'English', label: 'English' },
+    { value: 'Hindi', label: 'Hindi' },
+    { value: 'Malayalam', label: 'Malayalam' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Telugu', label: 'Telugu' },
   ];
   
   const handleSubmit = async (e: React.FormEvent) => {

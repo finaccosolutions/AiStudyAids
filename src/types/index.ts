@@ -22,7 +22,7 @@ export type ApiKeyData = {
 };
 
 // Supported languages for quiz generation
-export type QuizLanguage = 'en' | 'hi' | 'ml' | 'ta' | 'te';
+export type QuizLanguage = 'English' | 'Hindi' | 'Malayalam' | 'Tamil' | 'Telugu';
 
 // Language display information
 export type LanguageInfo = {
