@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { UserData } from '../types';
-import { getCurrentUser, signIn, signOut, signUp } from '../services/supabase';
+import { getCurrentUser, signIn, signOut, signUp, resetPassword as resetPasswordRequest } from '../services/supabase';
 
 interface AuthState {
   user: UserData | null;
@@ -10,9 +10,10 @@ interface AuthState {
   
   // Actions
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, fullName: string, mobileNumber: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -29,13 +30,13 @@ export const useAuthStore = create<AuthState>((set) => ({
       if (error) throw error;
       
       if (data.user) {
-        set({
-          user: {
-            id: data.user.id,
-            email: data.user.email || '',
-          },
-          isLoggedIn: true,
-        });
+        const { data: userData } = await getCurrentUser();
+        if (userData?.user) {
+          set({
+            user: userData.user,
+            isLoggedIn: true,
+          });
+        }
       }
     } catch (error: any) {
       set({ error: error.message || 'Failed to login' });
@@ -44,10 +45,10 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   
-  register: async (email, password) => {
+  register: async (email, password, fullName, mobileNumber) => {
     set({ isLoading: true, error: null });
     try {
-      const { data, error } = await signUp(email, password);
+      const { data, error } = await signUp(email, password, fullName, mobileNumber);
       
       if (error) throw error;
       
@@ -56,12 +57,21 @@ export const useAuthStore = create<AuthState>((set) => ({
           user: {
             id: data.user.id,
             email: data.user.email || '',
+            profile: {
+              id: '',
+              fullName,
+              mobileNumber,
+              emailConfirmed: false,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
           },
           isLoggedIn: true,
         });
       }
     } catch (error: any) {
       set({ error: error.message || 'Failed to register' });
+      throw error;
     } finally {
       set({ isLoading: false });
     }
@@ -88,15 +98,25 @@ export const useAuthStore = create<AuthState>((set) => ({
       
       if (data?.user) {
         set({
-          user: {
-            id: data.user.id,
-            email: data.user.email || '',
-          },
+          user: data.user,
           isLoggedIn: true,
         });
       }
     } catch (error) {
       set({ user: null, isLoggedIn: false });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+  
+  resetPassword: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { error } = await resetPasswordRequest(email);
+      if (error) throw error;
+      set({ error: 'Password reset link sent to your email' });
+    } catch (error: any) {
+      set({ error: error.message || 'Failed to send reset link' });
     } finally {
       set({ isLoading: false });
     }

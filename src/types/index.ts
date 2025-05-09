@@ -1,6 +1,17 @@
 export type UserData = {
   id: string;
   email: string;
+  profile?: UserProfile;
+};
+
+export type UserProfile = {
+  id: string;
+  fullName: string;
+  mobileNumber: string;
+  emailConfirmed: boolean;
+  avatarUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export type ApiKeyData = {
@@ -43,4 +54,22 @@ export type QuizResult = {
   correctAnswers: number;
   percentage: number;
   questions: Question[];
+};
+
+export type QuizResultData = {
+  id: string;
+  quizDate: Date;
+  topic: string;
+  score: number;
+  totalQuestions: number;
+  timeTaken?: number;
+};
+
+export type FavoriteQuestion = {
+  id: string;
+  questionText: string;
+  answer: string;
+  explanation?: string;
+  topic: string;
+  createdAt: Date;
 };
