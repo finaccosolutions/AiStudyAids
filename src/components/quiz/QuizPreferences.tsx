@@ -39,14 +39,48 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
     { value: 'hard', label: 'Hard' },
   ];
   
-  const questionTypeOptions = [
-    { value: 'multiple-choice', label: 'Multiple Choice' },
-    { value: 'true-false', label: 'True/False' },
-    { value: 'fill-blank', label: 'Fill in the Blank' },
-    { value: 'matching', label: 'Match the Following' },
-    { value: 'code-output', label: 'Code Snippet/Output' },
-    { value: 'assertion-reason', label: 'Assertion & Reason' },
-  ];
+const questionTypeOptions = [
+  { 
+    value: 'multiple-choice', 
+    label: 'Multiple Choice',
+    description: 'Select one correct answer from multiple options'
+  },
+    { 
+    value: 'multi-select', 
+    label: 'Select All That Apply',
+    description: 'Choose multiple correct options'
+  },
+  { 
+    value: 'true-false', 
+    label: 'True/False',
+    description: 'Determine if a statement is true or false'
+  },
+  { 
+    value: 'fill-blank', 
+    label: 'Fill in the Blank',
+    description: 'Complete sentences with missing words'
+  },
+  { 
+    value: 'short-answer', 
+    label: 'Short Answer',
+    description: 'Provide brief 1-2 word answers'
+  },
+  { 
+    value: 'sequence', 
+    label: 'Sequence/Ordering',
+    description: 'Arrange items in the correct order'
+  },
+  { 
+    value: 'case-study', 
+    label: 'Case Study',
+    description: 'Analyze real-world scenarios and answer questions'
+  },
+  { 
+    value: 'situation', 
+    label: 'Situation Judgment',
+    description: 'Choose the best action in given scenarios'
+  }
+];
   
   const languageOptions = [
     { value: 'English', label: 'English' },

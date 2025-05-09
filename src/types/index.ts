@@ -38,7 +38,7 @@ export type QuizPreferences = {
   difficulty: 'easy' | 'medium' | 'hard';
   questionCount: number;
   questionTypes: QuestionType[];
-  language: QuizLanguage; // Now using the specific QuizLanguage type
+  language: QuizLanguage;
   timeLimitEnabled: boolean;
   timeLimit?: string | null;
   totalTimeLimit?: string | null;
@@ -48,7 +48,15 @@ export type QuizPreferences = {
   answerMode: 'immediate' | 'end';
 };
 
-export type QuestionType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'matching' | 'code-output' | 'assertion-reason';
+export type QuestionType = 
+  | 'multiple-choice'  // Single correct answer from options
+  | 'true-false'      // True/False questions
+  | 'fill-blank'      // Fill in the blank
+  | 'short-answer'    // 1-2 word answers
+  | 'sequence'        // Arrange items in correct order
+  | 'case-study'      // Analyze real-world scenarios
+  | 'situation'       // Choose best action in a scenario
+  | 'multi-select';   // Multiple correct options
 
 export type Question = {
   id: number;
@@ -59,7 +67,12 @@ export type Question = {
   explanation?: string;
   difficulty: 'basic' | 'intermediate' | 'advanced';
   userAnswer?: string;
-  language?: QuizLanguage; // Added to track question language
+  language?: QuizLanguage;
+  // Additional fields for specific question types
+  caseStudy?: string;        // For case-study type
+  sequence?: string[];       // For sequence type
+  correctSequence?: string[]; // For sequence type
+  correctOptions?: string[]; // For multi-select type
 };
 
 export type QuizResult = {

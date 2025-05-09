@@ -1,30 +1,14 @@
-import { Question, QuizPreferences } from '../types';
+import { QuizPreferences, Question } from '../types';
 
+// Function to generate quiz questions using Gemini API
 export const generateQuiz = async (
   apiKey: string,
   preferences: QuizPreferences
 ): Promise<Question[]> => {
-  try {
-    const { 
-      course,
-      topic, 
-      subtopic, 
-      questionCount, 
-      questionTypes, 
-      language, 
-      difficulty,
-      negativeMarking,
-      negativeMarks 
-    } = preferences;
-    
-    if (!course) {
-      throw new Error('Course/Stream is required');
-    }
-    
-    // Ensure language is properly formatted for the prompt
-    const quizLanguage = language || 'English';
-    
-    const prompt = `Generate a premium-quality quiz about "${course}${topic ? ` - ${topic}` : ''}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
+  const { course, topic, subtopic, questionCount, questionTypes, language: quizLanguage, difficulty } = preferences;
+
+  // The prompt template for generating quiz questions
+  const prompt = `Generate a premium-quality quiz about "${course}${topic ? ` - ${topic}` : ''}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
 
 STRICT COMMERCIAL REQUIREMENTS:
 1. CORE PARAMETERS:
@@ -37,58 +21,64 @@ ${subtopic ? `- Subtopic: ${subtopic}` : ''}
 - Each question should be unique and not repetitive
 - Include practical applications and real-world scenarios
 - Ensure progressive complexity within the chosen difficulty level
-- CRITICAL: Ensure all JSON strings are properly escaped and terminated
-- CRITICAL: For non-English languages, use proper Unicode characters and ensure correct grammar
-- CRITICAL: Do not use placeholders or question marks for non-English characters
 
-2. QUALITY STANDARDS:
-For each question:
-→ The question text should be clear and well-formulated in ${quizLanguage}
-→ For multiple-choice questions, provide exactly 4 distinct options in ${quizLanguage}
-→ must be professionally crafted
-→ Zero repetition or similarity between questions
-→ 25% real-world application questions
-→ Mix conceptual (40%), factual (30%), analytical (30%) questions
+2. QUESTION TYPE REQUIREMENTS:
+For multiple-choice:
+- Exactly 4 distinct options
+- One clear correct answer
+- Plausible distractors
+
+For true-false:
+- Clear, unambiguous statements
+- No trick questions
+
+For fill-blank:
+- Clear context
+- Single word or short phrase answer
+
+For short-answer:
+- Questions requiring 1-2 word answers
+- Clear, specific answers
+
+For sequence:
+- 4-6 items to arrange
+- Clear ordering principle
+- Items as array in correct order
+
+For case-study:
+- Short scenario description
+- Multiple related questions
+- Clear correct answers
+
+For situation:
+- Real-world scenario
+- Multiple possible actions
+- One best solution
+
+For multi-select:
+- 4-6 options total
+- 2-3 correct options
+- Clear marking criteria
 
 Format your response STRICTLY as a valid JSON array with this structure:
 [
   {
     "id": 1,
-    "text": "Question text here in ${quizLanguage}",
-    "type": "${questionTypes[0]}", 
+    "text": "Question text here",
+    "type": "question-type",
     "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Correct option here in ${quizLanguage}",
-    "explanation": "Detailed explanation in ${quizLanguage}",
-    "difficulty": "basic"
+    "correctAnswer": "Correct answer here",
+    "explanation": "Detailed explanation",
+    "difficulty": "basic",
+    "caseStudy": "Case study text (if applicable)",
+    "sequence": ["Item 1", "Item 2", "Item 3", "Item 4"],
+    "correctSequence": ["Item 2", "Item 1", "Item 4", "Item 3"],
+    "correctOptions": ["Option A", "Option C"]
   }
-]
+]`;
 
-QUALITY CONTROL:
-✓ Professional wording
-✓ Perfect ${quizLanguage} grammar
-✓ Balanced difficulty
-✓ Valid JSON formatting
-✓ Complete metadata
-✓ Commercial-ready content
-
-CRITICAL INSTRUCTIONS:
-1. Generate ${questionCount} questions
-2. Ensure all JSON strings are properly escaped
-3. Do not include line breaks within JSON strings
-3. Ensure 100% unique questions
-4. Make content worth paying for
-5. Use proper Unicode encoding for non-English characters
-6. Do not use ASCII-only characters for non-English content
-7. Verify the JSON is valid before returning
-8. All content MUST be in ${quizLanguage} language with proper grammar and characters
-
-FINAL CHECK:
-- All fields populated
-- No empty values
-- Proper escaping
-- UTF-8 compliant
-- Ready for API response`;
-    
+  try {
+    // First try the edge function
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
       headers: {
@@ -102,50 +92,72 @@ FINAL CHECK:
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to generate quiz');
+      throw new Error(`Failed to generate quiz: ${response.statusText}`);
     }
 
     const data = await response.json();
-    return parseGeminiResponse(data, questionTypes);
-  } catch (error) {
-    console.error('Error generating quiz:', error);
-    throw new Error(`Failed to generate quiz: ${error.message}`);
+    
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from Gemini API');
+    }
+
+    const generatedText = data.candidates[0].content.parts[0].text;
+    
+    // Extract JSON from the response text
+    const jsonMatch = generatedText.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error('No valid JSON found in response');
+    }
+
+    try {
+      const questions = JSON.parse(jsonMatch[0]);
+      
+      if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error('Invalid questions format');
+      }
+
+      return questions.map((q: any, index: number) => ({
+        id: index + 1,
+        text: q.text,
+        type: q.type,
+        options: q.options,
+        correctAnswer: q.correctAnswer,
+        explanation: q.explanation,
+        difficulty: q.difficulty,
+        caseStudy: q.caseStudy,
+        sequence: q.sequence,
+        correctSequence: q.correctSequence,
+        correctOptions: q.correctOptions,
+        language: quizLanguage
+      }));
+    } catch (error) {
+      console.error('Parse error:', error);
+      throw new Error('Failed to parse generated questions');
+    }
+  } catch (error: any) {
+    console.error('Quiz generation error:', error);
+    throw new Error(`Quiz generation failed: ${error.message}`);
   }
 };
 
+// Function to get explanation for an answer
 export const getAnswerExplanation = async (
   apiKey: string,
   question: string,
-  userAnswer: string,
   correctAnswer: string,
   topic: string,
   language: string
 ): Promise<string> => {
+  const prompt = `Explain why "${correctAnswer}" is the correct answer to this ${topic} question: "${question}"
+  
+Requirements:
+- Use ${language} language
+- Be clear and concise
+- Include relevant concepts
+- Explain step-by-step if applicable
+- Add examples if helpful`;
+
   try {
-    // Ensure language is properly formatted
-    const explanationLanguage = language || 'English';
-
-    const prompt = `Analyze this answer for a question about ${topic} in ${explanationLanguage} language:
-    
-Question: ${question}
-User's Answer: ${userAnswer}
-Correct Answer: ${correctAnswer}
-
-Provide a detailed response in ${explanationLanguage} that includes:
-1. Whether the answer is correct or incorrect
-2. A thorough explanation of why the correct answer is right
-3. If the user's answer was wrong, explain what made it incorrect
-4. Additional context or related concepts to help understand the topic better
-5. If applicable, real-world examples or applications
-
-CRITICAL:
-- Use proper Unicode characters for non-English text
-- Ensure correct grammar and natural language flow
-- Do not use placeholders or question marks for non-English characters
-- Keep the tone encouraging and educational
-- ENSURE THE ENTIRE RESPONSE IS IN ${explanationLanguage} LANGUAGE`;
-
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
       headers: {
@@ -158,111 +170,19 @@ CRITICAL:
       })
     });
 
+    if (!response.ok) {
+      throw new Error(`Failed to get explanation: ${response.statusText}`);
+    }
+
     const data = await response.json();
     
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to get explanation');
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from Gemini API');
     }
 
-    return data.candidates[0].content.parts[0].text || 'No explanation available.';
-  } catch (error) {
-    console.error('Error getting explanation:', error);
-    return `Unable to generate explanation: ${error.message}`;
-  }
-};
-
-const parseGeminiResponse = (response: any, questionTypes: string[]): Question[] => {
-  try {
-    const textResponse = response.candidates[0].content.parts[0].text;
-    
-    // First, try to extract JSON from markdown code blocks
-    let jsonString = textResponse;
-    
-    // Try different markdown code block patterns
-    const patterns = [
-      /```json\n([\s\S]*?)\n```/,
-      /```javascript\n([\s\S]*?)\n```/,
-      /```\n([\s\S]*?)\n```/,
-      /\[([\s\S]*?)\]/  // Fallback: try to find array directly
-    ];
-
-    for (const pattern of patterns) {
-      const match = textResponse.match(pattern);
-      if (match && match[1]) {
-        try {
-          // Try parsing the extracted content
-          const extracted = match[1].trim();
-          JSON.parse(`[${extracted.replace(/^\[|\]$/g, '')}]`);
-          jsonString = extracted;
-          break;
-        } catch (e) {
-          continue; // Try next pattern if parsing fails
-        }
-      }
-    }
-
-    // Clean up and sanitize the JSON string
-    jsonString = jsonString
-      .replace(/^\s*```.*\n/, '') // Remove opening code fence
-      .replace(/\n\s*```\s*$/, '') // Remove closing code fence
-      .replace(/\/\/ .*$/gm, '') // Remove comments
-      .replace(/[\u2018\u2019]/g, "'") // Replace smart quotes
-      .replace(/[\u201C\u201D]/g, '"') // Replace smart double quotes
-      .replace(/[\u2013\u2014]/g, '-') // Replace em/en dashes
-      .trim();
-
-    // Ensure we have array brackets
-    if (!jsonString.startsWith('[')) {
-      jsonString = `[${jsonString}]`;
-    }
-    
-    let questions: Question[];
-    try {
-      questions = JSON.parse(jsonString);
-    } catch (parseError) {
-      // If parsing fails, try to fix common JSON issues
-      jsonString = jsonString
-        .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
-        .replace(/([^\\])\\([^"\\\/bfnrt])/g, '$1$2') // Fix invalid escapes
-        .replace(/\s+/g, ' '); // Normalize whitespace
-      
-      try {
-        questions = JSON.parse(jsonString);
-      } catch (finalError) {
-        throw new Error(`Invalid JSON format in response: ${finalError.message}. Please try again.`);
-      }
-    }
-    
-    if (!Array.isArray(questions)) {
-      throw new Error('Response is not an array of questions. Please try again.');
-    }
-
-    // Validate question structure and types
-    const invalidQuestions = questions.filter(q => !questionTypes.includes(q.type));
-    if (invalidQuestions.length > 0) {
-      const invalidTypes = [...new Set(invalidQuestions.map(q => q.type))];
-      throw new Error(
-        `Invalid question types detected: ${invalidTypes.join(', ')}. ` +
-        `Allowed types are: ${questionTypes.join(', ')}. Please try again.`
-      );
-    }
-    
-    // Sort questions by difficulty
-    const difficultyOrder = { 'basic': 0, 'intermediate': 1, 'advanced': 2 };
-    questions.sort((a, b) => difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]);
-    
-    return questions.map((q, index) => ({
-      id: index + 1,
-      text: q.text,
-      type: q.type as any,
-      options: q.options || undefined,
-      correctAnswer: q.correctAnswer,
-      explanation: q.explanation,
-      difficulty: q.difficulty,
-      language: q.language // Preserve the language information
-    }));
-  } catch (error) {
-    console.error('Error parsing Gemini response:', error);
-    throw new Error(`Failed to parse quiz questions: ${error.message}`);
+    return data.candidates[0].content.parts[0].text;
+  } catch (error: any) {
+    console.error('Explanation error:', error);
+    throw new Error(`Failed to get explanation: ${error.message}`);
   }
 };
