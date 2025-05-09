@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SignIn from '../components/auth/SignIn';
 import SignUp from '../components/auth/SignUp';
 import { Brain, CheckCircle } from 'lucide-react';
@@ -10,6 +10,10 @@ const AuthPage: React.FC = () => {
   const mode = searchParams.get('mode') || 'signin';
   const [isSignIn, setIsSignIn] = useState(mode === 'signin');
   const { isLoggedIn } = useAuthStore();
+  
+  useEffect(() => {
+    setIsSignIn(mode === 'signin');
+  }, [mode]);
   
   if (isLoggedIn) {
     return <Navigate to="/quiz" />;

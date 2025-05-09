@@ -29,6 +29,16 @@ const Header: React.FC = () => {
     navigate('/');
   };
 
+  const handleSignUp = () => {
+    setShowDropdown(false);
+    navigate('/auth?mode=signup');
+  };
+
+  const handleSignIn = () => {
+    setShowDropdown(false);
+    navigate('/auth?mode=signin');
+  };
+
   const isActive = (path: string) => location.pathname === path;
   
   return (
@@ -113,20 +123,18 @@ const Header: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      <Link
-                        to="/auth"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300"
-                        onClick={() => setShowDropdown(false)}
+                      <button
+                        onClick={handleSignIn}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300"
                       >
                         Sign In
-                      </Link>
-                      <Link
-                        to="/auth"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300"
-                        onClick={() => setShowDropdown(false)}
+                      </button>
+                      <button
+                        onClick={handleSignUp}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 transition-all duration-300"
                       >
                         Sign Up
-                      </Link>
+                      </button>
                     </>
                   )}
                 </motion.div>

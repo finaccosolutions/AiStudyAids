@@ -1,4 +1,9 @@
-import { Country } from '../types';
+export interface Country {
+  code: string;
+  name: string;
+  flag: string;
+  dialCode: string;
+}
 
 export const countries: Country[] = [
   { code: 'IN', name: 'India', flag: '🇮🇳', dialCode: '+91' },
@@ -18,7 +23,17 @@ export const countries: Country[] = [
   { code: 'SG', name: 'Singapore', flag: '🇸🇬', dialCode: '+65' },
   { code: 'AE', name: 'UAE', flag: '🇦🇪', dialCode: '+971' },
   { code: 'SA', name: 'Saudi Arabia', flag: '🇸🇦', dialCode: '+966' },
-  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', dialCode: '+27' },
   { code: 'NZ', name: 'New Zealand', flag: '🇳🇿', dialCode: '+64' },
-  { code: 'MX', name: 'Mexico', flag: '🇲🇽', dialCode: '+52' },
+  { code: 'ZA', name: 'South Africa', flag: '🇿🇦', dialCode: '+27' },
+  { code: 'MY', name: 'Malaysia', flag: '🇲🇾', dialCode: '+60' },
+  { code: 'TH', name: 'Thailand', flag: '🇹🇭', dialCode: '+66' },
+  { code: 'ID', name: 'Indonesia', flag: '🇮🇩', dialCode: '+62' },
+  { code: 'PH', name: 'Philippines', flag: '🇵🇭', dialCode: '+63' },
+  { code: 'VN', name: 'Vietnam', flag: '🇻🇳', dialCode: '+84' },
+  { code: 'PK', name: 'Pakistan', flag: '🇵🇰', dialCode: '+92' },
+  { code: 'BD', name: 'Bangladesh', flag: '🇧🇩', dialCode: '+880' },
+  { code: 'NP', name: 'Nepal', flag: '🇳🇵', dialCode: '+977' },
+  { code: 'LK', name: 'Sri Lanka', flag: '🇱🇰', dialCode: '+94' },
+  { code: 'MV', name: 'Maldives', flag: '🇲🇻', dialCode: '+960' },
+  { code: 'BT', name: 'Bhutan', flag: '🇧🇹', dialCode: '+975' }
 ];
