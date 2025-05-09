@@ -84,8 +84,8 @@ const SignUp: React.FC<SignUpProps> = ({ onToggleForm }) => {
       <div className="text-center space-y-4">
         <h3 className="text-xl font-semibold text-gray-800">Check Your Email</h3>
         <p className="text-gray-600">
-          We've sent a confirmation link to <span className="font-medium">{email}</span>.
-          Please check your email and click the link to complete your registration.
+          We've sent a verification link to <span className="font-medium">{email}</span>.
+          Please check your email and click the link to verify your account.
         </p>
         <div className="mt-6">
           <Button

@@ -10,117 +10,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// API Key functions
-export const getApiKey = async (userId: string): Promise<string | null> => {
-  const { data, error } = await supabase
-    .from('api_keys')
-    .select('gemini_api_key')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) throw error;
-  return data?.gemini_api_key || null;
-};
-
-export const saveApiKey = async (userId: string, apiKey: string) => {
-  const { data: existingKey } = await supabase
-    .from('api_keys')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
-
-  if (existingKey) {
-    // Update existing key
-    const { error } = await supabase
-      .from('api_keys')
-      .update({ gemini_api_key: apiKey })
-      .eq('user_id', userId);
-    
-    if (error) throw error;
-  } else {
-    // Insert new key
-    const { error } = await supabase
-      .from('api_keys')
-      .insert({ user_id: userId, gemini_api_key: apiKey });
-    
-    if (error) throw error;
-  }
-};
-
-// Quiz preferences functions
-export const getQuizPreferences = async (userId: string): Promise<QuizPreferences | null> => {
-  const { data, error } = await supabase
-    .from('quiz_preferences')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') { // Record not found
-      return null;
-    }
-    throw error;
-  }
-
-  return {
-    topic: data.topic,
-    subtopic: data.subtopic,
-    questionCount: data.question_count,
-    questionTypes: data.question_types,
-    language: data.language,
-    difficulty: data.difficulty,
-    timeLimit: data.time_limit,
-    customTimeLimit: data.custom_time_limit,
-    negativeMarking: data.negative_marking,
-    negativeMarks: data.negative_marks,
-    mode: data.mode,
-    totalTimeLimit: data.total_time_limit,
-    customTotalTimeLimit: data.custom_total_time_limit
-  };
-};
-
-export const saveQuizPreferences = async (userId: string, preferences: QuizPreferences) => {
-  const { data: existingPrefs } = await supabase
-    .from('quiz_preferences')
-    .select('id')
-    .eq('user_id', userId)
-    .single();
-
-  const prefsData = {
-    user_id: userId,
-    topic: preferences.topic,
-    subtopic: preferences.subtopic,
-    question_count: preferences.questionCount,
-    question_types: preferences.questionTypes,
-    language: preferences.language,
-    difficulty: preferences.difficulty,
-    time_limit: preferences.timeLimit,
-    custom_time_limit: preferences.customTimeLimit,
-    negative_marking: preferences.negativeMarking,
-    negative_marks: preferences.negativeMarks,
-    mode: preferences.mode,
-    total_time_limit: preferences.totalTimeLimit,
-    custom_total_time_limit: preferences.customTotalTimeLimit
-  };
-
-  if (existingPrefs) {
-    // Update existing preferences
-    const { error } = await supabase
-      .from('quiz_preferences')
-      .update(prefsData)
-      .eq('user_id', userId);
-    
-    if (error) throw error;
-  } else {
-    // Insert new preferences
-    const { error } = await supabase
-      .from('quiz_preferences')
-      .insert(prefsData);
-    
-    if (error) throw error;
-  }
-};
-
 // Auth functions
 export const signUp = async (
   email: string, 
@@ -147,6 +36,8 @@ export const signUp = async (
     options: {
       data: {
         full_name: fullName,
+        registration_status: 'pending_verification',
+        registration_date: new Date().toISOString(),
       },
       emailRedirectTo: `${window.location.origin}/auth?mode=signin`,
     }
