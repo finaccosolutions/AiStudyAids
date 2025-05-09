@@ -52,7 +52,8 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
     { value: 'en', label: 'English' },
     { value: 'hi', label: 'Hindi' },
     { value: 'ml', label: 'Malayalam' },
-    { value: 'tl', label: 'Tamil' },
+    { value: 'ta', label: 'Tamil' },
+    { value: 'te', label: 'Telugu' },
   ];
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,14 +154,14 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
           {/* Basic Settings Panel */}
           <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-purple-50/30 to-indigo-50/30">
             <div className="relative">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center mb-6">
+              <div className="flex items-center mb-6 relative">
                 <Settings className="w-6 h-6 mr-3 text-purple-600" />
-                <span>Basic Settings</span>
-                <div className="tooltip ml-2">
+                <h3 className="text-xl font-semibold text-gray-800">Basic Settings</h3>
+                <div className="tooltip ml-2 z-10">
                   <Info className="w-4 h-4 text-gray-400 hover:text-purple-600 cursor-help" />
-                  <span className="tooltiptext">Configure your basic quiz settings</span>
+                  <span className="tooltiptext">Configure your basic quiz settings including course, topic, and difficulty level</span>
                 </div>
-              </h3>
+              </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-2">
@@ -210,6 +211,18 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                     options={difficultyOptions}
                     value={preferences.difficulty}
                     onChange={(e) => setPreferences({ ...preferences, difficulty: e.target.value })}
+                    className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Language
+                  </label>
+                  <Select
+                    options={languageOptions}
+                    value={preferences.language}
+                    onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
                     className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
                   />
                 </div>
@@ -271,24 +284,23 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
           </div>
           
           {/* Question Types Panel */}
-          <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-blue-50/30 to-purple-50/30">
+          <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-blue-50/30 to-cyan-50/30">
             <div className="relative">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+              <div className="flex items-center mb-6 relative">
                 <ListChecks className="w-6 h-6 mr-3 text-blue-600" />
-                <span>Question Types</span>
-                <div className="tooltip ml-2">
+                <h3 className="text-xl font-semibold text-gray-800">Question Types</h3>
+                <div className="tooltip ml-2 z-10">
                   <Info className="w-4 h-4 text-gray-400 hover:text-blue-600 cursor-help" />
-                  <span className="tooltiptext">Select the types of questions you want in your quiz</span>
+                  <span className="tooltiptext">Choose the types of questions you want in your quiz</span>
                 </div>
-              </h3>
+              </div>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {questionTypeOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => handleQuestionTypeToggle(option.value)}
-                    title={`Toggle ${option.label} questions`}
                     className={`p-4 rounded-xl text-sm font-medium transition-all duration-300 transform hover:scale-102 ${
                       isQuestionTypeSelected(option.value)
                         ? 'bg-blue-100 text-blue-700 border-2 border-blue-300 shadow-md hover:bg-blue-200'
@@ -308,24 +320,24 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
           </div>
           
           {/* Time Settings Panel */}
-          <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-green-50/30 to-teal-50/30">
+          <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-emerald-50/30 to-teal-50/30">
             <div className="relative">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
-                <Timer className="w-6 h-6 mr-3 text-green-600" />
-                <span>Time Settings</span>
-                <div className="tooltip ml-2">
-                  <Info className="w-4 h-4 text-gray-400 hover:text-green-600 cursor-help" />
-                  <span className="tooltiptext">Configure time limits for your quiz</span>
+              <div className="flex items-center mb-6 relative">
+                <Timer className="w-6 h-6 mr-3 text-emerald-600" />
+                <h3 className="text-xl font-semibold text-gray-800">Time Settings</h3>
+                <div className="tooltip ml-2 z-10">
+                  <Info className="w-4 h-4 text-gray-400 hover:text-emerald-600 cursor-help" />
+                  <span className="tooltiptext">Set time limits for individual questions or the entire quiz</span>
                 </div>
-              </h3>
+              </div>
               
-              <div className="space-y-6 mt-6">
+              <div className="space-y-6">
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     checked={preferences.timeLimitEnabled}
                     onChange={(e) => handleTimeLimitToggle(e.target.checked)}
-                    className="form-checkbox h-5 w-5 text-green-600 rounded border-gray-300 focus:ring-green-500 transition-colors"
+                    className="form-checkbox h-5 w-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 transition-colors"
                   />
                   <span className="text-sm font-medium text-gray-700">Enable Time Limit</span>
                 </div>
@@ -338,8 +350,8 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                         onClick={() => setTimingMode('per-question')}
                         className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
                           timingMode === 'per-question'
-                            ? 'border-green-300 bg-green-50 text-green-700'
-                            : 'border-gray-200 hover:border-green-200'
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                            : 'border-gray-200 hover:border-emerald-200'
                         }`}
                       >
                         <Clock className="w-6 h-6 mx-auto mb-2" />
@@ -351,8 +363,8 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                         onClick={() => setTimingMode('total')}
                         className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
                           timingMode === 'total'
-                            ? 'border-green-300 bg-green-50 text-green-700'
-                            : 'border-gray-200 hover:border-green-200'
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                            : 'border-gray-200 hover:border-emerald-200'
                         }`}
                       >
                         <AlarmClock className="w-6 h-6 mx-auto mb-2" />
@@ -372,13 +384,13 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                             max={3600}
                             value={timingMode === 'per-question' ? preferences.timeLimit || 30 : preferences.totalTimeLimit || 300}
                             onChange={(e) => handleTimeSettingChange(e.target.value)}
-                            className="w-32 transition-all duration-300 hover:border-green-400 focus:ring-green-400 text-lg"
+                            className="w-32 transition-all duration-300 hover:border-emerald-400 focus:ring-emerald-400 text-lg"
                           />
                           <span className="text-gray-600">seconds</span>
                         </div>
                         
-                        <div className="text-sm text-gray-600 bg-green-50 p-4 rounded-lg mt-4">
-                          <p className="font-medium text-green-700">Current Time Setting:</p>
+                        <div className="text-sm text-gray-600 bg-emerald-50 p-4 rounded-lg mt-4">
+                          <p className="font-medium text-emerald-700">Current Time Setting:</p>
                           <p>{calculateTotalTime()}</p>
                         </div>
                       </div>
@@ -392,16 +404,16 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
           {/* Quiz Mode Panel */}
           <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-amber-50/30 to-orange-50/30">
             <div className="relative">
-              <h3 className="text-xl font-semibold text-gray-800 flex items-center">
+              <div className="flex items-center mb-6 relative">
                 <BarChart3 className="w-6 h-6 mr-3 text-amber-600" />
-                <span>Quiz Mode</span>
-                <div className="tooltip ml-2">
+                <h3 className="text-xl font-semibold text-gray-800">Quiz Mode</h3>
+                <div className="tooltip ml-2 z-10">
                   <Info className="w-4 h-4 text-gray-400 hover:text-amber-600 cursor-help" />
-                  <span className="tooltiptext">Choose how you want to take the quiz</span>
+                  <span className="tooltiptext">Choose between practice mode for immediate feedback or exam mode for end-of-quiz results</span>
                 </div>
-              </h3>
+              </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
                   type="button"
                   onClick={() => setPreferences({ ...preferences, mode: 'practice' })}

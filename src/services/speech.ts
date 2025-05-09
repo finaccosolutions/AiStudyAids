@@ -1,12 +1,12 @@
 class SpeechService {
   private synth: SpeechSynthesis;
   private voices: SpeechSynthesisVoice[] = [];
+  private currentUtterance: SpeechSynthesisUtterance | null = null;
   
   constructor() {
     this.synth = window.speechSynthesis;
     this.loadVoices();
     
-    // Initialize voices when they load (if they haven't loaded yet)
     if (speechSynthesis.onvoiceschanged !== undefined) {
       speechSynthesis.onvoiceschanged = this.loadVoices.bind(this);
     }
@@ -18,14 +18,14 @@ class SpeechService {
   
   speak(text: string, language: string = 'en-US') {
     // Cancel any ongoing speech
-    this.synth.cancel();
+    this.stop();
     
     // Create utterance
     const utterance = new SpeechSynthesisUtterance(text);
     
     // Find a voice that matches the language
     const matchedVoice = this.voices.find(voice => 
-      voice.lang.startsWith(language.split('-')[0]) && !voice.localService
+      voice.lang.toLowerCase().startsWith(language.toLowerCase()) && !voice.localService
     );
     
     if (matchedVoice) {
@@ -36,12 +36,18 @@ class SpeechService {
     utterance.rate = 1;
     utterance.pitch = 1;
     
+    // Store current utterance
+    this.currentUtterance = utterance;
+    
     // Speak the text
     this.synth.speak(utterance);
   }
   
   stop() {
-    this.synth.cancel();
+    if (this.currentUtterance) {
+      this.synth.cancel();
+      this.currentUtterance = null;
+    }
   }
   
   isPaused() {
