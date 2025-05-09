@@ -34,6 +34,7 @@ interface QuizState {
 }
 
 export const defaultPreferences: QuizPreferences = {
+  course: '',
   topic: '',
   subtopic: null,
   questionCount: 5,

@@ -57,6 +57,7 @@ export const getQuizPreferences = async (userId: string): Promise<QuizPreference
   if (!data) return null;
 
   return {
+    course: data.course,
     topic: data.topic,
     subtopic: data.subtopic,
     questionCount: data.question_count,
@@ -83,6 +84,7 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
 
   const prefsData = {
     user_id: userId,
+    course: preferences.course,
     topic: preferences.topic,
     subtopic: preferences.subtopic,
     question_count: preferences.questionCount,

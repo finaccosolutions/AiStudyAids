@@ -22,7 +22,8 @@ export type ApiKeyData = {
 };
 
 export type QuizPreferences = {
-  topic: string;
+  course?: string;
+  topic?: string;
   subtopic?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   questionCount: number;
