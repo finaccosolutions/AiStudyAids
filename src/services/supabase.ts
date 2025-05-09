@@ -140,7 +140,7 @@ export const signUp = async (
     throw new Error('Mobile number already registered');
   }
 
-  // Sign up user
+  // Sign up user with email confirmation required
   const { data, error } = await supabase.auth.signUp({ 
     email, 
     password,
@@ -148,7 +148,7 @@ export const signUp = async (
       data: {
         full_name: fullName,
       },
-      emailRedirectTo: `${window.location.origin}/auth/callback`
+      emailRedirectTo: `${window.location.origin}/auth?mode=signin`,
     }
   });
 

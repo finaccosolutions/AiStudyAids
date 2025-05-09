@@ -20,6 +20,7 @@ const SignUp: React.FC<SignUpProps> = ({ onToggleForm }) => {
   );
   const [showCountryList, setShowCountryList] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [registrationComplete, setRegistrationComplete] = useState(false);
   
   const { register, isLoading, error } = useAuthStore();
   
@@ -60,7 +61,15 @@ const SignUp: React.FC<SignUpProps> = ({ onToggleForm }) => {
     if (!validateForm()) return;
     
     try {
-      await register(email, password, fullName, mobileNumber, selectedCountry.code, selectedCountry.name);
+      await register(
+        email, 
+        password, 
+        fullName, 
+        mobileNumber, 
+        selectedCountry.code, 
+        selectedCountry.name
+      );
+      setRegistrationComplete(true);
     } catch (err: any) {
       if (err.message.includes('mobile number')) {
         setErrors({ mobileNumber: 'Mobile number already registered' });
@@ -69,6 +78,26 @@ const SignUp: React.FC<SignUpProps> = ({ onToggleForm }) => {
       }
     }
   };
+
+  if (registrationComplete) {
+    return (
+      <div className="text-center space-y-4">
+        <h3 className="text-xl font-semibold text-gray-800">Check Your Email</h3>
+        <p className="text-gray-600">
+          We've sent a confirmation link to <span className="font-medium">{email}</span>.
+          Please check your email and click the link to complete your registration.
+        </p>
+        <div className="mt-6">
+          <Button
+            onClick={onToggleForm}
+            className="text-purple-600 hover:text-purple-800 font-medium transition-colors hover:underline"
+          >
+            Back to Sign In
+          </Button>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="w-full">
