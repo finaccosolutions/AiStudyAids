@@ -7,9 +7,12 @@ export const generateQuiz = async (
   try {
     const { topic, subtopic, questionCount, questionTypes, language, difficulty } = preferences;
     
+    // Ensure language is properly formatted for the prompt
+    const quizLanguage = language || 'English';
+    
     const prompt = `Generate a quiz about "${topic}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
 
-The questions MUST be in ${language} language and follow these strict requirements:
+The questions MUST be in ${quizLanguage} language and follow these strict requirements:
 - Difficulty level: ${difficulty}
 - ONLY use these question types: ${questionTypes.join(', ')}
 - Each question MUST be one of these types: ${questionTypes.join(', ')}
@@ -19,26 +22,27 @@ The questions MUST be in ${language} language and follow these strict requiremen
 - Ensure progressive complexity within the chosen difficulty level
 - CRITICAL: ONLY generate questions of the types specified in questionTypes array
 - CRITICAL: Ensure all JSON strings are properly escaped and terminated
-- CRITICAL: Do not include any special characters or line breaks within JSON strings
-- CRITICAL: All question text, options, answers, and explanations MUST be in ${language} language
+- CRITICAL: All question text, options, answers, and explanations MUST be in ${quizLanguage} language
+- CRITICAL: For non-English languages, use proper Unicode characters and ensure correct grammar
+- CRITICAL: Do not use placeholders or question marks for non-English characters
 
 For each question:
-1. The question text should be clear and well-formulated in ${language}
+1. The question text should be clear and well-formulated in ${quizLanguage}
 2. The type MUST be one of: ${questionTypes.join(', ')}
-3. For multiple-choice questions, provide exactly 4 distinct options in ${language}
-4. The correct answer in ${language}
-5. A detailed explanation of why this answer is correct in ${language}
+3. For multiple-choice questions, provide exactly 4 distinct options in ${quizLanguage}
+4. The correct answer in ${quizLanguage}
+5. A detailed explanation of why this answer is correct in ${quizLanguage}
 6. The difficulty level (basic, intermediate, or advanced)
 
 Format your response STRICTLY as a valid JSON array with this structure:
 [
   {
     "id": 1,
-    "text": "Question text here in ${language}",
+    "text": "Question text here in ${quizLanguage}",
     "type": "${questionTypes[0]}", 
     "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Correct option here in ${language}",
-    "explanation": "Detailed explanation in ${language}",
+    "correctAnswer": "Correct option here in ${quizLanguage}",
+    "explanation": "Detailed explanation in ${quizLanguage}",
     "difficulty": "basic"
   }
 ]
@@ -46,8 +50,10 @@ Format your response STRICTLY as a valid JSON array with this structure:
 CRITICAL: 
 - Ensure all JSON strings are properly escaped
 - Do not include line breaks within JSON strings
-- Use only basic ASCII characters in strings
-- Verify the JSON is valid before returning`;
+- Use proper Unicode encoding for non-English characters
+- Do not use ASCII-only characters for non-English content
+- Verify the JSON is valid before returning
+- All content MUST be in ${quizLanguage} language with proper grammar and characters`;
     
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
@@ -83,20 +89,28 @@ export const getAnswerExplanation = async (
   language: string
 ): Promise<string> => {
   try {
-    const prompt = `Analyze this answer for a question about ${topic} in ${language} language:
+    // Ensure language is properly formatted
+    const explanationLanguage = language || 'English';
+
+    const prompt = `Analyze this answer for a question about ${topic} in ${explanationLanguage} language:
     
 Question: ${question}
 User's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}
 
-Provide a detailed response in ${language} that includes:
+Provide a detailed response in ${explanationLanguage} that includes:
 1. Whether the answer is correct or incorrect
 2. A thorough explanation of why the correct answer is right
 3. If the user's answer was wrong, explain what made it incorrect
 4. Additional context or related concepts to help understand the topic better
 5. If applicable, real-world examples or applications
 
-Keep the tone encouraging and educational. ENSURE THE ENTIRE RESPONSE IS IN ${language} LANGUAGE.`;
+CRITICAL:
+- Use proper Unicode characters for non-English text
+- Ensure correct grammar and natural language flow
+- Do not use placeholders or question marks for non-English characters
+- Keep the tone encouraging and educational
+- ENSURE THE ENTIRE RESPONSE IS IN ${explanationLanguage} LANGUAGE`;
 
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
@@ -161,9 +175,6 @@ const parseGeminiResponse = (response: any, questionTypes: string[]): Question[]
       .replace(/[\u2018\u2019]/g, "'") // Replace smart quotes
       .replace(/[\u201C\u201D]/g, '"') // Replace smart double quotes
       .replace(/[\u2013\u2014]/g, '-') // Replace em/en dashes
-      .replace(/[^\x20-\x7E]/g, '') // Remove non-ASCII characters
-      .replace(/\\\\/g, '\\') // Fix double escaped backslashes
-      .replace(/\\([^"\\\/bfnrt])/g, '$1') // Remove invalid escapes
       .trim();
 
     // Ensure we have array brackets
@@ -213,7 +224,8 @@ const parseGeminiResponse = (response: any, questionTypes: string[]): Question[]
       options: q.options || undefined,
       correctAnswer: q.correctAnswer,
       explanation: q.explanation,
-      difficulty: q.difficulty
+      difficulty: q.difficulty,
+      language: q.language // Preserve the language information
     }));
   } catch (error) {
     console.error('Error parsing Gemini response:', error);
