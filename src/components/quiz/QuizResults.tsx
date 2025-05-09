@@ -17,7 +17,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   onChangePreferences,
 }) => {
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
-  const { getExplanation, explanation, isLoading, resetExplanation } = useQuizStore();
+  const { getExplanation, explanation, isLoading, resetExplanation, preferences } = useQuizStore();
   
   const handleGetExplanation = async (questionId: number) => {
     if (selectedQuestionId === questionId) {
@@ -28,10 +28,23 @@ const QuizResults: React.FC<QuizResultsProps> = ({
       await getExplanation(questionId);
     }
   };
+
+  // Calculate final score considering negative marking
+  const calculateFinalScore = () => {
+    if (!preferences?.negativeMarking || !preferences?.negativeMarks) {
+      return result.correctAnswers;
+    }
+
+    const incorrectAnswers = result.totalQuestions - result.correctAnswers;
+    return result.correctAnswers + (incorrectAnswers * preferences.negativeMarks);
+  };
+
+  const finalScore = calculateFinalScore();
+  const finalPercentage = Math.max(0, (finalScore / result.totalQuestions) * 100);
   
   // Determine result message based on percentage
   const getResultMessage = () => {
-    const percentage = result.percentage;
+    const percentage = finalPercentage;
     
     if (percentage >= 90) return 'Excellent!';
     if (percentage >= 80) return 'Great job!';
@@ -43,7 +56,7 @@ const QuizResults: React.FC<QuizResultsProps> = ({
   
   // Determine result color based on percentage
   const getResultColor = () => {
-    const percentage = result.percentage;
+    const percentage = finalPercentage;
     
     if (percentage >= 80) return 'text-green-600';
     if (percentage >= 60) return 'text-blue-600';
@@ -62,26 +75,31 @@ const QuizResults: React.FC<QuizResultsProps> = ({
           <h3 className="text-2xl font-bold mb-1">{getResultMessage()}</h3>
           
           <div className="text-4xl font-bold my-4">
-            <span className={getResultColor()}>{result.percentage}%</span>
+            <span className={getResultColor()}>{finalPercentage.toFixed(1)}%</span>
           </div>
           
           <p className="text-gray-600">
             You got {result.correctAnswers} out of {result.totalQuestions} questions correct
+            {preferences?.negativeMarking && (
+              <span className="block text-sm text-gray-500 mt-1">
+                Final score: {finalScore.toFixed(2)} (with negative marking of {preferences.negativeMarks} per wrong answer)
+              </span>
+            )}
           </p>
           
           <div className="w-full max-w-xs mx-auto mt-6">
             <div className="h-4 w-full bg-gray-200 rounded-full">
               <div
                 className={`h-4 rounded-full ${
-                  result.percentage >= 80
+                  finalPercentage >= 80
                     ? 'bg-green-500'
-                    : result.percentage >= 60
+                    : finalPercentage >= 60
                     ? 'bg-blue-500'
-                    : result.percentage >= 40
+                    : finalPercentage >= 40
                     ? 'bg-yellow-500'
                     : 'bg-red-500'
                 }`}
-                style={{ width: `${result.percentage}%` }}
+                style={{ width: `${Math.max(0, Math.min(100, finalPercentage))}%` }}
               ></div>
             </div>
           </div>

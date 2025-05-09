@@ -65,12 +65,11 @@ export const getQuizPreferences = async (userId: string): Promise<QuizPreference
     language: data.language,
     difficulty: data.difficulty,
     timeLimit: data.time_limit,
-    customTimeLimit: data.custom_time_limit,
+    totalTimeLimit: data.total_time_limit,
+    timeLimitEnabled: data.time_limit_enabled,
     negativeMarking: data.negative_marking,
     negativeMarks: data.negative_marks,
-    mode: data.mode,
-    totalTimeLimit: data.total_time_limit,
-    customTotalTimeLimit: data.custom_total_time_limit
+    mode: data.mode
   };
 };
 
@@ -92,12 +91,11 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
     language: preferences.language,
     difficulty: preferences.difficulty,
     time_limit: preferences.timeLimit,
-    custom_time_limit: preferences.customTimeLimit,
+    total_time_limit: preferences.totalTimeLimit,
+    time_limit_enabled: preferences.timeLimitEnabled,
     negative_marking: preferences.negativeMarking,
     negative_marks: preferences.negativeMarks,
-    mode: preferences.mode,
-    total_time_limit: preferences.totalTimeLimit,
-    custom_total_time_limit: preferences.customTotalTimeLimit
+    mode: preferences.mode
   };
 
   if (existingPrefs) {

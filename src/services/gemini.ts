@@ -5,34 +5,50 @@ export const generateQuiz = async (
   preferences: QuizPreferences
 ): Promise<Question[]> => {
   try {
-    const { topic, subtopic, questionCount, questionTypes, language, difficulty } = preferences;
+    const { 
+      course,
+      topic, 
+      subtopic, 
+      questionCount, 
+      questionTypes, 
+      language, 
+      difficulty,
+      negativeMarking,
+      negativeMarks 
+    } = preferences;
+    
+    if (!course) {
+      throw new Error('Course/Stream is required');
+    }
     
     // Ensure language is properly formatted for the prompt
     const quizLanguage = language || 'English';
     
-    const prompt = `Generate a quiz about "${topic}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
+    const prompt = `Generate a premium-quality quiz about "${course}${topic ? ` - ${topic}` : ''}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
 
-The questions MUST be in ${quizLanguage} language and follow these strict requirements:
-- Difficulty level: ${difficulty}
-- ONLY use these question types: ${questionTypes.join(', ')}
-- Each question MUST be one of these types: ${questionTypes.join(', ')}
-- DO NOT generate any question types that are not in the list above
+STRICT COMMERCIAL REQUIREMENTS:
+1. CORE PARAMETERS:
+- Course/Stream: ${course}
+${topic ? `- Topic: ${topic}` : '- Topic: General concepts and principles'}
+${subtopic ? `- Subtopic: ${subtopic}` : ''}
+- Language: ${quizLanguage} (flawless grammar)
+- Difficulty: ${difficulty} (with natural variation)
+- Question Types: ONLY ${questionTypes.join(', ')}
 - Each question should be unique and not repetitive
 - Include practical applications and real-world scenarios
 - Ensure progressive complexity within the chosen difficulty level
-- CRITICAL: ONLY generate questions of the types specified in questionTypes array
 - CRITICAL: Ensure all JSON strings are properly escaped and terminated
-- CRITICAL: All question text, options, answers, and explanations MUST be in ${quizLanguage} language
 - CRITICAL: For non-English languages, use proper Unicode characters and ensure correct grammar
 - CRITICAL: Do not use placeholders or question marks for non-English characters
 
+2. QUALITY STANDARDS:
 For each question:
-1. The question text should be clear and well-formulated in ${quizLanguage}
-2. The type MUST be one of: ${questionTypes.join(', ')}
-3. For multiple-choice questions, provide exactly 4 distinct options in ${quizLanguage}
-4. The correct answer in ${quizLanguage}
-5. A detailed explanation of why this answer is correct in ${quizLanguage}
-6. The difficulty level (basic, intermediate, or advanced)
+→ The question text should be clear and well-formulated in ${quizLanguage}
+→ For multiple-choice questions, provide exactly 4 distinct options in ${quizLanguage}
+→ must be professionally crafted
+→ Zero repetition or similarity between questions
+→ 25% real-world application questions
+→ Mix conceptual (40%), factual (30%), analytical (30%) questions
 
 Format your response STRICTLY as a valid JSON array with this structure:
 [
@@ -47,13 +63,31 @@ Format your response STRICTLY as a valid JSON array with this structure:
   }
 ]
 
-CRITICAL: 
-- Ensure all JSON strings are properly escaped
-- Do not include line breaks within JSON strings
-- Use proper Unicode encoding for non-English characters
-- Do not use ASCII-only characters for non-English content
-- Verify the JSON is valid before returning
-- All content MUST be in ${quizLanguage} language with proper grammar and characters`;
+QUALITY CONTROL:
+✓ Professional wording
+✓ Perfect ${quizLanguage} grammar
+✓ Balanced difficulty
+✓ Valid JSON formatting
+✓ Complete metadata
+✓ Commercial-ready content
+
+CRITICAL INSTRUCTIONS:
+1. Generate ${questionCount} questions
+2. Ensure all JSON strings are properly escaped
+3. Do not include line breaks within JSON strings
+3. Ensure 100% unique questions
+4. Make content worth paying for
+5. Use proper Unicode encoding for non-English characters
+6. Do not use ASCII-only characters for non-English content
+7. Verify the JSON is valid before returning
+8. All content MUST be in ${quizLanguage} language with proper grammar and characters
+
+FINAL CHECK:
+- All fields populated
+- No empty values
+- Proper escaping
+- UTF-8 compliant
+- Ready for API response`;
     
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
