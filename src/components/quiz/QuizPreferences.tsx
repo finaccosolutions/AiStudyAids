@@ -157,9 +157,9 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               <div className="flex items-center mb-6 relative">
                 <Settings className="w-6 h-6 mr-3 text-purple-600" />
                 <h3 className="text-xl font-semibold text-gray-800">Basic Settings</h3>
-                <div className="tooltip ml-2 z-10">
+                <div className="tooltip ml-2">
                   <Info className="w-4 h-4 text-gray-400 hover:text-purple-600 cursor-help" />
-                  <span className="tooltiptext">Configure your basic quiz settings including course, topic, and difficulty level</span>
+                  <span className="tooltiptext z-50">Configure your basic quiz settings including course, topic, and difficulty level</span>
                 </div>
               </div>
               
@@ -289,9 +289,9 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               <div className="flex items-center mb-6 relative">
                 <ListChecks className="w-6 h-6 mr-3 text-blue-600" />
                 <h3 className="text-xl font-semibold text-gray-800">Question Types</h3>
-                <div className="tooltip ml-2 z-10">
+                <div className="tooltip ml-2">
                   <Info className="w-4 h-4 text-gray-400 hover:text-blue-600 cursor-help" />
-                  <span className="tooltiptext">Choose the types of questions you want in your quiz</span>
+                  <span className="tooltiptext z-50">Choose the types of questions you want in your quiz</span>
                 </div>
               </div>
               
@@ -325,9 +325,9 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               <div className="flex items-center mb-6 relative">
                 <Timer className="w-6 h-6 mr-3 text-emerald-600" />
                 <h3 className="text-xl font-semibold text-gray-800">Time Settings</h3>
-                <div className="tooltip ml-2 z-10">
+                <div className="tooltip ml-2">
                   <Info className="w-4 h-4 text-gray-400 hover:text-emerald-600 cursor-help" />
-                  <span className="tooltiptext">Set time limits for individual questions or the entire quiz</span>
+                  <span className="tooltiptext z-50">Set time limits for individual questions or the entire quiz</span>
                 </div>
               </div>
               
@@ -407,9 +407,9 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               <div className="flex items-center mb-6 relative">
                 <BarChart3 className="w-6 h-6 mr-3 text-amber-600" />
                 <h3 className="text-xl font-semibold text-gray-800">Quiz Mode</h3>
-                <div className="tooltip ml-2 z-10">
+                <div className="tooltip ml-2">
                   <Info className="w-4 h-4 text-gray-400 hover:text-amber-600 cursor-help" />
-                  <span className="tooltiptext">Choose between practice mode for immediate feedback or exam mode for end-of-quiz results</span>
+                  <span className="tooltiptext z-50">Choose between practice mode for immediate feedback or exam mode for end-of-quiz results</span>
                 </div>
               </div>
               

@@ -48,11 +48,13 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [timeLeft, setTimeLeft] = useState<number | null>(() => {
     if (!timeLimitEnabled) return null;
     
-    if (totalTimeLimit) {
-      return parseInt(totalTimeLimit);
-    }
     if (timeLimit) {
+      // Per question time limit
       return parseInt(timeLimit);
+    }
+    if (totalTimeLimit) {
+      // Total quiz time limit
+      return parseInt(totalTimeLimit);
     }
     return null;
   });
@@ -61,7 +63,12 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   useEffect(() => {
     setSelectedAnswer(userAnswer || '');
     setHasAnswered(!!userAnswer);
-  }, [userAnswer, question.id]);
+    
+    // Reset timer for per-question time limit
+    if (timeLimitEnabled && timeLimit && !totalTimeLimit) {
+      setTimeLeft(parseInt(timeLimit));
+    }
+  }, [userAnswer, question.id, timeLimit, totalTimeLimit]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -76,7 +83,14 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
         });
       }, 1000);
     } else if (timeLeft === 0) {
-      handleNext();
+      if (timeLimit && !totalTimeLimit) {
+        // Per question time limit expired
+        handleAnswerSubmit();
+        handleNext();
+      } else if (totalTimeLimit && !timeLimit) {
+        // Total quiz time expired
+        handleFinish();
+      }
     }
     return () => clearInterval(timer);
   }, [timeLeft]);
@@ -84,7 +98,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const handleNext = () => {
     onAnswer(selectedAnswer);
     setShowExplanation(false);
-    setTimeLeft(timeLeft);
     setHasAnswered(false);
     onNext();
   };
@@ -92,7 +105,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const handlePrevious = () => {
     onAnswer(selectedAnswer);
     setShowExplanation(false);
-    setTimeLeft(timeLeft);
     setHasAnswered(false);
     onPrevious();
   };
@@ -397,3 +409,5 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
 };
 
 export default QuizQuestion;
+
+export default QuizQuestion
