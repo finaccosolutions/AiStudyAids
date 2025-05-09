@@ -7,9 +7,9 @@ export const generateQuiz = async (
   try {
     const { topic, subtopic, questionCount, questionTypes, language, difficulty } = preferences;
     
-    const prompt = `Generate a ${language} quiz about "${topic}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
+    const prompt = `Generate a quiz about "${topic}${subtopic ? ` (${subtopic})` : ''}" with exactly ${questionCount} questions.
 
-The questions MUST follow these strict requirements:
+The questions MUST be in ${language} language and follow these strict requirements:
 - Difficulty level: ${difficulty}
 - ONLY use these question types: ${questionTypes.join(', ')}
 - Each question MUST be one of these types: ${questionTypes.join(', ')}
@@ -20,24 +20,25 @@ The questions MUST follow these strict requirements:
 - CRITICAL: ONLY generate questions of the types specified in questionTypes array
 - CRITICAL: Ensure all JSON strings are properly escaped and terminated
 - CRITICAL: Do not include any special characters or line breaks within JSON strings
+- CRITICAL: All question text, options, answers, and explanations MUST be in ${language} language
 
 For each question:
-1. The question text should be clear and well-formulated
+1. The question text should be clear and well-formulated in ${language}
 2. The type MUST be one of: ${questionTypes.join(', ')}
-3. For multiple-choice questions, provide exactly 4 distinct options
-4. The correct answer
-5. A detailed explanation of why this answer is correct
+3. For multiple-choice questions, provide exactly 4 distinct options in ${language}
+4. The correct answer in ${language}
+5. A detailed explanation of why this answer is correct in ${language}
 6. The difficulty level (basic, intermediate, or advanced)
 
 Format your response STRICTLY as a valid JSON array with this structure:
 [
   {
     "id": 1,
-    "text": "Question text here",
+    "text": "Question text here in ${language}",
     "type": "${questionTypes[0]}", 
     "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Correct option here",
-    "explanation": "Detailed explanation of the correct answer",
+    "correctAnswer": "Correct option here in ${language}",
+    "explanation": "Detailed explanation in ${language}",
     "difficulty": "basic"
   }
 ]
@@ -82,20 +83,20 @@ export const getAnswerExplanation = async (
   language: string
 ): Promise<string> => {
   try {
-    const prompt = `Analyze this answer for a question about ${topic} in ${language}:
+    const prompt = `Analyze this answer for a question about ${topic} in ${language} language:
     
 Question: ${question}
 User's Answer: ${userAnswer}
 Correct Answer: ${correctAnswer}
 
-Provide a detailed response that includes:
+Provide a detailed response in ${language} that includes:
 1. Whether the answer is correct or incorrect
 2. A thorough explanation of why the correct answer is right
 3. If the user's answer was wrong, explain what made it incorrect
 4. Additional context or related concepts to help understand the topic better
 5. If applicable, real-world examples or applications
 
-Keep the tone encouraging and educational.`;
+Keep the tone encouraging and educational. ENSURE THE ENTIRE RESPONSE IS IN ${language} LANGUAGE.`;
 
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
       method: 'POST',
