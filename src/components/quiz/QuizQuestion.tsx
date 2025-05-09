@@ -19,6 +19,9 @@ interface QuizQuestionProps {
   onFinish: () => void;
   language: string;
   timeLimit?: string | null;
+  totalTimeLimit?: string | null;
+  customTimeLimit?: number | null;
+  customTotalTimeLimit?: number | null;
   mode: 'practice' | 'exam';
   answerMode: 'immediate' | 'end';
 }
@@ -35,6 +38,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   onFinish,
   language,
   timeLimit,
+  totalTimeLimit,
+  customTimeLimit,
+  customTotalTimeLimit,
   mode,
   answerMode,
 }) => {
@@ -42,11 +48,15 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(() => {
+    if (totalTimeLimit && totalTimeLimit !== 'none') {
+      return totalTimeLimit === 'custom'
+        ? customTotalTimeLimit || 300
+        : parseInt(totalTimeLimit);
+    }
+    
     if (!timeLimit || timeLimit === 'none') return null;
     if (timeLimit === 'custom') {
-      // Get custom time limit from preferences
-      const customTimeLimit = question.customTimeLimit;
-      return customTimeLimit || 30; // Default to 30 seconds if not set
+      return customTimeLimit || 30;
     }
     return parseInt(timeLimit);
   });
@@ -72,7 +82,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const handleNext = () => {
     onAnswer(selectedAnswer);
     setShowExplanation(false);
-    setTimeLeft(timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null);
+    setTimeLeft(timeLeft);
     setHasAnswered(false);
     onNext();
   };
@@ -80,7 +90,7 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const handlePrevious = () => {
     onAnswer(selectedAnswer);
     setShowExplanation(false);
-    setTimeLeft(timeLimit && timeLimit !== 'none' ? parseInt(timeLimit) : null);
+    setTimeLeft(timeLeft);
     setHasAnswered(false);
     onPrevious();
   };

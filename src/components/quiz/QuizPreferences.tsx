@@ -64,7 +64,17 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await savePreferences(userId, preferences);
+    
+    // Clear time_limit fields if total quiz time is selected
+    const updatedPreferences = {
+      ...preferences,
+      timeLimit: timingMode === 'total' ? null : preferences.timeLimit,
+      customTimeLimit: timingMode === 'total' ? null : preferences.customTimeLimit,
+      totalTimeLimit: timingMode === 'per-question' ? null : preferences.totalTimeLimit,
+      customTotalTimeLimit: timingMode === 'per-question' ? null : preferences.customTotalTimeLimit
+    };
+    
+    await savePreferences(userId, updatedPreferences);
     if (onSave) onSave();
   };
   
@@ -100,28 +110,16 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
         ...prev,
         timeLimit: value,
         customTimeLimit: value === 'custom' ? 30 : null,
-        totalTimeLimit: value === 'none' ? 'none' : null,
-        customTotalTimeLimit: value === 'custom' 
-          ? 30 * prev.questionCount 
-          : value === 'none' 
-            ? null 
-            : parseInt(value) * prev.questionCount
+        totalTimeLimit: null,
+        customTotalTimeLimit: null
       }));
     } else {
-      const perQuestionTime = value === 'none' 
-        ? 'none' 
-        : value === 'custom'
-          ? 'custom'
-          : Math.floor(parseInt(value) / preferences.questionCount).toString();
-
       setPreferences(prev => ({
         ...prev,
         totalTimeLimit: value,
         customTotalTimeLimit: value === 'custom' ? 300 : null,
-        timeLimit: perQuestionTime,
-        customTimeLimit: perQuestionTime === 'custom' 
-          ? Math.floor(300 / prev.questionCount)
-          : null
+        timeLimit: null,
+        customTimeLimit: null
       }));
     }
   };
@@ -131,13 +129,15 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
       setPreferences(prev => ({
         ...prev,
         customTimeLimit: value,
-        customTotalTimeLimit: value * prev.questionCount
+        totalTimeLimit: null,
+        customTotalTimeLimit: null
       }));
     } else {
       setPreferences(prev => ({
         ...prev,
         customTotalTimeLimit: value,
-        customTimeLimit: Math.floor(value / prev.questionCount)
+        timeLimit: null,
+        customTimeLimit: null
       }));
     }
   };
@@ -248,35 +248,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                     value={preferences.questionCount}
                     onChange={(e) => {
                       const newCount = parseInt(e.target.value) || 5;
-                      setPreferences(prev => {
-                        let newTimeLimit = prev.timeLimit;
-                        let newCustomTimeLimit = prev.customTimeLimit;
-                        let newTotalTimeLimit = prev.totalTimeLimit;
-                        let newCustomTotalTimeLimit = prev.customTotalTimeLimit;
-
-                        if (timingMode === 'per-question' && prev.timeLimit !== 'none') {
-                          if (prev.timeLimit === 'custom') {
-                            newCustomTotalTimeLimit = (prev.customTimeLimit || 30) * newCount;
-                          } else {
-                            newTotalTimeLimit = (parseInt(prev.timeLimit) * newCount).toString();
-                          }
-                        } else if (timingMode === 'total' && prev.totalTimeLimit !== 'none') {
-                          if (prev.totalTimeLimit === 'custom') {
-                            newCustomTimeLimit = Math.floor((prev.customTotalTimeLimit || 300) / newCount);
-                          } else {
-                            newTimeLimit = Math.floor(parseInt(prev.totalTimeLimit) / newCount).toString();
-                          }
-                        }
-
-                        return {
-                          ...prev,
-                          questionCount: newCount,
-                          timeLimit: newTimeLimit,
-                          customTimeLimit: newCustomTimeLimit,
-                          totalTimeLimit: newTotalTimeLimit,
-                          customTotalTimeLimit: newCustomTotalTimeLimit
-                        };
-                      });
+                      setPreferences({ ...preferences, questionCount: newCount });
                     }}
                     className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
                   />
@@ -397,7 +369,7 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-gray-700">
-                      {timingMode === 'per-question' ? 'Time Limit per Question' : 'Total Quiz Time'}
+                      Time Limit per Question
                     </label>
                     <Select
                       options={timeOptions}
