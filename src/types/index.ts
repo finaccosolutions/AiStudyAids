@@ -21,14 +21,24 @@ export type ApiKeyData = {
   geminiApiKey: string;
 };
 
+// Supported languages for quiz generation
+export type QuizLanguage = 'en' | 'hi' | 'ml' | 'ta' | 'te';
+
+// Language display information
+export type LanguageInfo = {
+  code: QuizLanguage;
+  name: string;
+  nativeName: string;
+};
+
 export type QuizPreferences = {
   course?: string;
   topic?: string;
   subtopic?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   questionCount: number;
-  questionTypes: string[];
-  language: string;
+  questionTypes: QuestionType[];
+  language: QuizLanguage; // Now using the specific QuizLanguage type
   timeLimitEnabled: boolean;
   timeLimit?: string | null;
   totalTimeLimit?: string | null;
@@ -49,6 +59,7 @@ export type Question = {
   explanation?: string;
   difficulty: 'basic' | 'intermediate' | 'advanced';
   userAnswer?: string;
+  language?: QuizLanguage; // Added to track question language
 };
 
 export type QuizResult = {
