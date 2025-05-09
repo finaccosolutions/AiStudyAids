@@ -1,3 +1,5 @@
+import { QuizLanguage } from './languages';
+
 export type UserData = {
   id: string;
   email: string;
@@ -58,22 +60,85 @@ export type QuestionType =
   | 'situation'       // Choose best action in a scenario
   | 'multi-select';   // Multiple correct options
 
-export type Question = {
+// Base question interface with common fields
+interface BaseQuestion {
   id: number;
   text: string;
   type: QuestionType;
-  options?: string[];
-  correctAnswer: string;
   explanation?: string;
   difficulty: 'basic' | 'intermediate' | 'advanced';
   userAnswer?: string;
   language?: QuizLanguage;
-  // Additional fields for specific question types
-  caseStudy?: string;        // For case-study type
-  sequence?: string[];       // For sequence type
-  correctSequence?: string[]; // For sequence type
-  correctOptions?: string[]; // For multi-select type
-};
+}
+
+// Multiple choice question
+interface MultipleChoiceQuestion extends BaseQuestion {
+  type: 'multiple-choice';
+  options: string[];
+  correctAnswer: string;
+}
+
+// True/False question
+interface TrueFalseQuestion extends BaseQuestion {
+  type: 'true-false';
+  options: ['True', 'False'];
+  correctAnswer: 'True' | 'False';
+}
+
+// Fill in the blank question
+interface FillBlankQuestion extends BaseQuestion {
+  type: 'fill-blank';
+  correctAnswer: string;
+}
+
+// Short answer question
+interface ShortAnswerQuestion extends BaseQuestion {
+  type: 'short-answer';
+  correctAnswer: string;
+}
+
+// Sequence question
+interface SequenceQuestion extends BaseQuestion {
+  type: 'sequence';
+  sequence: string[];        // Steps in random order
+  correctSequence: string[]; // Steps in correct order
+}
+
+// Case study question
+interface CaseStudyQuestion extends BaseQuestion {
+  type: 'case-study';
+  caseStudy: string;     // Detailed scenario
+  question: string;      // Specific question about the case
+  options: string[];     // Possible solutions
+  correctAnswer: string; // Best solution
+}
+
+// Situation judgment question
+interface SituationQuestion extends BaseQuestion {
+  type: 'situation';
+  situation: string;     // Detailed scenario
+  question: string;      // Specific question about the situation
+  options: string[];     // Possible actions
+  correctAnswer: string; // Most appropriate action
+}
+
+// Multi-select question
+interface MultiSelectQuestion extends BaseQuestion {
+  type: 'multi-select';
+  options: string[];        // All possible options
+  correctOptions: string[]; // Array of correct options (2-3)
+}
+
+// Union type of all question types
+export type Question = 
+  | MultipleChoiceQuestion 
+  | TrueFalseQuestion 
+  | FillBlankQuestion 
+  | ShortAnswerQuestion
+  | SequenceQuestion 
+  | CaseStudyQuestion 
+  | SituationQuestion
+  | MultiSelectQuestion;
 
 export type QuizResult = {
   totalQuestions: number;

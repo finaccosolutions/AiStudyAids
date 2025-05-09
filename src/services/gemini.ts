@@ -58,10 +58,10 @@ Example:
 }
 
 For multi-select:
-- MUST have "text": clear question specifying to select all that apply
+- MUST have "text": clear question specifying "Select all that apply"
 - MUST have "options": array of EXACTLY 6 complete, distinct options
-- MUST have "correctOptions": array of 2-3 correct options (exact matches)
-- MUST have "explanation": explain why each correct option is right
+- MUST have "correctOptions": array of EXACTLY 2 OR 3 correct options (no more, no less)
+- MUST have "explanation": explain why each correct option is right AND why others are wrong
 Example:
 {
   "type": "multi-select",
@@ -75,73 +75,77 @@ Example:
     "COBOL"
   ],
   "correctOptions": ["Java", "Python", "Ruby"],
-  "explanation": "Java, Python, and Ruby are object-oriented languages because..."
+  "explanation": "Java, Python, and Ruby are object-oriented languages because they support encapsulation, inheritance, and polymorphism. C is procedural, Assembly is low-level, and COBOL is primarily procedural."
 }
 
 For sequence:
 - MUST have "text": clear instruction about what to sequence
 - MUST have "sequence": array of 4-6 complete steps in RANDOM order
 - MUST have "correctSequence": same steps in CORRECT order
-- MUST have "explanation": explain the correct sequence logic
+- MUST have "explanation": explain the logic behind EACH step in the sequence
 Example:
 {
   "type": "sequence",
-  "text": "Arrange the following steps of the software development lifecycle in the correct order:",
+  "text": "Arrange the following steps of the TCP three-way handshake in the correct order:",
   "sequence": [
-    "Testing the application",
-    "Gathering requirements",
-    "Deploying to production",
-    "Designing the solution"
+    "Client sends ACK",
+    "Server sends SYN-ACK",
+    "Client sends SYN",
+    "Connection established"
   ],
   "correctSequence": [
-    "Gathering requirements",
-    "Designing the solution",
-    "Testing the application",
-    "Deploying to production"
+    "Client sends SYN",
+    "Server sends SYN-ACK",
+    "Client sends ACK",
+    "Connection established"
   ],
-  "explanation": "The software development lifecycle follows this sequence because..."
+  "explanation": "1. Client initiates with SYN to request connection\\n2. Server acknowledges and sends its own SYN\\n3. Client acknowledges server's SYN\\n4. Connection is now established and ready for data transfer"
 }
 
 For case-study:
-- MUST have "text": brief introduction to the case
-- MUST have "caseStudy": detailed scenario description
+- MUST have "text": brief introduction
+- MUST have "caseStudy": detailed scenario description (minimum 100 words)
+- MUST have "question": specific question about the case
 - MUST have "options": array of EXACTLY 4 possible solutions
 - MUST have "correctAnswer": the best solution (exact match)
-- MUST have "explanation": detailed analysis of why it's the best solution
+- MUST have "explanation": detailed analysis of ALL options
 Example:
 {
   "type": "case-study",
-  "text": "Analyze the following database design scenario:",
-  "caseStudy": "A social media application needs to store user posts, comments, and likes. The current design uses separate tables for each, but performance is slow...",
+  "text": "Analyze this e-commerce system scaling scenario:",
+  "caseStudy": "An e-commerce platform experiences sudden traffic spikes during flash sales, causing system slowdowns and occasional crashes. The current architecture uses a monolithic application deployed on a single server with a PostgreSQL database. During peak times, the server CPU reaches 100% utilization, database connections are exhausted, and the application becomes unresponsive. The company wants to handle 10x more concurrent users while maintaining response times under 500ms.",
+  "question": "What is the most effective immediate solution to handle the traffic spikes?",
   "options": [
-    "Implement database indexing on frequently queried columns",
-    "Merge all tables into a single denormalized table",
-    "Switch to a NoSQL database system",
-    "Add more database servers"
+    "Implement horizontal scaling with load balancing",
+    "Upgrade to a more powerful server",
+    "Switch to a NoSQL database",
+    "Add application caching"
   ],
-  "correctAnswer": "Implement database indexing on frequently queried columns",
-  "explanation": "Database indexing is the best solution because..."
+  "correctAnswer": "Implement horizontal scaling with load balancing",
+  "explanation": "Analysis of each option:\\n1. Horizontal scaling with load balancing: Best immediate solution as it provides linear scalability, high availability, and can handle traffic spikes effectively.\\n2. Upgrading server: Temporary solution that doesn't solve the fundamental scalability issue and has physical limitations.\\n3. Switching to NoSQL: Major architectural change that doesn't address the immediate CPU bottleneck and requires significant development effort.\\n4. Adding caching: Helpful but insufficient alone for handling concurrent user load and CPU bottleneck."
 }
 
 For situation:
-- MUST have "text": brief introduction to the situation
-- MUST have "caseStudy": detailed situation description
+- MUST have "text": brief introduction
+- MUST have "situation": detailed scenario description (minimum 100 words)
+- MUST have "question": specific question about the situation
 - MUST have "options": array of EXACTLY 4 possible actions
-- MUST have "correctAnswer": the most appropriate action (exact match)
-- MUST have "explanation": detailed justification of the best action
+- MUST have "correctAnswer": most appropriate action (exact match)
+- MUST have "explanation": detailed analysis of ALL options and their consequences
 Example:
 {
   "type": "situation",
-  "text": "How would you handle the following system outage scenario?",
-  "caseStudy": "During peak business hours, the production server becomes unresponsive. Initial logs show high CPU usage and memory consumption...",
+  "text": "Handle a critical production incident:",
+  "situation": "You're the lead developer on call when a critical alert triggers at 2 AM. The company's main API is returning 500 errors for 30% of requests, affecting multiple major clients. Initial logs show increased database connection timeouts and memory usage spikes. The last deployment was 6 hours ago, which included both database schema changes and new API endpoints. The backup from 12 hours ago is available, but restoring it would lose 12 hours of customer data. Client impact is estimated at $50,000 per hour of downtime.",
+  "question": "What should be your first action?",
   "options": [
-    "Immediately restart the server",
-    "Scale up server resources",
-    "Analyze logs and identify the root cause",
-    "Roll back recent deployments"
+    "Immediately roll back the last deployment",
+    "Scale up database resources",
+    "Analyze logs and metrics for root cause",
+    "Restore from the latest backup"
   ],
-  "correctAnswer": "Analyze logs and identify the root cause",
-  "explanation": "Analyzing logs first is the best action because..."
+  "correctAnswer": "Analyze logs and metrics for root cause",
+  "explanation": "Analysis of each action and its consequences:\\n1. Rolling back immediately: Risky without understanding the issue, could cause data inconsistencies and might not solve the problem if it's unrelated to the deployment.\\n2. Scaling database resources: Premature solution without understanding if database is the real bottleneck, wastes time and resources if the issue lies elsewhere.\\n3. Analyzing logs and metrics: Best first action as it quickly identifies the root cause, minimizes risk, and ensures the correct solution is implemented. Allows for informed decision-making.\\n4. Restoring backup: Most disruptive option with guaranteed data loss, should only be used as a last resort after other options are exhausted."
 }
 
 CRITICAL REQUIREMENTS:
@@ -155,7 +159,11 @@ CRITICAL REQUIREMENTS:
 3. Use double quotes for strings
 4. Escape quotes within strings
 5. No text outside the JSON array
-6. No missing or null fields`;
+6. No missing or null fields
+7. For multi-select questions, ALWAYS include EXACTLY 2 OR 3 correct options - no more, no less
+8. For sequence questions, ALWAYS provide step-by-step explanation
+9. For case-study and situation questions, ALWAYS include detailed scenario (100+ words)
+10. ALWAYS analyze ALL options in explanations for case-study and situation questions`;
 
   try {
     // First try the edge function
@@ -227,9 +235,11 @@ CRITICAL REQUIREMENTS:
             if (!Array.isArray(q.options) || q.options.length !== 6) {
               throw new Error(`Question ${index + 1} (multi-select) must have exactly 6 options`);
             }
-            if (!Array.isArray(q.correctOptions) || 
-                q.correctOptions.length < 2 || q.correctOptions.length > 3) {
-              throw new Error(`Question ${index + 1} must have 2-3 correct options`);
+            if (!Array.isArray(q.correctOptions)) {
+              throw new Error(`Question ${index + 1} must have correctOptions array`);
+            }
+            if (q.correctOptions.length < 2 || q.correctOptions.length > 3) {
+              throw new Error(`Question ${index + 1} must have exactly 2 or 3 correct options (found ${q.correctOptions.length})`);
             }
             if (!q.correctOptions.every((opt: string) => q.options.includes(opt))) {
               throw new Error(`Question ${index + 1} correctOptions must match options exactly`);
@@ -237,17 +247,40 @@ CRITICAL REQUIREMENTS:
             break;
 
           case 'sequence':
-            if (!Array.isArray(q.sequence) || !Array.isArray(q.correctSequence) ||
-                q.sequence.length !== q.correctSequence.length ||
-                q.sequence.length < 4 || q.sequence.length > 6) {
-              throw new Error(`Question ${index + 1} (sequence) must have matching sequence and correctSequence arrays of 4-6 items`);
+            if (!Array.isArray(q.sequence) || !Array.isArray(q.correctSequence)) {
+              throw new Error(`Question ${index + 1} must have sequence and correctSequence arrays`);
+            }
+            if (q.sequence.length < 4 || q.sequence.length > 6 || 
+                q.sequence.length !== q.correctSequence.length) {
+              throw new Error(`Question ${index + 1} must have 4-6 matching steps in sequence and correctSequence`);
+            }
+            // Verify all steps exist in both arrays
+            const sequenceSet = new Set([...q.sequence, ...q.correctSequence]);
+            if (sequenceSet.size !== q.sequence.length) {
+              throw new Error(`Question ${index + 1} sequence and correctSequence must contain the same steps`);
             }
             break;
 
           case 'case-study':
+            if (!q.caseStudy || !q.question || !Array.isArray(q.options) || 
+                q.options.length !== 4 || !q.correctAnswer) {
+              throw new Error(`Question ${index + 1} (case-study) must have caseStudy, question, exactly 4 options, and correctAnswer`);
+            }
+            if (q.caseStudy.length < 100) {
+              throw new Error(`Question ${index + 1} case study description must be at least 100 characters`);
+            }
+            if (!q.options.includes(q.correctAnswer)) {
+              throw new Error(`Question ${index + 1} correctAnswer must match one of the options exactly`);
+            }
+            break;
+
           case 'situation':
-            if (!q.caseStudy || !Array.isArray(q.options) || q.options.length !== 4 || !q.correctAnswer) {
-              throw new Error(`Question ${index + 1} (${q.type}) must have caseStudy, exactly 4 options, and correctAnswer`);
+            if (!q.situation || !q.question || !Array.isArray(q.options) || 
+                q.options.length !== 4 || !q.correctAnswer) {
+              throw new Error(`Question ${index + 1} (situation) must have situation, question, exactly 4 options, and correctAnswer`);
+            }
+            if (q.situation.length < 100) {
+              throw new Error(`Question ${index + 1} situation description must be at least 100 characters`);
             }
             if (!q.options.includes(q.correctAnswer)) {
               throw new Error(`Question ${index + 1} correctAnswer must match one of the options exactly`);
@@ -265,6 +298,8 @@ CRITICAL REQUIREMENTS:
         explanation: q.explanation,
         difficulty: q.difficulty,
         caseStudy: q.caseStudy,
+        situation: q.situation,
+        question: q.question,
         sequence: q.sequence,
         correctSequence: q.correctSequence,
         correctOptions: q.correctOptions,
