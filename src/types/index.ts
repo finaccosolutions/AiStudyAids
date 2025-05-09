@@ -1,6 +1,7 @@
 export type UserData = {
   id: string;
   email: string;
+  emailConfirmed: boolean;
   profile?: UserProfile;
 };
 
@@ -10,7 +11,6 @@ export type UserProfile = {
   mobileNumber: string;
   countryCode: string;
   countryName: string;
-  emailConfirmed: boolean;
   avatarUrl?: string;
   createdAt: Date;
   updatedAt: Date;

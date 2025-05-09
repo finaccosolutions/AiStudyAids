@@ -127,17 +127,16 @@ export const signUp = async (
   password: string, 
   fullName: string, 
   mobileNumber: string,
-  countryCode: string,
-  countryName: string
+  countryCode: string = 'IN',
+  countryName: string = 'India'
 ) => {
   // First check if mobile number exists
-  const { data: existingProfile } = await supabase
+  const { data: existingProfiles } = await supabase
     .from('profiles')
     .select('mobile_number')
-    .eq('mobile_number', mobileNumber)
-    .single();
+    .eq('mobile_number', mobileNumber);
 
-  if (existingProfile) {
+  if (existingProfiles && existingProfiles.length > 0) {
     throw new Error('Mobile number already registered');
   }
 
@@ -149,7 +148,7 @@ export const signUp = async (
       data: {
         full_name: fullName,
       },
-      emailRedirectTo: `${window.location.origin}/auth/confirm`
+      emailRedirectTo: `${window.location.origin}/auth/callback`
     }
   });
 
@@ -164,8 +163,7 @@ export const signUp = async (
         full_name: fullName,
         mobile_number: mobileNumber,
         country_code: countryCode,
-        country_name: countryName,
-        email_confirmed: false
+        country_name: countryName
       });
 
     if (profileError) throw profileError;
@@ -180,13 +178,7 @@ export const signIn = async (email: string, password: string) => {
   if (error) throw error;
 
   // Check if email is confirmed
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('email_confirmed')
-    .eq('user_id', data.user.id)
-    .single();
-
-  if (!profile?.email_confirmed) {
+  if (!data.user.email_confirmed_at) {
     throw new Error('Please confirm your email address before signing in');
   }
 
@@ -198,9 +190,11 @@ export const signOut = async () => {
 };
 
 export const getCurrentUser = async () => {
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
   
-  if (error || !user) return { data: null, error };
+  if (userError || !user) {
+    return { data: null, error: userError };
+  }
 
   try {
     // Get user profile
@@ -212,36 +206,38 @@ export const getCurrentUser = async () => {
 
     if (profileError) throw profileError;
 
+    if (!profile) {
+      // If no profile is found, this is an error state
+      throw new Error('User profile not found');
+    }
+
     return {
       data: {
         user: {
           id: user.id,
           email: user.email,
-          profile: profile ? {
+          emailConfirmed: !!user.email_confirmed_at,
+          profile: {
             id: profile.id,
             fullName: profile.full_name,
             mobileNumber: profile.mobile_number,
             countryCode: profile.country_code,
             countryName: profile.country_name,
-            emailConfirmed: profile.email_confirmed,
             avatarUrl: profile.avatar_url,
             createdAt: new Date(profile.created_at),
             updatedAt: new Date(profile.updated_at),
-          } : undefined,
+          },
         }
       },
       error: null,
     };
-  } catch (err) {
+  } catch (err: any) {
     return {
-      data: {
-        user: {
-          id: user.id,
-          email: user.email,
-          profile: undefined,
-        }
+      data: null,
+      error: {
+        message: err.message,
+        status: err.status || 500
       },
-      error: null,
     };
   }
 };

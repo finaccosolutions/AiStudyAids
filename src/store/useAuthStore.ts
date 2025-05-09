@@ -16,7 +16,7 @@ interface AuthState {
   resetPassword: (email: string) => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: false,
   error: null,
@@ -94,15 +94,26 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const { data, error } = await getCurrentUser();
       
-      if (error) throw error;
+      if (error) {
+        // If we get a 403 error or user not found, log out the user
+        if (error.status === 403 || error.message?.includes('user_not_found')) {
+          await get().logout();
+          return;
+        }
+        throw error;
+      }
       
       if (data?.user) {
         set({
           user: data.user,
           isLoggedIn: true,
         });
+      } else {
+        // If no user data is returned, log out
+        await get().logout();
       }
-    } catch (error) {
+    } catch (error: any) {
+      // For any other errors, clear the user state
       set({ user: null, isLoggedIn: false });
     } finally {
       set({ isLoading: false });

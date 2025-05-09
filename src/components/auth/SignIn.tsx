@@ -16,7 +16,14 @@ const SignIn: React.FC<SignInProps> = ({ onToggleForm }) => {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password);
+    try {
+      await login(email, password);
+    } catch (error: any) {
+      if (error.message.includes('email')) {
+        // Show resend verification email option
+        setShowForgotPassword(true);
+      }
+    }
   };
   
   const handleForgotPassword = async (e: React.FormEvent) => {
