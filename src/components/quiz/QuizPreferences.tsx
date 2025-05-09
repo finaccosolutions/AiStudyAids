@@ -16,17 +16,6 @@ interface QuizPreferencesFormProps {
   onSave?: () => void;
 }
 
-const timeOptions = [
-  { value: 'none', label: 'No Time Limit' },
-  { value: 'custom', label: 'Custom Time Limit' },
-  { value: '15', label: '15 Seconds' },
-  { value: '30', label: '30 Seconds' },
-  { value: '45', label: '45 Seconds' },
-  { value: '60', label: '60 Seconds' },
-  { value: '90', label: '90 Seconds' },
-  { value: '120', label: '120 Seconds' },
-];
-
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
   userId, 
   initialPreferences,
@@ -65,13 +54,10 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Clear time_limit fields if total quiz time is selected
     const updatedPreferences = {
       ...preferences,
       timeLimit: timingMode === 'total' ? null : preferences.timeLimit,
-      customTimeLimit: timingMode === 'total' ? null : preferences.customTimeLimit,
-      totalTimeLimit: timingMode === 'per-question' ? null : preferences.totalTimeLimit,
-      customTotalTimeLimit: timingMode === 'per-question' ? null : preferences.customTotalTimeLimit
+      totalTimeLimit: timingMode === 'per-question' ? null : preferences.totalTimeLimit
     };
     
     await savePreferences(userId, updatedPreferences);
@@ -105,64 +91,39 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
   };
 
   const handleTimeSettingChange = (value: string) => {
+    const numericValue = parseInt(value) || 30;
     if (timingMode === 'per-question') {
       setPreferences(prev => ({
         ...prev,
         timeLimit: value,
-        customTimeLimit: value === 'custom' ? 30 : null,
-        totalTimeLimit: null,
-        customTotalTimeLimit: null
+        totalTimeLimit: null
       }));
     } else {
       setPreferences(prev => ({
         ...prev,
         totalTimeLimit: value,
-        customTotalTimeLimit: value === 'custom' ? 300 : null,
-        timeLimit: null,
-        customTimeLimit: null
-      }));
-    }
-  };
-
-  const handleCustomTimeChange = (value: number) => {
-    if (timingMode === 'per-question') {
-      setPreferences(prev => ({
-        ...prev,
-        customTimeLimit: value,
-        totalTimeLimit: null,
-        customTotalTimeLimit: null
-      }));
-    } else {
-      setPreferences(prev => ({
-        ...prev,
-        customTotalTimeLimit: value,
-        timeLimit: null,
-        customTimeLimit: null
+        timeLimit: null
       }));
     }
   };
 
   const calculateTotalTime = () => {
+    if (!preferences.timeLimitEnabled) return 'No time limit';
+    
     if (timingMode === 'per-question') {
-      if (preferences.timeLimit === 'none') return 'No time limit';
-      if (preferences.timeLimit === 'custom') {
-        const perQuestion = preferences.customTimeLimit || 30;
-        const total = perQuestion * preferences.questionCount;
-        return `${perQuestion} seconds per question (Total: ${total} seconds)`;
-      }
-      const perQuestionTime = parseInt(preferences.timeLimit || '30');
-      const totalTime = perQuestionTime * preferences.questionCount;
-      return `${perQuestionTime} seconds per question (Total: ${totalTime} seconds)`;
+      if (!preferences.timeLimit) return 'No time limit';
+      const perQuestion = parseInt(preferences.timeLimit);
+      const total = perQuestion * preferences.questionCount;
+      const minutes = Math.floor(total / 60);
+      const seconds = total % 60;
+      return `${perQuestion} seconds per question (Total: ${minutes}:${seconds.toString().padStart(2, '0')})`;
     } else {
-      if (preferences.totalTimeLimit === 'none') return 'No time limit';
-      if (preferences.totalTimeLimit === 'custom') {
-        const total = preferences.customTotalTimeLimit || 300;
-        const perQuestion = Math.floor(total / preferences.questionCount);
-        return `${total} seconds total (${perQuestion} seconds per question)`;
-      }
-      const totalTime = parseInt(preferences.totalTimeLimit || '300');
-      const perQuestionTime = Math.floor(totalTime / preferences.questionCount);
-      return `${totalTime} seconds total (${perQuestionTime} seconds per question)`;
+      if (!preferences.totalTimeLimit) return 'No time limit';
+      const total = parseInt(preferences.totalTimeLimit);
+      const perQuestion = Math.floor(total / preferences.questionCount);
+      const minutes = Math.floor(total / 60);
+      const seconds = total % 60;
+      return `${total} seconds total (${perQuestion} seconds per question, ${minutes}:${seconds.toString().padStart(2, '0')})`;
     }
   };
   
@@ -338,73 +299,76 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
               </h3>
               
               <div className="space-y-6 mt-6">
-                <div className="flex items-center space-x-6">
-                  <button
-                    type="button"
-                    onClick={() => setTimingMode('per-question')}
-                    className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
-                      timingMode === 'per-question'
-                        ? 'border-purple-300 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-purple-200'
-                    }`}
-                  >
-                    <Clock className="w-6 h-6 mx-auto mb-2" />
-                    <div className="font-medium">Time per Question</div>
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => setTimingMode('total')}
-                    className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
-                      timingMode === 'total'
-                        ? 'border-purple-300 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-purple-200'
-                    }`}
-                  >
-                    <AlarmClock className="w-6 h-6 mx-auto mb-2" />
-                    <div className="font-medium">Total Quiz Time</div>
-                  </button>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={preferences.timeLimitEnabled}
+                    onChange={(e) => setPreferences({ 
+                      ...preferences, 
+                      timeLimitEnabled: e.target.checked,
+                      timeLimit: e.target.checked ? preferences.timeLimit || '30' : null,
+                      totalTimeLimit: e.target.checked ? preferences.totalTimeLimit || '300' : null
+                    })}
+                    className="form-checkbox h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Enable Time Limit</span>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Time Limit per Question
-                    </label>
-                    <Select
-                      options={timeOptions}
-                      value={timingMode === 'per-question' ? preferences.timeLimit || 'none' : preferences.totalTimeLimit || 'none'}
-                      onChange={(e) => handleTimeSettingChange(e.target.value)}
-                      className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
-                    />
+
+                {preferences.timeLimitEnabled && (
+                  <>
+                    <div className="flex items-center space-x-6">
+                      <button
+                        type="button"
+                        onClick={() => setTimingMode('per-question')}
+                        className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
+                          timingMode === 'per-question'
+                            ? 'border-purple-300 bg-purple-50 text-purple-700'
+                            : 'border-gray-200 hover:border-purple-200'
+                        }`}
+                      >
+                        <Clock className="w-6 h-6 mx-auto mb-2" />
+                        <div className="font-medium">Time per Question</div>
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => setTimingMode('total')}
+                        className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
+                          timingMode === 'total'
+                            ? 'border-purple-300 bg-purple-50 text-purple-700'
+                            : 'border-gray-200 hover:border-purple-200'
+                        }`}
+                      >
+                        <AlarmClock className="w-6 h-6 mx-auto mb-2" />
+                        <div className="font-medium">Total Quiz Time</div>
+                      </button>
+                    </div>
                     
-                    {((timingMode === 'per-question' && preferences.timeLimit === 'custom') ||
-                      (timingMode === 'total' && preferences.totalTimeLimit === 'custom')) && (
-                      <div className="mt-4">
-                        <Input
-                          type="number"
-                          min={1}
-                          max={3600}
-                          value={timingMode === 'per-question' 
-                            ? preferences.customTimeLimit || 30
-                            : preferences.customTotalTimeLimit || 300
-                          }
-                          onChange={(e) => handleCustomTimeChange(parseInt(e.target.value) || 30)}
-                          placeholder="Enter time in seconds"
-                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
-                        />
-                        <p className="text-sm text-gray-500 mt-1">
-                          Enter a value between 1 and 3600 seconds
-                        </p>
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Time Setting
+                        </label>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="number"
+                            min={1}
+                            max={3600}
+                            value={timingMode === 'per-question' ? preferences.timeLimit || 30 : preferences.totalTimeLimit || 300}
+                            onChange={(e) => handleTimeSettingChange(e.target.value)}
+                            className="w-24 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                          />
+                          <span className="text-gray-600">seconds</span>
+                        </div>
+                        
+                        <div className="text-sm text-gray-600 bg-purple-50 p-4 rounded-lg">
+                          <p className="font-medium text-purple-700">Current Time Setting:</p>
+                          <p>{calculateTotalTime()}</p>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="text-sm text-gray-600 bg-purple-50 p-4 rounded-lg">
-                    <p className="font-medium text-purple-700">Current Time Setting:</p>
-                    <p>{calculateTotalTime()}</p>
-                  </div>
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>

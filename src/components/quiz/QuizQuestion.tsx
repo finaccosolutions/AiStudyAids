@@ -18,10 +18,9 @@ interface QuizQuestionProps {
   isLastQuestion: boolean;
   onFinish: () => void;
   language: string;
+  timeLimitEnabled: boolean;
   timeLimit?: string | null;
   totalTimeLimit?: string | null;
-  customTimeLimit?: number | null;
-  customTotalTimeLimit?: number | null;
   mode: 'practice' | 'exam';
   answerMode: 'immediate' | 'end';
 }
@@ -37,10 +36,9 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   isLastQuestion,
   onFinish,
   language,
+  timeLimitEnabled,
   timeLimit,
   totalTimeLimit,
-  customTimeLimit,
-  customTotalTimeLimit,
   mode,
   answerMode,
 }) => {
@@ -48,16 +46,12 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
   const [timeLeft, setTimeLeft] = useState<number | null>(() => {
-    if (totalTimeLimit && totalTimeLimit !== 'none') {
-      return totalTimeLimit === 'custom'
-        ? customTotalTimeLimit || 300
-        : parseInt(totalTimeLimit);
-    }
+    if (!timeLimitEnabled) return null;
     
-    if (!timeLimit || timeLimit === 'none') return null;
-    if (timeLimit === 'custom') {
-      return customTimeLimit || 30;
+    if (totalTimeLimit) {
+      return parseInt(totalTimeLimit);
     }
+    if (!timeLimit) return null;
     return parseInt(timeLimit);
   });
   const [hasAnswered, setHasAnswered] = useState(false);
@@ -135,6 +129,12 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   
   const isAnswerCorrect = () => {
     return selectedAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
   
   const renderQuestionContent = () => {
@@ -260,11 +260,11 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
             <span className={`text-sm font-medium capitalize px-3 py-1 rounded-full ${getDifficultyColor()}`}>
               {question.difficulty}
             </span>
-            {timeLeft !== null && (
+            {timeLimitEnabled && timeLeft !== null && (
               <div className="flex items-center space-x-2 text-sm">
                 <Clock className="w-4 h-4 text-gray-500" />
                 <span className={`font-medium ${timeLeft <= 10 ? 'text-red-500' : 'text-gray-600'}`}>
-                  {timeLeft}s
+                  {formatTime(timeLeft)}
                 </span>
               </div>
             )}

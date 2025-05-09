@@ -29,10 +29,9 @@ export type QuizPreferences = {
   questionCount: number;
   questionTypes: string[];
   language: string;
-  timeLimit?: string;
-  customTimeLimit?: number | null;
-  totalTimeLimit?: string;
-  customTotalTimeLimit?: number | null;
+  timeLimitEnabled: boolean;
+  timeLimit?: string | null;
+  totalTimeLimit?: string | null;
   negativeMarking?: boolean;
   negativeMarks?: number;
   mode: 'practice' | 'exam';
