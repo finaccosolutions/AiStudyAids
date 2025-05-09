@@ -8,6 +8,8 @@ export type UserProfile = {
   id: string;
   fullName: string;
   mobileNumber: string;
+  countryCode: string;
+  countryName: string;
   emailConfirmed: boolean;
   avatarUrl?: string;
   createdAt: Date;
@@ -72,4 +74,11 @@ export type FavoriteQuestion = {
   explanation?: string;
   topic: string;
   createdAt: Date;
+};
+
+export type Country = {
+  code: string;
+  name: string;
+  flag: string;
+  dialCode: string;
 };

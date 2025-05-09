@@ -122,7 +122,14 @@ export const saveQuizPreferences = async (userId: string, preferences: QuizPrefe
 };
 
 // Auth functions
-export const signUp = async (email: string, password: string, fullName: string, mobileNumber: string) => {
+export const signUp = async (
+  email: string, 
+  password: string, 
+  fullName: string, 
+  mobileNumber: string,
+  countryCode: string,
+  countryName: string
+) => {
   // First check if mobile number exists
   const { data: existingProfile } = await supabase
     .from('profiles')
@@ -141,7 +148,8 @@ export const signUp = async (email: string, password: string, fullName: string, 
     options: {
       data: {
         full_name: fullName,
-      }
+      },
+      emailRedirectTo: `${window.location.origin}/auth/confirm`
     }
   });
 
@@ -155,30 +163,34 @@ export const signUp = async (email: string, password: string, fullName: string, 
         user_id: data.user.id,
         full_name: fullName,
         mobile_number: mobileNumber,
+        country_code: countryCode,
+        country_name: countryName,
+        email_confirmed: false
       });
 
     if (profileError) throw profileError;
-
-    // Send confirmation email
-    await fetch(`${supabaseUrl}/functions/v1/send-confirmation`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-      body: JSON.stringify({
-        userId: data.user.id,
-        email,
-        name: fullName,
-      }),
-    });
   }
 
   return data;
 };
 
 export const signIn = async (email: string, password: string) => {
-  return supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  
+  if (error) throw error;
+
+  // Check if email is confirmed
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('email_confirmed')
+    .eq('user_id', data.user.id)
+    .single();
+
+  if (!profile?.email_confirmed) {
+    throw new Error('Please confirm your email address before signing in');
+  }
+
+  return { data, error };
 };
 
 export const signOut = async () => {
@@ -209,6 +221,8 @@ export const getCurrentUser = async () => {
             id: profile.id,
             fullName: profile.full_name,
             mobileNumber: profile.mobile_number,
+            countryCode: profile.country_code,
+            countryName: profile.country_name,
             emailConfirmed: profile.email_confirmed,
             avatarUrl: profile.avatar_url,
             createdAt: new Date(profile.created_at),
@@ -249,6 +263,8 @@ export const updateProfile = async (userId: string, profile: Partial<UserProfile
       full_name: profile.fullName,
       mobile_number: profile.mobileNumber,
       avatar_url: profile.avatarUrl,
+      country_code: profile.countryCode,
+      country_name: profile.countryName,
     })
     .eq('user_id', userId);
 };

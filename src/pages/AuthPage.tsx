@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import SignIn from '../components/auth/SignIn';
 import SignUp from '../components/auth/SignUp';
 import { Brain, CheckCircle } from 'lucide-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 
 const AuthPage: React.FC = () => {
-  const [isSignIn, setIsSignIn] = useState(true);
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get('mode') || 'signin';
+  const [isSignIn, setIsSignIn] = useState(mode === 'signin');
   const { isLoggedIn } = useAuthStore();
   
   if (isLoggedIn) {
@@ -31,7 +33,7 @@ const AuthPage: React.FC = () => {
           </div>
           <h1 className="text-3xl font-bold gradient-text">QuizGenius</h1>
           <p className="mt-2 text-center text-gray-600">
-            Join our community of learners
+            {isSignIn ? 'Welcome back!' : 'Join our community of learners'}
           </p>
         </div>
         
