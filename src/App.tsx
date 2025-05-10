@@ -27,7 +27,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 // Quiz route wrapper to handle API key and preferences flow
 const QuizRoute: React.FC = () => {
-  const { apiKey, loadApiKey, preferences, loadPreferences, questions, isLoading } = useQuizStore();
+  const { apiKey, loadApiKey, preferences, loadPreferences, questions } = useQuizStore();
   const { user, isLoggedIn } = useAuthStore();
   const location = useLocation();
 
@@ -38,17 +38,12 @@ const QuizRoute: React.FC = () => {
     }
   }, [user]);
 
-  // Wait for initial data load
-  if (isLoading) {
-    return null; // Or a loading spinner
-  }
-
   if (!isLoggedIn) {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // Only redirect if we've loaded the API key and it's missing
-  if (!isLoading && apiKey === null) {
+  if (apiKey === null) {
     return <Navigate to="/api-settings" replace />;
   }
 
