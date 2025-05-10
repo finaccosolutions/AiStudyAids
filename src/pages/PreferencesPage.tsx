@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
@@ -7,6 +7,7 @@ import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 const PreferencesPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const { preferences, loadPreferences, generateQuiz, isLoading } = useQuizStore();
 
   useEffect(() => {
@@ -19,7 +20,7 @@ const PreferencesPage: React.FC = () => {
     if (!user) return;
     
     await generateQuiz(user.id);
-    navigate('/quiz');
+    navigate('/quiz', { state: { from: '/preferences' } });
   };
 
   if (!user) return null;

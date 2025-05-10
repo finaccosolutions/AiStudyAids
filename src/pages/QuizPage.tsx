@@ -7,7 +7,7 @@ import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import QuizQuestion from '../components/quiz/QuizQuestion';
 import QuizResults from '../components/quiz/QuizResults';
 import { Button } from '../components/ui/Button';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, X } from 'lucide-react';
 
 const QuizPage: React.FC = () => {
   const { user, isLoggedIn } = useAuthStore();
@@ -71,7 +71,12 @@ const QuizPage: React.FC = () => {
   
   const handleChangePreferences = () => {
     resetQuiz();
-    navigate('/quiz');
+    navigate('/preferences');
+  };
+
+  const handleCloseQuiz = () => {
+    resetQuiz();
+    navigate('/preferences');
   };
   
   const renderContent = () => {
@@ -115,6 +120,16 @@ const QuizPage: React.FC = () => {
         
         return (
           <div className="max-w-3xl mx-auto">
+            <div className="flex justify-end mb-4">
+              <Button
+                onClick={handleCloseQuiz}
+                variant="ghost"
+                className="text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <X className="w-5 h-5 mr-2" />
+                Close Quiz
+              </Button>
+            </div>
             <QuizQuestion
               question={currentQuestion}
               questionNumber={currentQuestionIndex + 1}

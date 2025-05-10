@@ -47,8 +47,8 @@ const QuizRoute: React.FC = () => {
     return <Navigate to="/api-settings" replace />;
   }
 
-  // If no questions are loaded, redirect to preferences
-  if (questions.length === 0) {
+  // If no questions are loaded and we're not coming from preferences, redirect to preferences
+  if (questions.length === 0 && location.state?.from !== '/preferences') {
     return <Navigate to="/preferences" replace />;
   }
 
