@@ -39,7 +39,7 @@ const QuizRoute: React.FC = () => {
   }, [user]);
 
   // Wait for initial data load
-  if (isLoading || apiKey === undefined) {
+  if (isLoading) {
     return null; // Or a loading spinner
   }
 
