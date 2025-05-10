@@ -75,6 +75,8 @@ const SignUp: React.FC<SignUpProps> = ({ onToggleForm }) => {
         setErrors({ mobileNumber: 'Mobile number already registered' });
       } else if (err.message.includes('email')) {
         setErrors({ email: 'Email already registered' });
+      } else {
+        setErrors({ submit: err.message || 'Registration failed. Please try again.' });
       }
     }
   };
@@ -260,9 +262,9 @@ const SignUp: React.FC<SignUpProps> = ({ onToggleForm }) => {
           )}
         </div>
         
-        {error && (
+        {(error || errors.submit) && (
           <div className="text-red-500 text-sm font-medium py-2 px-3 bg-red-50 rounded-md">
-            {error}
+            {error || errors.submit}
           </div>
         )}
         

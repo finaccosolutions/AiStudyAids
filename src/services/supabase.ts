@@ -148,18 +148,27 @@ export const signUp = async (
   if (error) throw error;
 
   if (data.user) {
-    // Create profile
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: data.user.id,
-        full_name: fullName,
-        mobile_number: mobileNumber,
-        country_code: countryCode,
-        country_name: countryName
-      });
+    // Call the send-verification function to create profile and send verification email
+    const response = await fetch(`${supabaseUrl}/functions/v1/send-verification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${supabaseAnonKey}`,
+      },
+      body: JSON.stringify({
+        userId: data.user.id,
+        email,
+        name: fullName,
+        mobileNumber,
+        countryCode,
+        countryName,
+      }),
+    });
 
-    if (profileError) throw profileError;
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to create profile');
+    }
   }
 
   return data;

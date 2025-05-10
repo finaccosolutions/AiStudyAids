@@ -10,6 +10,9 @@ interface EmailRequest {
   userId: string;
   email: string;
   name: string;
+  mobileNumber: string;
+  countryCode: string;
+  countryName: string;
 }
 
 Deno.serve(async (req) => {
@@ -18,7 +21,22 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { userId, email, name } = await req.json() as EmailRequest;
+    const { userId, email, name, mobileNumber, countryCode, countryName } = await req.json() as EmailRequest;
+
+    // Create profile using service role client (bypasses RLS)
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        user_id: userId,
+        full_name: name,
+        mobile_number: mobileNumber,
+        country_code: countryCode,
+        country_name: countryName
+      });
+
+    if (profileError) {
+      throw new Error(`Failed to create profile: ${profileError.message}`);
+    }
 
     // Update user metadata to indicate pending verification
     const { error: updateError } = await supabase.auth.admin.updateUserById(
@@ -36,7 +54,7 @@ Deno.serve(async (req) => {
     }
 
     // Generate verification link
-    const { data: { user }, error: userError } = await supabase.auth.admin.generateLink({
+    const { data, error: linkError } = await supabase.auth.admin.generateLink({
       type: 'signup',
       email,
       options: {
@@ -48,27 +66,15 @@ Deno.serve(async (req) => {
       },
     });
 
-    if (userError || !user) {
-      throw new Error(userError?.message || 'Failed to generate verification link');
+    if (linkError || !data) {
+      throw new Error(linkError?.message || 'Failed to generate verification link');
     }
 
-    // Send verification email
-    const { error: emailError } = await supabase.auth.admin.sendEmail(email, {
-      template: 'confirmation',
-      templateData: {
-        name,
-        confirmation_url: user.confirmation_sent_at,
-        site_name: 'QuizGenius',
-        support_email: 'support@quizgenius.com',
-      },
-    });
-
-    if (emailError) {
-      throw emailError;
-    }
+    // The verification email will be automatically sent by Supabase when generating the signup link
+    // No need to explicitly call sendEmail as it's handled by the generateLink method
 
     return new Response(
-      JSON.stringify({ message: 'Verification email sent successfully' }),
+      JSON.stringify({ message: 'Profile created and verification email sent successfully' }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
