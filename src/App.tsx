@@ -43,9 +43,9 @@ const QuizRoute: React.FC = () => {
   }
 
   // Only redirect if we've loaded the API key and it's missing
-  if (apiKey === null) {
-    return <Navigate to="/api-settings" replace />;
-  }
+   // if (apiKey === null) {
+   //   return <Navigate to="/api-settings" replace />;
+   // }
 
   // If no questions are loaded and we're not coming from preferences, redirect to preferences
   if (questions.length === 0 && location.state?.from !== '/preferences') {
