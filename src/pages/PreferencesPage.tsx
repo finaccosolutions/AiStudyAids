@@ -7,7 +7,7 @@ import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 const PreferencesPage: React.FC = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
-  const { preferences, loadPreferences, savePreferences, generateQuiz, isLoading } = useQuizStore();
+  const { preferences, loadPreferences, generateQuiz, isLoading } = useQuizStore();
 
   useEffect(() => {
     if (user) {
@@ -15,10 +15,9 @@ const PreferencesPage: React.FC = () => {
     }
   }, [user]);
 
-  const handleGenerateQuiz = async () => {
+  const handleStartQuiz = async () => {
     if (!user) return;
     
-    // Save preferences and generate quiz in sequence
     await generateQuiz(user.id);
     navigate('/quiz');
   };
@@ -30,11 +29,10 @@ const PreferencesPage: React.FC = () => {
       <QuizPreferencesForm
         userId={user.id}
         initialPreferences={preferences || defaultPreferences}
-        onGenerate={handleGenerateQuiz}
-        isLoading={isLoading}
+        onSave={handleStartQuiz}
       />
     </div>
   );
 };
 
-export default PreferencesPage
+export default PreferencesPage;

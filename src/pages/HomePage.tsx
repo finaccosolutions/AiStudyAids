@@ -1,13 +1,21 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/Button';
 import { Brain, CheckCircle, LightbulbIcon, User, ArrowRight, Star, Sparkles, Trophy } from 'lucide-react';
 
 const HomePage: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
-  
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  const handleStartLearning = () => {
+    if (isLoggedIn) {
+      navigate('/quiz');
+    } else {
+      navigate('/auth', { state: { from: location } });
+    }
+  };
   
   return (
     <div className="flex flex-col items-center">
@@ -34,7 +42,7 @@ const HomePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
           <Button 
             size="lg" 
-            onClick={() => window.location.href = '/auth'}
+            onClick={handleStartLearning}
             className="group"
           >
             Start Learning Now
@@ -83,7 +91,7 @@ const HomePage: React.FC = () => {
               Join thousands of learners who are already using QuizGenius to master new subjects.
             </p>
             <Button
-              onClick={() => window.location.href = '/auth'}
+              onClick={handleStartLearning}
               className="bg-white text-purple-700 hover:bg-purple-50 group"
             >
               Sign Up Free
