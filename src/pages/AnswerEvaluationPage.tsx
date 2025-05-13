@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useStudyAidsStore } from '../store/useStudyAidsStore';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
@@ -13,6 +13,7 @@ import {
   FileQuestion, PenTool, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '../services/supabase';
 
 interface EvaluationResult {
   id: string;
@@ -44,6 +45,30 @@ const AnswerEvaluationPage: React.FC = () => {
   const [questionType, setQuestionType] = useState('multiple-choice');
   const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
   const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadApiKey = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('api_keys')
+          .select('gemini_api_key')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) throw error;
+        if (data) setApiKey(data.gemini_api_key);
+      } catch (error) {
+        console.error('Error loading API key:', error);
+        setError('Failed to load API key. Please check your API settings.');
+      }
+    };
+
+    loadApiKey();
+  }, [user]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -65,16 +90,22 @@ const AnswerEvaluationPage: React.FC = () => {
     }
   }, []);
 
-  const handleGenerateQuestions = async () => {
+  const handleGenerateQuestions = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!user) return;
 
+    setError(null);
     try {
-      // Call the edge function to generate questions
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           subject,
@@ -86,25 +117,38 @@ const AnswerEvaluationPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate questions');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      if (!data.questions || !Array.isArray(data.questions)) {
+        throw new Error('Invalid response format');
+      }
+
       setGeneratedQuestions(data.questions);
     } catch (error) {
       console.error('Error generating questions:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate questions');
     }
   };
 
   const handleRegenerateQuestion = async (index: number) => {
+    if (!user) return;
+
     setRegeneratingIndex(index);
+    setError(null);
     try {
-      // Call the edge function to regenerate a single question
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-questions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           subject,
@@ -116,15 +160,21 @@ const AnswerEvaluationPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to regenerate question');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
+      if (!data.questions || !Array.isArray(data.questions)) {
+        throw new Error('Invalid response format');
+      }
+
       const newQuestions = [...generatedQuestions];
       newQuestions[index] = data.questions[0];
       setGeneratedQuestions(newQuestions);
     } catch (error) {
       console.error('Error regenerating question:', error);
+      setError(error instanceof Error ? error.message : 'Failed to regenerate question');
     } finally {
       setRegeneratingIndex(null);
     }
@@ -152,8 +202,32 @@ const AnswerEvaluationPage: React.FC = () => {
     }));
   };
 
+  if (!apiKey) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-yellow-700">
+            <AlertTriangle className="w-5 h-5" />
+            <p className="font-medium">
+              Please set up your Gemini API key in the API Settings page before generating questions.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertTriangle className="w-5 h-5" />
+            <p className="font-medium">{error}</p>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
@@ -540,7 +614,8 @@ const AnswerEvaluationPage: React.FC = () => {
             <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
               <div className="flex items-center gap-3">
                 <BarChart className="h-6 w-6 text-purple-600" />
-                <h2 className="text-xl font-semibold">Recent Evaluations</h2>
+                <h2 className="text-xl font-semibold">Recent Evalu
+ations</h2>
               </div>
             </CardHeader>
             
@@ -717,7 +792,7 @@ const AnswerEvaluationPage: React.FC = () => {
                   </motion.div>
                 ))}
 
-                {evaluations.length === 0 && (
+                {evaluations.length === 0  && (
                   <div className="text-center py-12">
                     <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
