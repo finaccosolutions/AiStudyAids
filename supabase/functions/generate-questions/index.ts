@@ -7,6 +7,7 @@ interface GenerateRequest {
   questionCount: number;
   difficulty: string;
   questionType: string;
+  mode?: 'practice' | 'exam';
 }
 
 Deno.serve(async (req) => {
@@ -48,11 +49,11 @@ Deno.serve(async (req) => {
       .eq('user_id', user.id)
       .single();
 
-    if (apiKeyError || !apiKeyData) {
-      throw new Error('Gemini API key not found for user');
+    if (apiKeyError || !apiKeyData?.gemini_api_key) {
+      throw new Error('Gemini API key not found. Please set up your API key in the API Settings page.');
     }
 
-    const { subject, topic, questionCount, difficulty, questionType } = await req.json() as GenerateRequest;
+    const { subject, topic, questionCount, difficulty, questionType, mode = 'practice' } = await req.json() as GenerateRequest;
 
     // Validate required parameters
     if (!subject || !topic || !questionCount || !difficulty || !questionType) {
@@ -108,14 +109,14 @@ Requirements:
 
 Return the questions as a JSON array.`;
 
-    // Call Gemini API with error handling
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
+    // Call Gemini API with error handling and proper API key
+    const geminiResponse = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKeyData.gemini_api_key}`,
+          'x-goog-api-key': apiKeyData.gemini_api_key,
         },
         body: JSON.stringify({
           contents: [{
@@ -133,16 +134,19 @@ Return the questions as a JSON array.`;
       }
     );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
+    if (!geminiResponse.ok) {
+      const errorData = await geminiResponse.json().catch(() => null);
+      if (geminiResponse.status === 401) {
+        throw new Error('Invalid Gemini API key. Please check your API key in the API Settings page.');
+      }
       throw new Error(
-        `Gemini API error: ${response.status} ${response.statusText}${
+        `Gemini API error: ${geminiResponse.status} ${geminiResponse.statusText}${
           errorData ? ` - ${JSON.stringify(errorData)}` : ''
         }`
       );
     }
 
-    const data = await response.json();
+    const data = await geminiResponse.json();
     
     try {
       // Extract and validate JSON from response
@@ -169,8 +173,18 @@ Return the questions as a JSON array.`;
         }
       });
 
+      // If in exam mode, remove answers and explanations
+      const processedQuestions = questions.map(q => {
+        if (mode === 'exam') {
+          // Create a copy without answers
+          const { correctAnswer, explanation, ...questionWithoutAnswers } = q;
+          return questionWithoutAnswers;
+        }
+        return q;
+      });
+
       return new Response(
-        JSON.stringify({ questions }),
+        JSON.stringify({ questions: processedQuestions }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
@@ -181,13 +195,16 @@ Return the questions as a JSON array.`;
   } catch (error) {
     console.error('Error in generate-questions function:', error);
     
+    const status = error.message.includes('Missing authorization') ? 401 :
+                  error.message.includes('API key') ? 400 : 500;
+    
     return new Response(
       JSON.stringify({ 
         error: error.message,
         timestamp: new Date().toISOString()
       }),
       {
-        status: error.message.includes('Missing authorization') ? 401 : 500,
+        status,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
