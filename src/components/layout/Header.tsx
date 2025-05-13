@@ -2,10 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { 
-  Brain, ChevronDown, LogOut, User, BookOpen, 
+  ChevronDown, LogOut, User, BookOpen, 
   Home, Settings, GraduationCap, FileQuestion, 
-  PenTool, NotebookText, Calendar, LineChart, 
-  MessageSquare 
+  PenTool, NotebookText, Calendar, LineChart,
+  Brain, Menu, Key, Heart, Lock
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,7 +13,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Header: React.FC = () => {
   const { user, logout, isLoggedIn } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -21,6 +23,9 @@ const Header: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
       }
     };
     
@@ -46,14 +51,20 @@ const Header: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
+  const studyAids = [
+    { path: '/quiz', icon: Brain, label: 'AI Quiz' },
     { path: '/question-bank', icon: FileQuestion, label: 'Question Bank' },
     { path: '/answer-evaluation', icon: PenTool, label: 'Answer Evaluation' },
     { path: '/notes', icon: NotebookText, label: 'Smart Notes' },
     { path: '/study-plan', icon: Calendar, label: 'Study Planner' },
     { path: '/progress', icon: LineChart, label: 'Progress' },
-    { path: '/chat', icon: MessageSquare, label: 'Chat Assistant' },
+  ];
+
+  const profileMenuItems = [
+    { path: '/profile', icon: User, label: 'My Profile' },
+    { path: '/api-settings', icon: Key, label: 'API Settings' },
+    { path: '/favorites', icon: Heart, label: 'Favorite Questions' },
+    { path: '/change-password', icon: Lock, label: 'Change Password' },
   ];
   
   return (
@@ -71,20 +82,59 @@ const Header: React.FC = () => {
           </Link>
           
           <nav className="hidden md:flex items-center space-x-6">
-            {isLoggedIn && navItems.map((item) => (
-              <Link 
-                key={item.path}
-                to={item.path} 
-                className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 ${
-                  isActive(item.path) 
-                    ? 'text-purple-700 bg-purple-50' 
-                    : 'hover:text-purple-700 hover:bg-purple-50/50'
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {isLoggedIn && (
+              <>
+                <Link 
+                  to="/"
+                  className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 ${
+                    isActive('/') 
+                      ? 'text-purple-700 bg-purple-50' 
+                      : 'hover:text-purple-700 hover:bg-purple-50/50'
+                  }`}
+                >
+                  <Home className="w-4 h-4" />
+                  <span>Home</span>
+                </Link>
+
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 ${
+                      showMenu ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Study Aids</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showMenu ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 border border-purple-100"
+                      >
+                        {studyAids.map((item) => (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 transition-colors ${
+                              isActive(item.path) ? 'text-purple-700 bg-purple-50' : 'text-gray-700'
+                            }`}
+                            onClick={() => setShowMenu(false)}
+                          >
+                            <item.icon className="w-4 h-4" />
+                            <span>{item.label}</span>
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </>
+            )}
           </nav>
           
           <div className="relative" ref={dropdownRef}>
@@ -93,6 +143,11 @@ const Header: React.FC = () => {
               className="flex items-center space-x-2 hover:bg-purple-100 group transition-all duration-300"
               onClick={() => setShowDropdown(!showDropdown)}
             >
+              {isLoggedIn && user?.profile && (
+                <span className="text-sm font-medium text-gray-700 mr-2">
+                  {user.profile.fullName}
+                </span>
+              )}
               <User className="h-5 w-5 group-hover:scale-110 transition-transform" />
               <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${showDropdown ? 'rotate-180' : ''} group-hover:text-purple-600`} />
             </Button>
@@ -104,20 +159,26 @@ const Header: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 border border-purple-100"
+                  className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-1 border border-purple-100"
                 >
                   {isLoggedIn ? (
                     <>
                       <div className="px-4 py-2 border-b border-purple-100">
                         <div className="text-sm font-medium text-gray-900">{user?.email}</div>
                       </div>
-                      <Link
-                        to="/api-settings"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
-                      >
-                        <Settings className="inline-block w-4 h-4 mr-2" />
-                        API Settings
-                      </Link>
+                      
+                      {profileMenuItems.map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                          onClick={() => setShowDropdown(false)}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      ))}
+                      
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center space-x-2 transition-all duration-300"

@@ -3,9 +3,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/Button';
 import { 
-  Brain, ArrowRight, Sparkles, GraduationCap, 
+  Brain, GraduationCap, 
   FileQuestion, PenTool, BookOpen, Calendar, 
-  LineChart, MessageSquare, Rocket, Target,
+  LineChart, Rocket, Target,
   Award, Users, Zap, CheckCircle
 } from 'lucide-react';
 
@@ -14,9 +14,9 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleStartLearning = () => {
+  const handleGetStarted = () => {
     if (isLoggedIn) {
-      navigate('/question-bank');
+      navigate('/quiz');
     } else {
       navigate('/auth', { state: { from: location } });
     }
@@ -24,7 +24,15 @@ const HomePage: React.FC = () => {
 
   const studyAids = [
     {
-      title: 'AI Question Bank',
+      title: 'AI Quiz',
+      description: 'Generate personalized quizzes with intelligent question generation and adaptive difficulty.',
+      icon: Brain,
+      path: '/quiz',
+      color: 'from-violet-500 to-purple-400',
+      hoverEffect: 'hover:shadow-violet-200'
+    },
+    {
+      title: 'Question Bank',
       description: 'Generate comprehensive question banks from text or PDFs with intelligent analysis.',
       icon: FileQuestion,
       path: '/question-bank',
@@ -62,37 +70,33 @@ const HomePage: React.FC = () => {
       path: '/progress',
       color: 'from-rose-500 to-pink-400',
       hoverEffect: 'hover:shadow-rose-200'
-    },
-    {
-      title: 'AI Chat Assistant',
-      description: 'Get instant help and explanations from your personal AI tutor.',
-      icon: MessageSquare,
-      path: '/chat',
-      color: 'from-teal-500 to-cyan-400',
-      hoverEffect: 'hover:shadow-teal-200'
     }
   ];
 
   const features = [
     {
       icon: Rocket,
-      title: 'Personalized Learning',
-      description: 'Adaptive study paths tailored to your pace and style'
+      title: 'AI-Powered Learning',
+      description: 'Advanced algorithms create personalized study paths',
+      color: 'from-blue-500 to-indigo-500'
     },
     {
       icon: Target,
       title: 'Smart Assessment',
-      description: 'AI-powered evaluation with detailed feedback'
+      description: 'Detailed feedback and performance analysis',
+      color: 'from-green-500 to-teal-500'
     },
     {
       icon: Award,
-      title: 'Track Progress',
-      description: 'Comprehensive analytics to monitor improvement'
+      title: 'Progress Tracking',
+      description: 'Visual analytics and achievement milestones',
+      color: 'from-purple-500 to-pink-500'
     },
     {
       icon: Users,
-      title: 'Community Support',
-      description: 'Connect with peers and share resources'
+      title: 'Personalized Experience',
+      description: 'Adapts to your learning style and pace',
+      color: 'from-orange-500 to-red-500'
     }
   ];
   
@@ -117,17 +121,6 @@ const HomePage: React.FC = () => {
           Transform your learning experience with intelligent study tools. 
           Get personalized guidance, instant feedback, and comprehensive analytics.
         </p>
-        
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button 
-            size="lg" 
-            onClick={handleStartLearning}
-            className="group bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
-          >
-            Start Learning Now
-            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-          </Button>
-        </div>
       </div>
 
       {/* Study Aids Grid */}
@@ -137,10 +130,9 @@ const HomePage: React.FC = () => {
             <button
               key={aid.path}
               onClick={() => isLoggedIn ? navigate(aid.path) : navigate('/auth')}
-              className={`group relative overflow-hidden rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.02] ${aid.hoverEffect}`}
+              className={`group relative overflow-hidden rounded-2xl p-8 transition-all duration-300 transform hover:scale-[1.02] bg-white border border-gray-100 shadow-lg ${aid.hoverEffect}`}
             >
-              <div className="absolute inset-0 bg-gradient-to-br opacity-10 group-hover:opacity-15 transition-opacity" />
-              <div className={`absolute inset-0 bg-gradient-to-br ${aid.color} opacity-10 group-hover:opacity-15 transition-opacity`} />
+              <div className={`absolute inset-0 bg-gradient-to-br ${aid.color} opacity-5 group-hover:opacity-10 transition-opacity`} />
               
               <div className="relative">
                 <div className={`bg-gradient-to-br ${aid.color} p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform`}>
@@ -174,9 +166,10 @@ const HomePage: React.FC = () => {
             {features.map((feature, index) => (
               <div 
                 key={index}
-                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
+                className="relative overflow-hidden rounded-2xl p-8 bg-white shadow-lg border border-gray-100 transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
               >
-                <div className="bg-gradient-to-br from-purple-500 to-indigo-500 p-3 rounded-lg w-fit mb-4">
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-5`} />
+                <div className={`bg-gradient-to-br ${feature.color} p-3 rounded-xl w-fit mb-4`}>
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
@@ -196,7 +189,7 @@ const HomePage: React.FC = () => {
               Join thousands of students who are already experiencing the power of AI-assisted learning.
             </p>
             <Button
-              onClick={() => navigate(isLoggedIn ? '/question-bank' : '/auth')}
+              onClick={handleGetStarted}
               className="bg-white text-purple-700 hover:bg-purple-50 group"
             >
               <Zap className="w-5 h-5 mr-2" />
