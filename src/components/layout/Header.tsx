@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
-import { Brain, ChevronDown, LogOut, User, BookOpen, Home, Settings } from 'lucide-react';
+import { 
+  Brain, ChevronDown, LogOut, User, BookOpen, 
+  Home, Settings, GraduationCap, FileQuestion, 
+  PenTool, NotebookText, Calendar, LineChart, 
+  MessageSquare 
+} from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -40,6 +45,16 @@ const Header: React.FC = () => {
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  const navItems = [
+    { path: '/', icon: Home, label: 'Home' },
+    { path: '/question-bank', icon: FileQuestion, label: 'Question Bank' },
+    { path: '/answer-evaluation', icon: PenTool, label: 'Answer Evaluation' },
+    { path: '/notes', icon: NotebookText, label: 'Smart Notes' },
+    { path: '/study-plan', icon: Calendar, label: 'Study Planner' },
+    { path: '/progress', icon: LineChart, label: 'Progress' },
+    { path: '/chat', icon: MessageSquare, label: 'Chat Assistant' },
+  ];
   
   return (
     <header className="bg-gradient-to-r from-purple-100 to-indigo-100 sticky top-0 z-50 border-b border-purple-200 shadow-sm">
@@ -47,7 +62,7 @@ const Header: React.FC = () => {
         <div className="flex justify-between h-16 items-center">
           <Link to="/" className="flex items-center space-x-2 group">
             <div className="relative">
-              <Brain className="h-8 w-8 text-purple-600 transition-all duration-300 group-hover:scale-110" />
+              <GraduationCap className="h-8 w-8 text-purple-600 transition-all duration-300 group-hover:scale-110" />
               <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-xl transition-all duration-300 group-hover:blur-2xl" />
             </div>
             <span className="text-xl font-bold gradient-text">
@@ -55,38 +70,21 @@ const Header: React.FC = () => {
             </span>
           </Link>
           
-          <nav className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 ${
-                isActive('/') ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
-              }`}
-            >
-              <Home className="w-4 h-4 inline-block mr-1" />
-              Home
-            </Link>
-            {isLoggedIn && (
-              <>
-                <Link 
-                  to="/preferences" 
-                  className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 ${
-                    isActive('/preferences') ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
-                  }`}
-                >
-                  <BookOpen className="w-4 h-4 inline-block mr-1" />
-                  Quiz Preferences
-                </Link>
-                <Link 
-                  to="/api-settings" 
-                  className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 ${
-                    isActive('/api-settings') ? 'text-purple-700 bg-purple-50' : 'hover:text-purple-700 hover:bg-purple-50/50'
-                  }`}
-                >
-                  <Settings className="w-4 h-4 inline-block mr-1" />
-                  API Settings
-                </Link>
-              </>
-            )}
+          <nav className="hidden md:flex items-center space-x-6">
+            {isLoggedIn && navItems.map((item) => (
+              <Link 
+                key={item.path}
+                to={item.path} 
+                className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 ${
+                  isActive(item.path) 
+                    ? 'text-purple-700 bg-purple-50' 
+                    : 'hover:text-purple-700 hover:bg-purple-50/50'
+                }`}
+              >
+                <item.icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </Link>
+            ))}
           </nav>
           
           <div className="relative" ref={dropdownRef}>
@@ -113,6 +111,13 @@ const Header: React.FC = () => {
                       <div className="px-4 py-2 border-b border-purple-100">
                         <div className="text-sm font-medium text-gray-900">{user?.email}</div>
                       </div>
+                      <Link
+                        to="/api-settings"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                      >
+                        <Settings className="inline-block w-4 h-4 mr-2" />
+                        API Settings
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700 flex items-center space-x-2 transition-all duration-300"

@@ -5,7 +5,8 @@ import { Button } from '../components/ui/Button';
 import { 
   Brain, ArrowRight, Sparkles, GraduationCap, 
   FileQuestion, PenTool, BookOpen, Calendar, 
-  LineChart, MessageSquare 
+  LineChart, MessageSquare, Rocket, Target,
+  Award, Users, Zap, CheckCircle
 } from 'lucide-react';
 
 const HomePage: React.FC = () => {
@@ -15,7 +16,7 @@ const HomePage: React.FC = () => {
 
   const handleStartLearning = () => {
     if (isLoggedIn) {
-      navigate('/quiz');
+      navigate('/question-bank');
     } else {
       navigate('/auth', { state: { from: location } });
     }
@@ -23,53 +24,82 @@ const HomePage: React.FC = () => {
 
   const studyAids = [
     {
-      title: 'AI Quiz Generator',
-      description: 'Create personalized quizzes with instant feedback and explanations.',
-      icon: Brain,
-      path: '/quiz',
-      color: 'text-purple-600 bg-purple-100'
-    },
-    {
-      title: 'Question Bank',
-      description: 'Generate comprehensive question banks from text or PDFs.',
+      title: 'AI Question Bank',
+      description: 'Generate comprehensive question banks from text or PDFs with intelligent analysis.',
       icon: FileQuestion,
       path: '/question-bank',
-      color: 'text-blue-600 bg-blue-100'
+      color: 'from-blue-500 to-cyan-400',
+      hoverEffect: 'hover:shadow-blue-200'
     },
     {
       title: 'Answer Evaluation',
-      description: 'Get detailed feedback on your written answers using AI.',
+      description: 'Get detailed feedback on your written answers using advanced AI analysis.',
       icon: PenTool,
       path: '/answer-evaluation',
-      color: 'text-green-600 bg-green-100'
+      color: 'from-green-500 to-emerald-400',
+      hoverEffect: 'hover:shadow-green-200'
     },
     {
       title: 'Smart Notes',
-      description: 'Generate summaries, mind maps, and study materials.',
+      description: 'Generate summaries, mind maps, and interactive study materials.',
       icon: BookOpen,
       path: '/notes',
-      color: 'text-amber-600 bg-amber-100'
+      color: 'from-purple-500 to-indigo-400',
+      hoverEffect: 'hover:shadow-purple-200'
     },
     {
       title: 'Study Planner',
-      description: 'Create personalized study schedules based on your syllabus.',
+      description: 'Create personalized study schedules optimized for your learning goals.',
       icon: Calendar,
       path: '/study-plan',
-      color: 'text-indigo-600 bg-indigo-100'
+      color: 'from-orange-500 to-amber-400',
+      hoverEffect: 'hover:shadow-orange-200'
     },
     {
       title: 'Progress Tracker',
-      description: 'Monitor your learning progress and identify areas for improvement.',
+      description: 'Monitor your learning journey with detailed analytics and insights.',
       icon: LineChart,
       path: '/progress',
-      color: 'text-rose-600 bg-rose-100'
+      color: 'from-rose-500 to-pink-400',
+      hoverEffect: 'hover:shadow-rose-200'
+    },
+    {
+      title: 'AI Chat Assistant',
+      description: 'Get instant help and explanations from your personal AI tutor.',
+      icon: MessageSquare,
+      path: '/chat',
+      color: 'from-teal-500 to-cyan-400',
+      hoverEffect: 'hover:shadow-teal-200'
+    }
+  ];
+
+  const features = [
+    {
+      icon: Rocket,
+      title: 'Personalized Learning',
+      description: 'Adaptive study paths tailored to your pace and style'
+    },
+    {
+      icon: Target,
+      title: 'Smart Assessment',
+      description: 'AI-powered evaluation with detailed feedback'
+    },
+    {
+      icon: Award,
+      title: 'Track Progress',
+      description: 'Comprehensive analytics to monitor improvement'
+    },
+    {
+      icon: Users,
+      title: 'Community Support',
+      description: 'Connect with peers and share resources'
     }
   ];
   
   return (
     <div className="flex flex-col items-center">
+      {/* Hero Section */}
       <div className="text-center max-w-4xl mx-auto relative mb-16">
-        {/* Decorative elements */}
         <div className="absolute -top-20 -left-20 w-40 h-40 bg-purple-200 rounded-full blur-3xl opacity-20" />
         <div className="absolute -top-10 right-0 w-32 h-32 bg-indigo-200 rounded-full blur-3xl opacity-20" />
         
@@ -79,67 +109,104 @@ const HomePage: React.FC = () => {
         </div>
         
         <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 mb-6">
-          Your Personal <br />
-          <span className="gradient-text">Study Assistant</span>
+          Your AI-Powered <br />
+          <span className="gradient-text">Learning Companion</span>
         </h1>
         
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Transform your learning experience with AI-powered study tools. 
-          Get personalized quizzes, smart feedback, and organized study plans.
+          Transform your learning experience with intelligent study tools. 
+          Get personalized guidance, instant feedback, and comprehensive analytics.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button 
             size="lg" 
             onClick={handleStartLearning}
-            className="group"
+            className="group bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90"
           >
             Start Learning Now
             <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
           </Button>
         </div>
       </div>
-      
-      <div className="max-w-7xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-        {studyAids.map((aid) => (
-          <button
-            key={aid.path}
-            onClick={() => isLoggedIn ? navigate(aid.path) : navigate('/auth')}
-            className="feature-card text-left group cursor-pointer"
-          >
-            <div className={`${aid.color} p-3 rounded-full w-fit mb-4 group-hover:scale-110 transition-transform`}>
-              <aid.icon className="h-6 w-6" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 group-hover:text-purple-600 transition-colors">
-              {aid.title}
-            </h3>
-            <p className="text-gray-600">
-              {aid.description}
-            </p>
-          </button>
-        ))}
+
+      {/* Study Aids Grid */}
+      <div className="w-full max-w-7xl mx-auto px-4 mb-16">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {studyAids.map((aid) => (
+            <button
+              key={aid.path}
+              onClick={() => isLoggedIn ? navigate(aid.path) : navigate('/auth')}
+              className={`group relative overflow-hidden rounded-2xl p-6 transition-all duration-300 transform hover:scale-[1.02] ${aid.hoverEffect}`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br opacity-10 group-hover:opacity-15 transition-opacity" />
+              <div className={`absolute inset-0 bg-gradient-to-br ${aid.color} opacity-10 group-hover:opacity-15 transition-opacity`} />
+              
+              <div className="relative">
+                <div className={`bg-gradient-to-br ${aid.color} p-3 rounded-xl w-fit mb-4 group-hover:scale-110 transition-transform`}>
+                  <aid.icon className="h-6 w-6 text-white" />
+                </div>
+                
+                <h3 className="text-xl font-semibold mb-3 text-gray-900 group-hover:text-purple-600 transition-colors">
+                  {aid.title}
+                </h3>
+                
+                <p className="text-gray-600">
+                  {aid.description}
+                </p>
+              </div>
+            </button>
+          ))}
+        </div>
       </div>
-      
-      <div className="w-full max-w-6xl mx-auto mb-16">
-        <div className="gradient-bg rounded-2xl shadow-xl p-8 sm:p-12 text-white relative overflow-hidden group">
+
+      {/* Features Section */}
+      <div className="w-full bg-gradient-to-b from-purple-50 to-white py-16">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Why Choose QuizGenius?</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Experience the future of learning with our comprehensive suite of AI-powered tools
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <div 
+                key={index}
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300"
+              >
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-500 p-3 rounded-lg w-fit mb-4">
+                  <feature.icon className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Call to Action */}
+      <div className="w-full max-w-6xl mx-auto px-4 mb-16">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-xl p-8 sm:p-12 text-white relative overflow-hidden">
           <div className="relative z-10">
-            <h2 className="text-3xl font-bold mb-4">Need help with your studies?</h2>
+            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Learning?</h2>
             <p className="text-purple-100 mb-6 max-w-xl">
-              Chat with our AI tutor to get instant answers to your questions and personalized learning support.
+              Join thousands of students who are already experiencing the power of AI-assisted learning.
             </p>
             <Button
-              onClick={() => navigate(isLoggedIn ? '/chat' : '/auth')}
+              onClick={() => navigate(isLoggedIn ? '/question-bank' : '/auth')}
               className="bg-white text-purple-700 hover:bg-purple-50 group"
             >
-              <MessageSquare className="w-5 h-5 mr-2" />
-              Start Chatting
+              <Zap className="w-5 h-5 mr-2" />
+              Get Started Free
             </Button>
           </div>
           
-          {/* Animated background elements */}
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 backdrop-blur-3xl group-hover:scale-105 transition-transform duration-500" />
-          <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/10  rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
-          <div className="absolute -left-10 -top-10 w-40 h-40 bg-purple-400/20 rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-indigo-600/20 backdrop-blur-3xl" />
+          <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-white/10 rounded-full blur-2xl" />
+          <div className="absolute -left-10 -top-10 w-40 h-40 bg-purple-400/20 rounded-full blur-2xl" />
         </div>
       </div>
     </div>

@@ -30,7 +30,7 @@ const ProgressTrackerPage: React.FC = () => {
           .from('progress_stats')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
         setStats(data);
