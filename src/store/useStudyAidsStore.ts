@@ -167,9 +167,27 @@ export const useStudyAidsStore = create<StudyAidsState>((set, get) => ({
   createStudyPlan: async (userId, data) => {
     set({ isLoading: true, error: null });
     try {
+      const { 
+        examDate,
+        startDate,
+        dailyHours,
+        topics, // Extract topics from the data
+        ...rest
+      } = data;
+
+      // Create the correct structure for the database
+      const dbData = {
+        user_id: userId,
+        exam_date: examDate,
+        start_date: startDate,
+        daily_hours: dailyHours,
+        syllabus: { topics }, // Wrap topics in syllabus object
+        ...rest
+      };
+
       const { error } = await supabase
         .from('study_plans')
-        .insert({ user_id: userId, ...data });
+        .insert(dbData);
         
       if (error) throw error;
       get().loadStudyPlans(userId);

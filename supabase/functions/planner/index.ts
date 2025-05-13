@@ -109,8 +109,15 @@ Format the response as a JSON object with:
 
     try {
       const plan = JSON.parse(data.candidates[0].content.parts[0].text);
+      
+      // Convert dailyHours to daily_hours for database compatibility
+      const dbPlan = {
+        ...plan,
+        daily_hours: dailyHours
+      };
+      
       return new Response(
-        JSON.stringify(plan),
+        JSON.stringify(dbPlan),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
