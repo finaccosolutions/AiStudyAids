@@ -9,7 +9,8 @@ import {
   Upload, FileText, CheckCircle2, AlertTriangle, 
   BarChart, Download, Eye, Clock, Brain, 
   Loader2, BookOpen, GraduationCap, Target,
-  ChevronDown, ChevronUp, Sparkles
+  ChevronDown, ChevronUp, Sparkles, Plus,
+  FileQuestion, PenTool, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -32,12 +33,17 @@ const AnswerEvaluationPage: React.FC = () => {
   const { createEvaluation, evaluations, isLoading } = useStudyAidsStore();
   const [file, setFile] = useState<File | null>(null);
   const [questionPaper, setQuestionPaper] = useState<File | null>(null);
-  const [evaluationMode, setEvaluationMode] = useState<'upload' | 'generate'>('upload');
+  const [mode, setMode] = useState<'generate' | 'evaluate'>('generate');
   const [dragActive, setDragActive] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationResult | null>(null);
   const [showDetails, setShowDetails] = useState<Record<string, boolean>>({});
   const [subject, setSubject] = useState('');
   const [topic, setTopic] = useState('');
+  const [questionCount, setQuestionCount] = useState(5);
+  const [difficulty, setDifficulty] = useState('medium');
+  const [questionType, setQuestionType] = useState('multiple-choice');
+  const [generatedQuestions, setGeneratedQuestions] = useState<any[]>([]);
+  const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -59,9 +65,74 @@ const AnswerEvaluationPage: React.FC = () => {
     }
   }, []);
 
+  const handleGenerateQuestions = async () => {
+    if (!user) return;
+
+    try {
+      // Call the edge function to generate questions
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          subject,
+          topic,
+          questionCount,
+          difficulty,
+          questionType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate questions');
+      }
+
+      const data = await response.json();
+      setGeneratedQuestions(data.questions);
+    } catch (error) {
+      console.error('Error generating questions:', error);
+    }
+  };
+
+  const handleRegenerateQuestion = async (index: number) => {
+    setRegeneratingIndex(index);
+    try {
+      // Call the edge function to regenerate a single question
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-questions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          subject,
+          topic,
+          questionCount: 1,
+          difficulty,
+          questionType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to regenerate question');
+      }
+
+      const data = await response.json();
+      const newQuestions = [...generatedQuestions];
+      newQuestions[index] = data.questions[0];
+      setGeneratedQuestions(newQuestions);
+    } catch (error) {
+      console.error('Error regenerating question:', error);
+    } finally {
+      setRegeneratingIndex(null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !file || (evaluationMode === 'upload' && !questionPaper)) return;
+    if (!user || !file) return;
 
     const formData = new FormData();
     formData.append('answerSheet', file);
@@ -90,26 +161,230 @@ const AnswerEvaluationPage: React.FC = () => {
             Answer Sheet Evaluation
           </h1>
           <p className="mt-2 text-gray-600">
-            Get detailed feedback and analysis on your answers using AI
+            Generate question papers and evaluate answer sheets using AI
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Upload Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Card className="overflow-hidden">
+        {/* Mode Selection */}
+        <Card>
+          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
+            <div className="flex items-center gap-3">
+              <Brain className="h-6 w-6 text-purple-600" />
+              <h2 className="text-xl font-semibold">Choose Mode</h2>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="grid grid-cols-2 gap-4">
+              <motion.button
+                onClick={() => setMode('generate')}
+                className={`p-6 rounded-xl border-2 transition-all duration-300 ${
+                  mode === 'generate' 
+                    ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
+                    : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
+                }`}
+                whileHover={{ scale: mode === 'generate' ? 1.02 : 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FileQuestion className={`w-8 h-8 mx-auto mb-3 transition-colors duration-300 ${
+                  mode === 'generate' ? 'text-purple-600' : 'text-gray-400'
+                }`} />
+                <span className="block text-sm font-medium">Generate Questions</span>
+                <p className="text-xs text-gray-500 mt-2">
+                  Create a new question paper
+                </p>
+              </motion.button>
+
+              <motion.button
+                onClick={() => setMode('evaluate')}
+                className={`p-6 rounded-xl border-2 transition-all duration-300 ${
+                  mode === 'evaluate' 
+                    ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
+                    : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
+                }`}
+                whileHover={{ scale: mode === 'evaluate' ? 1.02 : 1.05 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <PenTool className={`w-8 h-8 mx-auto mb-3 transition-colors duration-300 ${
+                  mode === 'evaluate' ? 'text-purple-600' : 'text-gray-400'
+                }`} />
+                <span className="block text-sm font-medium">Evaluate Answers</span>
+                <p className="text-xs text-gray-500 mt-2">
+                  Upload and evaluate answer sheets
+                </p>
+              </motion.button>
+            </div>
+          </CardBody>
+        </Card>
+
+        {mode === 'generate' ? (
+          <Card>
             <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
               <div className="flex items-center gap-3">
-                <Brain className="h-6 w-6 text-purple-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Start Evaluation</h2>
+                <FileQuestion className="h-6 w-6 text-purple-600" />
+                <h2 className="text-xl font-semibold">Generate Questions</h2>
               </div>
             </CardHeader>
-            
+            <CardBody>
+              <form onSubmit={handleGenerateQuestions} className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Subject
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="e.g., Computer Science"
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Topic
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="e.g., Data Structures"
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Number of Questions
+                    </label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={questionCount}
+                      onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                      required
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Difficulty
+                    </label>
+                    <Select
+                      value={difficulty}
+                      onChange={(e) => setDifficulty(e.target.value)}
+                      options={[
+                        { value: 'easy', label: 'Easy' },
+                        { value: 'medium', label: 'Medium' },
+                        { value: 'hard', label: 'Hard' }
+                      ]}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Question Type
+                  </label>
+                  <Select
+                    value={questionType}
+                    onChange={(e) => setQuestionType(e.target.value)}
+                    options={[
+                      { value: 'multiple-choice', label: 'Multiple Choice' },
+                      { value: 'true-false', label: 'True/False' },
+                      { value: 'short-answer', label: 'Short Answer' },
+                      { value: 'fill-blank', label: 'Fill in the Blank' }
+                    ]}
+                    className="w-full"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full gradient-bg"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Generate Questions
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              {generatedQuestions.length > 0 && (
+                <div className="mt-8 space-y-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Generated Questions</h3>
+                  {generatedQuestions.map((question, index) => (
+                    <div key={index} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-500">Question {index + 1}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleRegenerateQuestion(index)}
+                          disabled={regeneratingIndex === index}
+                        >
+                          {regeneratingIndex === index ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <RefreshCw className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-gray-900">{question.text}</p>
+                      {question.options && (
+                        <div className="space-y-2">
+                          {question.options.map((option: string, i: number) => (
+                            <div
+                              key={i}
+                              className={`p-3 rounded-lg ${
+                                option === question.correctAnswer
+                                  ? 'bg-green-50 border border-green-200'
+                                  : 'bg-gray-50 border border-gray-200'
+                              }`}
+                            >
+                              {option}
+                              {option === question.correctAnswer && (
+                                <CheckCircle2 className="inline-block w-4 h-4 ml-2 text-green-600" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                        <p className="text-sm text-purple-900">
+                          <span className="font-medium">Explanation: </span>
+                          {question.explanation}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
+              <div className="flex items-center gap-3">
+                <PenTool className="h-6 w-6 text-purple-600" />
+                <h2 className="text-xl font-semibold">Evaluate Answer Sheet</h2>
+              </div>
+            </CardHeader>
             <CardBody>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
@@ -142,94 +417,50 @@ const AnswerEvaluationPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <motion.button
-                    type="button"
-                    onClick={() => setEvaluationMode('upload')}
-                    className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                      evaluationMode === 'upload' 
-                        ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
-                        : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
-                    }`}
-                    whileHover={{ scale: evaluationMode === 'upload' ? 1.02 : 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Upload className={`w-8 h-8 mx-auto mb-3 transition-colors duration-300 ${
-                      evaluationMode === 'upload' ? 'text-purple-600' : 'text-gray-400'
+                <div
+                  className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+                    dragActive
+                      ? 'border-purple-500 bg-purple-50'
+                      : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/50'
+                  }`}
+                  onDragEnter={(e) => handleDrag(e)}
+                  onDragLeave={(e) => handleDrag(e)}
+                  onDragOver={(e) => handleDrag(e)}
+                  onDrop={(e) => handleDrop(e, 'question')}
+                >
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        setQuestionPaper(e.target.files[0]);
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div className="space-y-4">
+                    <Upload className={`w-12 h-12 mx-auto ${
+                      questionPaper ? 'text-purple-600' : 'text-gray-400'
                     }`} />
-                    <span className="block text-sm font-medium">Upload Question Paper</span>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Upload an existing question paper
-                    </p>
-                  </motion.button>
-
-                  <motion.button
-                    type="button"
-                    onClick={() => setEvaluationMode('generate')}
-                    className={`p-6 rounded-xl border-2 transition-all duration-300 ${
-                      evaluationMode === 'generate' 
-                        ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
-                        : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
-                    }`}
-                    whileHover={{ scale: evaluationMode === 'generate' ? 1.02 : 1.05 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Sparkles className={`w-8 h-8 mx-auto mb-3 transition-colors duration-300 ${
-                      evaluationMode === 'generate' ? 'text-purple-600' : 'text-gray-400'
-                    }`} />
-                    <span className="block text-sm font-medium">Generate Question Paper</span>
-                    <p className="text-xs text-gray-500 mt-2">
-                      Let AI generate a question paper
-                    </p>
-                  </motion.button>
-                </div>
-
-                {evaluationMode === 'upload' && (
-                  <div
-                    className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
-                      dragActive
-                        ? 'border-purple-500 bg-purple-50'
-                        : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/50'
-                    }`}
-                    onDragEnter={(e) => handleDrag(e)}
-                    onDragLeave={(e) => handleDrag(e)}
-                    onDragOver={(e) => handleDrag(e)}
-                    onDrop={(e) => handleDrop(e, 'question')}
-                  >
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          setQuestionPaper(e.target.files[0]);
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className="space-y-4">
-                      <Upload className={`w-12 h-12 mx-auto ${
-                        questionPaper ? 'text-purple-600' : 'text-gray-400'
-                      }`} />
-                      {questionPaper ? (
-                        <>
-                          <p className="text-sm font-medium text-gray-900">{questionPaper.name}</p>
-                          <p className="text-xs text-gray-500">
-                            Click or drag another file to replace
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-sm font-medium text-gray-900">
-                            Drop your question paper here or click to upload
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            PDF or image files up to 10MB
-                          </p>
-                        </>
-                      )}
-                    </div>
+                    {questionPaper ? (
+                      <>
+                        <p className="text-sm font-medium text-gray-900">{questionPaper.name}</p>
+                        <p className="text-xs text-gray-500">
+                          Click or drag another file to replace
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm font-medium text-gray-900">
+                          Upload Question Paper (Optional)
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PDF files up to 10MB
+                        </p>
+                      </>
+                    )}
                   </div>
-                )}
+                </div>
 
                 <div
                   className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
@@ -244,7 +475,7 @@ const AnswerEvaluationPage: React.FC = () => {
                 >
                   <input
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
+                    accept=".pdf"
                     onChange={(e) => {
                       if (e.target.files?.[0]) {
                         setFile(e.target.files[0]);
@@ -266,10 +497,10 @@ const AnswerEvaluationPage: React.FC = () => {
                     ) : (
                       <>
                         <p className="text-sm font-medium text-gray-900">
-                          Drop your answer sheet here or click to upload
+                          Upload Answer Sheet
                         </p>
                         <p className="text-xs text-gray-500">
-                          PDF or image files up to 10MB
+                          PDF files up to 10MB
                         </p>
                       </>
                     )}
@@ -278,7 +509,7 @@ const AnswerEvaluationPage: React.FC = () => {
 
                 <Button
                   type="submit"
-                  disabled={isLoading || !file || (evaluationMode === 'upload' && !questionPaper)}
+                  disabled={isLoading || !file}
                   className="w-full gradient-bg"
                 >
                   {isLoading ? (
@@ -296,13 +527,14 @@ const AnswerEvaluationPage: React.FC = () => {
               </form>
             </CardBody>
           </Card>
-        </motion.div>
+        )}
 
         {/* Evaluations List */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
+          className="lg:col-span-2"
         >
           <Card>
             <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">

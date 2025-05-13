@@ -1,17 +1,12 @@
-import { createClient } from 'npm:@supabase/supabase-js@2.39.8';
 import { corsHeaders } from '../_shared/cors.ts';
 
 interface GenerateRequest {
-  course: string;
-  topic?: string;
-  subtopic?: string;
-  difficulty: string;
-  language: string;
-  questionTypes: string[];
-  source: 'manual' | 'pdf';
-  pdfContent?: string;
+  subject: string;
+  topic: string;
   questionCount: number;
-  apiKey: string;
+  difficulty: string;
+  
+  questionType: string;
 }
 
 Deno.serve(async (req) => {
@@ -20,12 +15,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { 
-      course, topic, subtopic, difficulty, language,
-      questionTypes, source, pdfContent, questionCount, apiKey 
-    } = await req.json() as GenerateRequest;
+    const { subject, topic, questionCount, difficulty, questionType } = await req.json() as GenerateRequest;
 
-    if (!course || !difficulty || !language || !questionTypes || !source || !apiKey) {
+    if (!subject || !topic || !questionCount || !difficulty || !questionType) {
       return new Response(
         JSON.stringify({ error: 'Missing required parameters' }),
         {
@@ -35,58 +27,48 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build the prompt based on source and parameters
-    const prompt = `Generate ${questionCount} ${difficulty} difficulty questions about ${course}${topic ? ` - ${topic}` : ''}${subtopic ? ` (${subtopic})` : ''} in ${language}.
+    // Build the prompt for Gemini
+    const prompt = `Generate ${questionCount} ${difficulty} difficulty questions about ${subject} - ${topic}.
 
-Question types to include: ${questionTypes.join(', ')}
-
-${source === 'pdf' ? `Use this content as reference:\n${pdfContent}` : ''}
+Question type: ${questionType}
 
 Format each question as a JSON object with:
 - text: question text
-- type: question type (one of: ${questionTypes.join(', ')})
+- type: "${questionType}"
 - options: array of possible answers (for multiple choice)
 - correctAnswer: the correct answer
 - explanation: detailed explanation of the answer
-- difficulty: "${difficulty}"
 
-For multiple-choice questions:
-- Include exactly 4 distinct options
-- Ensure options are complete and clear
-- Mark the correct answer exactly as it appears in options
+Requirements:
+1. For multiple-choice questions:
+   - Include exactly 4 distinct options
+   - Ensure options are complete and clear
+   - Mark the correct answer exactly as it appears in options
 
-For true-false questions:
-- Use ["True", "False"] as options
-- Ensure statement is clear and unambiguous
+2. For true-false questions:
+   - Use ["True", "False"] as options
+   - Ensure statement is clear and unambiguous
 
-For multi-select questions:
-- Include exactly 6 options
-- Include 2-3 correct options
-- List correct options in correctOptions array
+3. For short-answer questions:
+   - Provide clear, concise questions
+   - Include expected answer format
+   - Add detailed explanation
 
-For sequence questions:
-- Provide 4-6 steps in random order
-- Include correct sequence in correctSequence array
-- Explain each step in the sequence
+4. For fill-in-blank questions:
+   - Create clear sentences with blanks
+   - Provide exact word/phrase for blank
+   - Include context in explanation
 
-For case-study and situation questions:
-- Include detailed scenario (100+ words)
-- Provide 4 distinct solution options
-- Explain why the correct answer is best
+Return the questions as a JSON array.`;
 
-Return the questions as a JSON array with proper validation:
-- Each question must have all required fields
-- No missing or null values
-- Proper JSON formatting
-- No trailing commas`;
-
-    // Call Gemini API to generate questions
+    // Call Gemini API
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('GEMINI_API_KEY')}`,
         },
         body: JSON.stringify({
           contents: [{
@@ -95,7 +77,7 @@ Return the questions as a JSON array with proper validation:
             }]
           }],
           generationConfig: {
-            temperature: 0.2,
+            temperature: 0.7,
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 2048,
@@ -119,66 +101,14 @@ Return the questions as a JSON array with proper validation:
 
       const questions = JSON.parse(jsonMatch[0]);
 
-      // Validate questions
-      if (!Array.isArray(questions) || questions.length === 0) {
-        throw new Error('Invalid questions format');
-      }
-
-      questions.forEach((q: any, index: number) => {
-        if (!q.text || !q.type || !q.explanation) {
-          throw new Error(`Question ${index + 1} missing required fields`);
-        }
-
-        // Validate based on question type
-        switch (q.type) {
-          case 'multiple-choice':
-            if (!Array.isArray(q.options) || q.options.length !== 4 || !q.correctAnswer) {
-              throw new Error(`Question ${index + 1} invalid multiple choice format`);
-            }
-            break;
-
-          case 'true-false':
-            if (!Array.isArray(q.options) || q.options.length !== 2 || 
-                !['True', 'False'].includes(q.correctAnswer)) {
-              throw new Error(`Question ${index + 1} invalid true/false format`);
-            }
-            break;
-
-          case 'multi-select':
-            if (!Array.isArray(q.options) || q.options.length !== 6 || 
-                !Array.isArray(q.correctOptions) || 
-                q.correctOptions.length < 2 || q.correctOptions.length > 3) {
-              throw new Error(`Question ${index + 1} invalid multi-select format`);
-            }
-            break;
-
-          case 'sequence':
-            if (!Array.isArray(q.sequence) || !Array.isArray(q.correctSequence) ||
-                q.sequence.length !== q.correctSequence.length ||
-                q.sequence.length < 4 || q.sequence.length > 6) {
-              throw new Error(`Question ${index + 1} invalid sequence format`);
-            }
-            break;
-
-          case 'case-study':
-          case 'situation':
-            if (!q.options || q.options.length !== 4 || !q.correctAnswer ||
-                (q.type === 'case-study' && (!q.caseStudy || q.caseStudy.length < 100)) ||
-                (q.type === 'situation' && (!q.situation || q.situation.length < 100))) {
-              throw new Error(`Question ${index + 1} invalid ${q.type} format`);
-            }
-            break;
-        }
-      });
-
       return new Response(
-        JSON.stringify(questions),
+        JSON.stringify({ questions }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
     } catch (error) {
-      throw new Error(`Failed to parse questions: ${error.message}`);
+      throw new Error('Failed to parse questions');
     }
   } catch (error) {
     return new Response(
