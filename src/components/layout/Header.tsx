@@ -102,7 +102,7 @@ const Header: React.FC = () => {
                     }`}
                   >
                     <BookOpen className="w-4 h-4" />
-                    <span>Study Assistance</span>
+                    <span>Study Aids</span>
                     <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showMenu ? 'rotate-180' : ''}`} />
                   </button>
 
