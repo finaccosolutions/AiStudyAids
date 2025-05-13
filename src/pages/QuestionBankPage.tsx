@@ -8,9 +8,9 @@ import { Select } from '../components/ui/Select';
 import { 
   Upload, BookOpen, FileText, Plus, Search, 
   CheckCircle2, AlertTriangle, Download, Eye,
-  Clock, Calendar, Brain
+  Clock, Calendar, Brain, Loader2
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface QuestionBank {
   id: string;
@@ -37,6 +37,7 @@ const QuestionBankPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBank, setSelectedBank] = useState<QuestionBank | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   
   const [preferences, setPreferences] = useState({
     course: '',
@@ -49,12 +50,46 @@ const QuestionBankPage: React.FC = () => {
   });
 
   const questionTypeOptions = [
-    { value: 'multiple-choice', label: 'Multiple Choice' },
-    { value: 'true-false', label: 'True/False' },
-    { value: 'fill-blank', label: 'Fill in the Blank' },
-    { value: 'short-answer', label: 'Short Answer' },
-    { value: 'long-answer', label: 'Long Answer' },
-    { value: 'matching', label: 'Matching' }
+    { 
+      value: 'multiple-choice', 
+      label: 'Multiple Choice',
+      description: 'Select one correct answer from multiple options'
+    },
+    { 
+      value: 'multi-select', 
+      label: 'Select All That Apply',
+      description: 'Choose multiple correct options'
+    },
+    { 
+      value: 'true-false', 
+      label: 'True/False',
+      description: 'Determine if a statement is true or false'
+    },
+    { 
+      value: 'fill-blank', 
+      label: 'Fill in the Blank',
+      description: 'Complete sentences with missing words'
+    },
+    { 
+      value: 'short-answer', 
+      label: 'Short Answer',
+      description: 'Provide brief 1-2 word answers'
+    },
+    { 
+      value: 'sequence', 
+      label: 'Sequence/Ordering',
+      description: 'Arrange items in the correct order'
+    },
+    { 
+      value: 'case-study', 
+      label: 'Case Study',
+      description: 'Analyze real-world scenarios and answer questions'
+    },
+    { 
+      value: 'situation', 
+      label: 'Situation Judgment',
+      description: 'Choose the best action in given scenarios'
+    }
   ];
 
   const difficultyOptions = [
@@ -92,6 +127,26 @@ const QuestionBankPage: React.FC = () => {
     }
   };
 
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -108,7 +163,7 @@ const QuestionBankPage: React.FC = () => {
     try {
       let content = '';
       if (source === 'pdf' && file) {
-        // First extract text from PDF using Vision API
+        // Extract text from PDF using Vision API
         const formData = new FormData();
         formData.append('file', file);
         formData.append('apiKey', apiKey);
@@ -241,170 +296,285 @@ Return the questions as a JSON array.`;
           <CardBody>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setSource('manual')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-6 rounded-xl border-2 transition-all duration-300 ${
                     source === 'manual' 
-                      ? 'border-purple-500 bg-purple-50' 
-                      : 'border-gray-200 hover:border-purple-200'
+                      ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
+                      : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
                   }`}
+                  whileHover={{ scale: source === 'manual' ? 1.02 : 1.05 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <FileText className="w-6 h-6 mx-auto mb-2" />
+                  <FileText className={`w-8 h-8 mx-auto mb-3 transition-colors duration-300 ${
+                    source === 'manual' ? 'text-purple-600' : 'text-gray-400'
+                  }`} />
                   <span className="block text-sm font-medium">Manual Input</span>
-                </button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Create questions by providing course and topic details
+                  </p>
+                </motion.button>
 
-                <button
+                <motion.button
                   type="button"
                   onClick={() => setSource('pdf')}
-                  className={`p-4 rounded-lg border-2 transition-all ${
+                  className={`p-6 rounded-xl border-2 transition-all duration-300 ${
                     source === 'pdf' 
-                      ? 'border-purple-500 bg-purple-50' 
-                      : 'border-gray-200 hover:border-purple-200'
+                      ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
+                      : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
                   }`}
+                  whileHover={{ scale: source === 'pdf' ? 1.02 : 1.05 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <Upload className="w-6 h-6 mx-auto mb-2" />
+                  <Upload className={`w-8 h-8 mx-auto mb-3 transition-colors duration-300 ${
+                    source === 'pdf' ? 'text-purple-600' : 'text-gray-400'
+                  }`} />
                   <span className="block text-sm font-medium">Upload PDF</span>
-                </button>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Generate questions from your study materials
+                  </p>
+                </motion.button>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Course
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., Computer Science"
-                    value={preferences.course}
-                    onChange={(e) => setPreferences({ ...preferences, course: e.target.value })}
-                    required
-                  />
-                </div>
+              <AnimatePresence mode="wait">
+                {source === 'manual' ? (
+                  <motion.div
+                    key="manual-form"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-6"
+                  >
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Course
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="e.g., Computer Science"
+                          value={preferences.course}
+                          onChange={(e) => setPreferences({ ...preferences, course: e.target.value })}
+                          required
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Topic (Optional)
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., Data Structures"
-                    value={preferences.topic}
-                    onChange={(e) => setPreferences({ ...preferences, topic: e.target.value })}
-                  />
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Topic (Optional)
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="e.g., Data Structures"
+                          value={preferences.topic}
+                          onChange={(e) => setPreferences({ ...preferences, topic: e.target.value })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sub-topic (Optional)
-                  </label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., Binary Trees"
-                    value={preferences.subtopic}
-                    onChange={(e) => setPreferences({ ...preferences, subtopic: e.target.value })}
-                  />
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Sub-topic (Optional)
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="e.g., Binary Trees"
+                          value={preferences.subtopic}
+                          onChange={(e) => setPreferences({ ...preferences, subtopic: e.target.value })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Number of Questions
-                  </label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={50}
-                    value={preferences.questionCount}
-                    onChange={(e) => setPreferences({ ...preferences, questionCount: parseInt(e.target.value) })}
-                    required
-                  />
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Number of Questions
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={preferences.questionCount}
+                          onChange={(e) => setPreferences({ ...preferences, questionCount: parseInt(e.target.value) })}
+                          required
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Difficulty Level
-                  </label>
-                  <Select
-                    options={difficultyOptions}
-                    value={preferences.difficulty}
-                    onChange={(e) => setPreferences({ ...preferences, difficulty: e.target.value })}
-                  />
-                </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Difficulty Level
+                        </label>
+                        <Select
+                          options={difficultyOptions}
+                          value={preferences.difficulty}
+                          onChange={(e) => setPreferences({ ...preferences, difficulty: e.target.value })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Language
-                  </label>
-                  <Select
-                    options={languageOptions}
-                    value={preferences.language}
-                    onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
-                  />
-                </div>
-              </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Language
+                        </label>
+                        <Select
+                          options={languageOptions}
+                          value={preferences.language}
+                          onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+                    </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Question Types
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {questionTypeOptions.map((type) => (
-                    <label
-                      key={type.value}
-                      className={`flex items-center p-3 rounded-lg border cursor-pointer transition-all ${
-                        preferences.questionTypes.includes(type.value)
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-3">
+                        Question Types
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {questionTypeOptions.map((type) => (
+                          <motion.button
+                            key={type.value}
+                            type="button"
+                            onClick={() => {
+                              const newTypes = preferences.questionTypes.includes(type.value)
+                                ? preferences.questionTypes.filter(t => t !== type.value)
+                                : [...preferences.questionTypes, type.value];
+                              setPreferences({ ...preferences, questionTypes: newTypes });
+                            }}
+                            className={`p-4 rounded-xl text-left transition-all duration-300 ${
+                              preferences.questionTypes.includes(type.value)
+                                ? 'bg-purple-50 border-2 border-purple-500 shadow-md'
+                                : 'bg-white border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                            }`}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-medium">{type.label}</span>
+                              {preferences.questionTypes.includes(type.value) && (
+                                <CheckCircle2 className="w-5 h-5 text-purple-600" />
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-500">{type.description}</p>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="pdf-form"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="space-y-6"
+                  >
+                    <div
+                      className={`relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300 ${
+                        dragActive
                           ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-purple-200'
+                          : 'border-gray-300 hover:border-purple-400 hover:bg-purple-50/50'
                       }`}
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
                     >
                       <input
-                        type="checkbox"
-                        checked={preferences.questionTypes.includes(type.value)}
-                        onChange={(e) => {
-                          const newTypes = e.target.checked
-                            ? [...preferences.questionTypes, type.value]
-                            : preferences.questionTypes.filter(t => t !== type.value);
-                          setPreferences({ ...preferences, questionTypes: newTypes });
-                        }}
-                        className="sr-only"
+                        type="file"
+                        accept=".pdf"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <span className="text-sm">{type.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {source === 'pdf' && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Upload PDF
-                  </label>
-                  <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                    <div className="space-y-1 text-center">
-                      <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                      <div className="flex text-sm text-gray-600">
-                        <label className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500">
-                          <span>Upload a file</span>
-                          <input
-                            type="file"
-                            className="sr-only"
-                            accept=".pdf"
-                            onChange={handleFileChange}
-                          />
-                        </label>
-                        <p className="pl-1">or drag and drop</p>
+                      <div className="space-y-4">
+                        <Upload className={`w-12 h-12 mx-auto ${
+                          file ? 'text-purple-600' : 'text-gray-400'
+                        }`} />
+                        {file ? (
+                          <>
+                            <p className="text-sm font-medium text-gray-900">{file.name}</p>
+                            <p className="text-xs text-gray-500">
+                              Click or drag another file to replace
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm font-medium text-gray-900">
+                              Drop your PDF here or click to upload
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              PDF files up to 10MB
+                            </p>
+                          </>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-500">PDF up to 10MB</p>
                     </div>
-                  </div>
-                </div>
-              )}
+
+                    <div className="grid grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Course
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="e.g., Computer Science"
+                          value={preferences.course}
+                          onChange={(e) => setPreferences({ ...preferences, course: e.target.value })}
+                          required
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Topic (Optional)
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="e.g., Data Structures"
+                          value={preferences.topic}
+                          onChange={(e) => setPreferences({ ...preferences, topic: e.target.value })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Number of Questions
+                        </label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={50}
+                          value={preferences.questionCount}
+                          onChange={(e) => setPreferences({ ...preferences, questionCount: parseInt(e.target.value) })}
+                          required
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Language
+                        </label>
+                        <Select
+                          options={languageOptions}
+                          value={preferences.language}
+                          onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {error && (
                 <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                  <div className="flex">
-                    <AlertTriangle className="h-5 w-5 text-red-400" />
-                    <p className="ml-3 text-sm text-red-700">{error}</p>
+                  <div className="flex items-center">
+                    <AlertTriangle className="h-5 w-5 text-red-400 mr-2" />
+                    <p className="text-sm text-red-700">{error}</p>
                   </div>
                 </div>
               )}
@@ -414,15 +584,26 @@ Return the questions as a JSON array.`;
                   type="button"
                   variant="outline"
                   onClick={() => setShowForm(false)}
+                  className="px-6"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || !preferences.course || preferences.questionTypes.length === 0}
-                  className="gradient-bg"
+                  disabled={isLoading || !preferences.course || preferences.questionTypes.length === 0 || (source === 'pdf' && !file)}
+                  className="gradient-bg px-6 min-w-[140px]"
                 >
-                  {isLoading ? 'Generating...' : 'Generate Questions'}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Brain className="w-5 h-5 mr-2" />
+                      Generate
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
@@ -504,6 +685,7 @@ Return the questions as a JSON array.`;
                       variant="outline"
                       size="sm"
                       onClick={() => setSelectedBank(bank)}
+                      className="hover:bg-purple-50 hover:text-purple-600 transition-colors"
                     >
                       <Eye className="w-4 h-4 mr-2" />
                       View
@@ -514,6 +696,7 @@ Return the questions as a JSON array.`;
                       onClick={() => {
                         // Download logic
                       }}
+                      className="hover:bg-purple-50 hover:text-purple-600 transition-colors"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Export
@@ -541,10 +724,15 @@ Return the questions as a JSON array.`;
       )}
 
       {selectedBank && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-6">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <div className="flex justify-between items-start">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-900">
                     {selectedBank.course}
@@ -556,52 +744,56 @@ Return the questions as a JSON array.`;
                 <Button
                   variant="ghost"
                   onClick={() => setSelectedBank(null)}
+                  className="text-gray-500 hover:text-gray-700"
                 >
                   ×
                 </Button>
               </div>
-
-              <div className="space-y-6">
-                {selectedBank.questions.map((question, index) => (
-                  <div
-                    key={index}
-                    className="border border-gray-200 rounded-lg p-4"
-                  >
-                    <p className="font-medium text-gray-900 mb-4">
-                      {index + 1}. {question.text}
-                    </p>
-
-                    {question.options && (
-                      <div className="space-y-2 mb-4">
-                        {question.options.map((option: string, i: number) => (
-                          <div
-                            key={i}
-                            className={`p-2 rounded ${
-                              option === question.correctAnswer
-                                ? 'bg-green-50 border border-green-200'
-                                : 'bg-gray-50 border border-gray-200'
-                            }`}
-                          >
-                            {option}
-                            {option === question.correctAnswer && (
-                              <CheckCircle2 className="inline-block w-4 h-4 ml-2 text-green-600" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-                      <p className="text-sm text-purple-900">
-                        <span className="font-medium">Explanation: </span>
-                        {question.explanation}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
-          </div>
+
+            <div className="p-6 space-y-6">
+              {selectedBank.questions.map((question, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+                >
+                  <p className="font-medium text-gray-900 mb-4">
+                    {index + 1}. {question.text}
+                  </p>
+
+                  {question.options && (
+                    <div className="space-y-2 mb-4">
+                      {question.options.map((option: string, i: number) => (
+                        <div
+                          key={i}
+                          className={`p-3 rounded-lg transition-colors ${
+                            option === question.correctAnswer
+                              ? 'bg-green-50 border border-green-200'
+                              : 'bg-gray-50 border border-gray-200'
+                          }`}
+                        >
+                          {option}
+                          {option === question.correctAnswer && (
+                            <CheckCircle2 className="inline-block w-4 h-4 ml-2 text-green-600" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="mt-4 p-4 bg-purple-50 rounded-lg">
+                    <p className="text-sm text-purple-900">
+                      <span className="font-medium">Explanation: </span>
+                      {question.explanation}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       )}
     </div>
