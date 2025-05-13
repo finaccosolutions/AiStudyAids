@@ -76,19 +76,38 @@ const AnswerEvaluationPage: React.FC = () => {
     setDragActive(e.type === 'dragenter' || e.type === 'dragover');
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent, type: 'answer' | 'question') => {
+  const handleDrop = useCallback(async (e: React.DragEvent, type: 'answer' | 'question') => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
     
+    if (!user) return;
+    
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      if (type === 'answer') {
-        setFile(e.dataTransfer.files[0]);
-      } else {
-        setQuestionPaper(e.dataTransfer.files[0]);
+      const droppedFile = e.dataTransfer.files[0];
+      
+      try {
+        // Upload to the correct folder based on type
+        const folder = type === 'answer' ? 'answer-sheets' : 'question-papers';
+        const filePath = `${user.id}/${Date.now()}-${droppedFile.name}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('evaluations')
+          .upload(`${folder}/${filePath}`, droppedFile);
+
+        if (uploadError) throw uploadError;
+
+        if (type === 'answer') {
+          setFile(droppedFile);
+        } else {
+          setQuestionPaper(droppedFile);
+        }
+      } catch (error) {
+        console.error(`Error uploading ${type} file:`, error);
+        setError(`Failed to upload ${type} file. Please try again.`);
       }
     }
-  }, []);
+  }, [user]);
 
   const handleGenerateQuestions = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -184,15 +203,39 @@ const AnswerEvaluationPage: React.FC = () => {
     e.preventDefault();
     if (!user || !file) return;
 
-    const formData = new FormData();
-    formData.append('answerSheet', file);
-    if (questionPaper) {
-      formData.append('questionPaper', questionPaper);
-    }
-    formData.append('subject', subject);
-    formData.append('topic', topic);
+    try {
+      // Upload answer sheet
+      const answerSheetPath = `${user.id}/${Date.now()}-${file.name}`;
+      const { error: answerUploadError } = await supabase.storage
+        .from('evaluations')
+        .upload(`answer-sheets/${answerSheetPath}`, file);
 
-    await createEvaluation(user.id, formData);
+      if (answerUploadError) throw answerUploadError;
+
+      // Upload question paper if provided
+      let questionPaperPath = '';
+      if (questionPaper) {
+        questionPaperPath = `${user.id}/${Date.now()}-${questionPaper.name}`;
+        const { error: questionUploadError } = await supabase.storage
+          .from('evaluations')
+          .upload(`question-papers/${questionPaperPath}`, questionPaper);
+
+        if (questionUploadError) throw questionUploadError;
+      }
+
+      const formData = new FormData();
+      formData.append('answerSheetPath', answerSheetPath);
+      if (questionPaperPath) {
+        formData.append('questionPaperPath', questionPaperPath);
+      }
+      formData.append('subject', subject);
+      formData.append('topic', topic);
+
+      await createEvaluation(user.id, formData);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      setError('Failed to upload files. Please try again.');
+    }
   };
 
   const toggleDetails = (id: string) => {
@@ -614,8 +657,7 @@ const AnswerEvaluationPage: React.FC = () => {
             <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
               <div className="flex items-center gap-3">
                 <BarChart className="h-6 w-6 text-purple-600" />
-                <h2 className="text-xl font-semibold">Recent Evalu
-ations</h2>
+                <h2 className="text-xl font-semibold">Recent Evaluations</h2>
               </div>
             </CardHeader>
             
@@ -673,6 +715,7 @@ ations</h2>
                         ))}
                         {evaluation.improvements.length > 3 && (
                           <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                
                             +{evaluation.improvements.length - 3} more
                           </span>
                         )}

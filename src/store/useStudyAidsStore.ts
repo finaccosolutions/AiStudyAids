@@ -13,7 +13,7 @@ interface StudyAidsState {
   // Answer Evaluation
   evaluations: any[];
   loadEvaluations: (userId: string) => Promise<void>;
-  createEvaluation: (userId: string, data: any) => Promise<void>;
+  createEvaluation: (userId: string, formData: FormData) => Promise<void>;
   
   // Notes
   notes: any[];
@@ -94,14 +94,88 @@ export const useStudyAidsStore = create<StudyAidsState>((set, get) => ({
       set({ isLoading: false });
     }
   },
-  createEvaluation: async (userId, data) => {
+  createEvaluation: async (userId, formData) => {
     set({ isLoading: true, error: null });
     try {
-      const { error } = await supabase
-        .from('answer_evaluations')
-        .insert({ user_id: userId, ...data });
+      const answerSheet = formData.get('answerSheet') as File;
+      const questionPaper = formData.get('questionPaper') as File | null;
+      const subject = formData.get('subject') as string;
+      const topic = formData.get('topic') as string;
+
+      if (!answerSheet) {
+        throw new Error('Answer sheet is required');
+      }
+
+      // Upload answer sheet
+      const answerSheetPath = `answer-sheets/${userId}/${Date.now()}-${answerSheet.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('evaluations')
+        .upload(answerSheetPath, answerSheet);
+
+      if (uploadError) throw uploadError;
+
+      // Get answer sheet URL
+      const { data: { publicUrl: answerSheetUrl } } = supabase.storage
+        .from('evaluations')
+        .getPublicUrl(answerSheetPath);
+
+      // Upload question paper if provided
+      let questionPaperUrl = null;
+      if (questionPaper) {
+        const questionPaperPath = `question-papers/${userId}/${Date.now()}-${questionPaper.name}`;
+        const { error: questionPaperError } = await supabase.storage
+          .from('evaluations')
+          .upload(questionPaperPath, questionPaper);
+
+        if (questionPaperError) throw questionPaperError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('evaluations')
+          .getPublicUrl(questionPaperPath);
         
-      if (error) throw error;
+        questionPaperUrl = publicUrl;
+      }
+
+      // Call the evaluation edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/evaluate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          answerSheetUrl,
+          questionPaperUrl,
+          subject,
+          topic,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const evaluationResult = await response.json();
+
+      // Create evaluation record
+      const { error: dbError } = await supabase
+        .from('answer_evaluations')
+        .insert({
+          user_id: userId,
+          answer_sheet_url: answerSheetUrl,
+          question_paper_id: questionPaperUrl ? undefined : null,
+          score: evaluationResult.score,
+          feedback: evaluationResult.feedback,
+          improvements: evaluationResult.improvements || [],
+        });
+        
+      if (dbError) throw dbError;
       get().loadEvaluations(userId);
     } catch (error: any) {
       set({ error: error.message });
@@ -171,17 +245,16 @@ export const useStudyAidsStore = create<StudyAidsState>((set, get) => ({
         examDate,
         startDate,
         dailyHours,
-        topics, // Extract topics from the data
+        topics,
         ...rest
       } = data;
 
-      // Create the correct structure for the database
       const dbData = {
         user_id: userId,
         exam_date: examDate,
         start_date: startDate,
         daily_hours: dailyHours,
-        syllabus: { topics }, // Wrap topics in syllabus object
+        syllabus: { topics },
         ...rest
       };
 
