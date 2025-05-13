@@ -5,7 +5,7 @@ import {
   ChevronDown, LogOut, User, BookOpen, 
   Home, Settings, GraduationCap, FileQuestion, 
   PenTool, NotebookText, Calendar, LineChart,
-  Brain, Menu, Key, Heart, Lock
+  Brain, Menu, Key
 } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -63,8 +63,6 @@ const Header: React.FC = () => {
   const profileMenuItems = [
     { path: '/profile', icon: User, label: 'My Profile' },
     { path: '/api-settings', icon: Key, label: 'API Settings' },
-    { path: '/favorites', icon: Heart, label: 'Favorite Questions' },
-    { path: '/change-password', icon: Lock, label: 'Change Password' },
   ];
   
   return (

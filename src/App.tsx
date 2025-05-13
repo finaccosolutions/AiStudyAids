@@ -14,6 +14,7 @@ import NotesGeneratorPage from './pages/NotesGeneratorPage';
 import StudyPlannerPage from './pages/StudyPlannerPage';
 import ProgressTrackerPage from './pages/ProgressTrackerPage';
 import ChatPage from './pages/ChatPage';
+import ProfilePage from './pages/ProfilePage';
 
 // Protected route wrapper component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -137,6 +138,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <ChatPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
               </ProtectedRoute>
             }
           />
