@@ -8,10 +8,11 @@ interface GenerateRequest {
   difficulty: string;
   questionType: string;
   mode?: 'practice' | 'exam';
+  previousQuestions?: boolean;
+  yearCount?: number;
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
       throw new Error('Gemini API key not found. Please set up your API key in the API Settings page.');
     }
 
-    const { subject, topic, questionCount, difficulty, questionType, mode = 'practice' } = await req.json() as GenerateRequest;
+    const { subject, topic, questionCount, difficulty, questionType, mode = 'practice', previousQuestions, yearCount } = await req.json() as GenerateRequest;
 
     // Validate required parameters
     if (!subject || !topic || !questionCount || !difficulty || !questionType) {
@@ -75,8 +76,37 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Build the prompt for Gemini
-    const prompt = `Generate ${questionCount} ${difficulty} difficulty questions about ${subject} - ${topic}.
+    let prompt = '';
+    
+    if (previousQuestions) {
+      // Generate previous year questions
+      prompt = `Generate ${questionCount} previous year exam questions for ${subject} - ${topic} from the past ${yearCount || 5} years.
+
+Requirements:
+1. Include questions from actual exams where possible
+2. Format each question with:
+   - Year of appearance
+   - Original exam/institution
+   - Question text
+   - Answer and explanation
+3. Maintain difficulty level: ${difficulty}
+4. Question type: ${questionType}
+
+Format as JSON array with:
+{
+  "questions": [{
+    "year": "YYYY",
+    "exam": "exam name",
+    "text": "question text",
+    "type": "${questionType}",
+    "options": ["option1", ...] (if applicable),
+    "correctAnswer": "answer",
+    "explanation": "detailed explanation"
+  }]
+}`;
+    } else {
+      // Generate new questions
+      prompt = `Generate ${questionCount} ${difficulty} difficulty questions about ${subject} - ${topic}.
 
 Question type: ${questionType}
 
@@ -97,21 +127,23 @@ Requirements:
    - Use ["True", "False"] as options
    - Ensure statement is clear and unambiguous
 
-3. For short-answer questions:
+3. For essay questions:
+   - Provide clear, focused topic
+   - Include expected points to cover
+   - Add sample answer outline
+   - Include evaluation criteria
+
+4. For short-answer questions:
    - Provide clear, concise questions
    - Include expected answer format
    - Add detailed explanation
 
-4. For fill-in-blank questions:
-   - Create clear sentences with blanks
-   - Provide exact word/phrase for blank
-   - Include context in explanation
-
 Return the questions as a JSON array.`;
+    }
 
-    // Call Gemini API with error handling and proper API key
-    const geminiResponse = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+    // Call Gemini API
+    const response = await fetch(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
       {
         method: 'POST',
         headers: {
@@ -134,57 +166,51 @@ Return the questions as a JSON array.`;
       }
     );
 
-    if (!geminiResponse.ok) {
-      const errorData = await geminiResponse.json().catch(() => null);
-      if (geminiResponse.status === 401) {
-        throw new Error('Invalid Gemini API key. Please check your API key in the API Settings page.');
-      }
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
       throw new Error(
-        `Gemini API error: ${geminiResponse.status} ${geminiResponse.statusText}${
+        `Gemini API error: ${response.status} ${response.statusText}${
           errorData ? ` - ${JSON.stringify(errorData)}` : ''
         }`
       );
     }
 
-    const data = await geminiResponse.json();
+    const data = await response.json();
     
     try {
       // Extract and validate JSON from response
-      const jsonMatch = data.candidates[0].content.parts[0].text.match(/\[[\s\S]*\]/);
+      const jsonMatch = data.candidates[0].content.parts[0].text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error('No valid JSON found in response');
       }
 
       const questions = JSON.parse(jsonMatch[0]);
       
-      // Validate questions array
-      if (!Array.isArray(questions)) {
-        throw new Error('Response is not an array');
+      // Save to question_banks table
+      const { error: insertError } = await supabase
+        .from('question_banks')
+        .insert({
+          user_id: user.id,
+          course: subject,
+          topic,
+          difficulty,
+          language: 'English',
+          question_types: [questionType],
+          source: 'manual',
+          questions: questions.questions || questions,
+          is_previous_year: previousQuestions || false,
+          year_count: yearCount
+        });
+
+      if (insertError) {
+        throw new Error(`Failed to save question bank: ${insertError.message}`);
       }
-
-      if (questions.length === 0) {
-        throw new Error('No questions generated');
-      }
-
-      // Validate each question has required fields
-      questions.forEach((q, i) => {
-        if (!q.text || !q.type || !q.correctAnswer || !q.explanation) {
-          throw new Error(`Question ${i + 1} is missing required fields`);
-        }
-      });
-
-      // If in exam mode, remove answers and explanations
-      const processedQuestions = questions.map(q => {
-        if (mode === 'exam') {
-          // Create a copy without answers
-          const { correctAnswer, explanation, ...questionWithoutAnswers } = q;
-          return questionWithoutAnswers;
-        }
-        return q;
-      });
 
       return new Response(
-        JSON.stringify({ questions: processedQuestions }),
+        JSON.stringify({ 
+          success: true,
+          questions: questions.questions || questions
+        }),
         {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
@@ -195,16 +221,13 @@ Return the questions as a JSON array.`;
   } catch (error) {
     console.error('Error in generate-questions function:', error);
     
-    const status = error.message.includes('Missing authorization') ? 401 :
-                  error.message.includes('API key') ? 400 : 500;
-    
     return new Response(
       JSON.stringify({ 
         error: error.message,
         timestamp: new Date().toISOString()
       }),
       {
-        status,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     );
