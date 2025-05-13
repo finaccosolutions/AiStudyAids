@@ -58,7 +58,19 @@ const StudyPlannerPage: React.FC = () => {
     examDate: '',
     startDate: '',
     dailyHours: 4,
-    topics: [{ name: '', subtopics: [''], difficulty: 'medium', estimatedHours: 2 }]
+    topics: [{ name: '', subtopics: [''], difficulty: 'medium', estimatedHours: 2 }],
+    schedule: [] as Array<{
+      date: string;
+      topics: Array<{
+        name: string;
+        subtopics: string[];
+        duration: number;
+        strategy: string;
+        resources: string[];
+      }>;
+      revision: boolean;
+      milestones: string[];
+    }>
   });
 
   useEffect(() => {
@@ -113,7 +125,8 @@ const StudyPlannerPage: React.FC = () => {
     try {
       await createStudyPlan(user.id, {
         ...formData,
-        syllabus: { topics: formData.topics }
+        syllabus: { topics: formData.topics },
+        schedule: formData.schedule
       });
       setShowForm(false);
       setFormData({
@@ -121,7 +134,8 @@ const StudyPlannerPage: React.FC = () => {
         examDate: '',
         startDate: '',
         dailyHours: 4,
-        topics: [{ name: '', subtopics: [''], difficulty: 'medium', estimatedHours: 2 }]
+        topics: [{ name: '', subtopics: [''], difficulty: 'medium', estimatedHours: 2 }],
+        schedule: []
       });
     } catch (error) {
       console.error('Failed to create study plan:', error);

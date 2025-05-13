@@ -122,16 +122,16 @@ export const useStudyAidsStore = create<StudyAidsState>((set, get) => ({
       // Upload question paper if provided
       let questionPaperUrl = null;
       if (questionPaper) {
-        const questionPaperPath = `question-papers/${userId}/${Date.now()}-${questionPaper.name}`;
+        const question_paper_path = `question-papers/${userId}/${Date.now()}-${questionPaper.name}`;
         const { error: questionPaperError } = await supabase.storage
           .from('evaluations')
-          .upload(questionPaperPath, questionPaper);
+          .upload(question_paper_path, questionPaper);
 
         if (questionPaperError) throw questionPaperError;
 
         const { data: { publicUrl } } = supabase.storage
           .from('evaluations')
-          .getPublicUrl(questionPaperPath);
+          .getPublicUrl(question_paper_path);
         
         questionPaperUrl = publicUrl;
       }
@@ -246,6 +246,7 @@ export const useStudyAidsStore = create<StudyAidsState>((set, get) => ({
         startDate,
         dailyHours,
         topics,
+        schedule,
         ...rest
       } = data;
 
@@ -255,6 +256,7 @@ export const useStudyAidsStore = create<StudyAidsState>((set, get) => ({
         start_date: startDate,
         daily_hours: dailyHours,
         syllabus: { topics },
+        schedule: schedule || [], // Ensure schedule is never null
         ...rest
       };
 
