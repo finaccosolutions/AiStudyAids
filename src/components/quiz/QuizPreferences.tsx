@@ -514,139 +514,143 @@ const questionTypeOptions = [
             </div>
           </div>
           
-          {/* Time Settings Panel */}
-          <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-emerald-50/30 to-teal-50/30">
-            <div className="relative">
-              <div className="flex items-center mb-6 relative">
-                <Timer className="w-6 h-6 mr-3 text-emerald-600" />
-                <h3 className="text-xl font-semibold text-gray-800">Time Settings</h3>
-                <div className="tooltip ml-2">
-                  <Info className="w-4 h-4 text-gray-400 hover:text-emerald-600 cursor-help" />
-                  <span className="tooltiptext z-50">Set time limits for individual questions or the entire quiz</span>
+          {/* Time Settings Panel - Only show for solo mode */}
+          {selectedMode === 'solo' && (
+            <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-emerald-50/30 to-teal-50/30">
+              <div className="relative">
+                <div className="flex items-center mb-6 relative">
+                  <Timer className="w-6 h-6 mr-3 text-emerald-600" />
+                  <h3 className="text-xl font-semibold text-gray-800">Time Settings</h3>
+                  <div className="tooltip ml-2">
+                    <Info className="w-4 h-4 text-gray-400 hover:text-emerald-600 cursor-help" />
+                    <span className="tooltiptext z-50">Set time limits for individual questions or the entire quiz</span>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={preferences.timeLimitEnabled}
-                    onChange={(e) => handleTimeLimitToggle(e.target.checked)}
-                    className="form-checkbox h-5 w-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 transition-colors"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Enable Time Limit</span>
-                </div>
+                
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={preferences.timeLimitEnabled}
+                      onChange={(e) => handleTimeLimitToggle(e.target.checked)}
+                      className="form-checkbox h-5 w-5 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500 transition-colors"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Enable Time Limit</span>
+                  </div>
 
-                {preferences.timeLimitEnabled && (
-                  <>
-                    <div className="flex items-center space-x-6">
-                      <button
-                        type="button"
-                        onClick={() => setTimingMode('per-question')}
-                        className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
-                          timingMode === 'per-question'
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                            : 'border-gray-200 hover:border-emerald-200'
-                        }`}
-                      >
-                        <Clock className="w-6 h-6 mx-auto mb-2" />
-                        <div className="font-medium">Time per Question</div>
-                      </button>
-                      
-                      <button
-                        type="button"
-                        onClick={() => setTimingMode('total')}
-                        className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
-                          timingMode === 'total'
-                            ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                            : 'border-gray-200 hover:border-emerald-200'
-                        }`}
-                      >
-                        <AlarmClock className="w-6 h-6 mx-auto mb-2" />
-                        <div className="font-medium">Total Quiz Time</div>
-                      </button>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Time Setting (in seconds)
-                        </label>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={3600}
-                            value={timingMode === 'per-question' ? preferences.timeLimit || 30 : preferences.totalTimeLimit || 300}
-                            onChange={(e) => handleTimeSettingChange(e.target.value)}
-                            className="w-32 transition-all duration-300 hover:border-emerald-400 focus:ring-emerald-400 text-lg"
-                          />
-                          <span className="text-gray-600">seconds</span>
-                        </div>
+                  {preferences.timeLimitEnabled && (
+                    <>
+                      <div className="flex items-center space-x-6">
+                        <button
+                          type="button"
+                          onClick={() => setTimingMode('per-question')}
+                          className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
+                            timingMode === 'per-question'
+                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                              : 'border-gray-200 hover:border-emerald-200'
+                          }`}
+                        >
+                          <Clock className="w-6 h-6 mx-auto mb-2" />
+                          <div className="font-medium">Time per Question</div>
+                        </button>
                         
-                        <div className="text-sm text-gray-600 bg-emerald-50 p-4 rounded-lg mt-4">
-                          <p className="font-medium text-emerald-700">Current Time Setting:</p>
-                          <p>{calculateTotalTime()}</p>
+                        <button
+                          type="button"
+                          onClick={() => setTimingMode('total')}
+                          className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 ${
+                            timingMode === 'total'
+                              ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                              : 'border-gray-200 hover:border-emerald-200'
+                          }`}
+                        >
+                          <AlarmClock className="w-6 h-6 mx-auto mb-2" />
+                          <div className="font-medium">Total Quiz Time</div>
+                        </button>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Time Setting (in seconds)
+                          </label>
+                          <div className="flex items-center space-x-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={3600}
+                              value={timingMode === 'per-question' ? preferences.timeLimit || 30 : preferences.totalTimeLimit || 300}
+                              onChange={(e) => handleTimeSettingChange(e.target.value)}
+                              className="w-32 transition-all duration-300 hover:border-emerald-400 focus:ring-emerald-400 text-lg"
+                            />
+                            <span className="text-gray-600">seconds</span>
+                          </div>
+                          
+                          <div className="text-sm text-gray-600 bg-emerald-50 p-4 rounded-lg mt-4">
+                            <p className="font-medium text-emerald-700">Current Time Setting:</p>
+                            <p>{calculateTotalTime()}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {/* Quiz Mode Panel */}
-          <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-amber-50/30 to-orange-50/30">
-            <div className="relative">
-              <div className="flex items-center mb-6 relative">
-                <BarChart3 className="w-6 h-6 mr-3 text-amber-600" />
-                <h3 className="text-xl font-semibold text-gray-800">Quiz Mode</h3>
-                <div className="tooltip ml-2">
-                  <Info className="w-4 h-4 text-gray-400 hover:text-amber-600 cursor-help" />
-                  <span className="tooltiptext z-50">Choose between practice mode for immediate feedback or exam mode for end-of-quiz results</span>
+                    </>
+                  )}
                 </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setPreferences({ ...preferences, mode: 'practice' })}
-                  className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
-                    preferences.mode === 'practice'
-                      ? 'border-amber-300 bg-amber-50 shadow-md'
-                      : 'border-gray-200 hover:border-amber-200'
-                  }`}
-                >
-                  <div className="flex items-center mb-2">
-                    <BookOpen className="w-6 h-6 mr-2 text-amber-600" />
-                    <span className="font-semibold text-lg">Practice Mode</span>
+            </div>
+          )}
+          
+          {/* Quiz Mode Panel - Only show for solo mode */}
+          {selectedMode === 'solo' && (
+            <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-amber-50/30 to-orange-50/30">
+              <div className="relative">
+                <div className="flex items-center mb-6 relative">
+                  <BarChart3 className="w-6 h-6 mr-3 text-amber-600" />
+                  <h3 className="text-xl font-semibold text-gray-800">Quiz Mode</h3>
+                  <div className="tooltip ml-2">
+                    <Info className="w-4 h-4 text-gray-400 hover:text-amber-600 cursor-help" />
+                    <span className="tooltiptext z-50">Choose between practice mode for immediate feedback or exam mode for end-of-quiz results</span>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Get immediate feedback after each question. Perfect for learning and understanding concepts.
-                  </p>
-                </button>
+                </div>
                 
-                <button
-                  type="button"
-                  onClick={() => setPreferences({ ...preferences, mode: 'exam' })}
-                  className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
-                    preferences.mode === 'exam'
-                      ? 'border-amber-300 bg-amber-50 shadow-md'
-                      : 'border-gray-200 hover:border-amber-200'
-                  }`}
-                >
-                  <div className="flex items-center mb-2">
-                    <BarChart3 className="w-6 h-6 mr-2 text-amber-600" />
-                    <span className="font-semibold text-lg">Exam Mode</span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    See results only at the end. Simulates real exam conditions for better preparation.
-                  </p>
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setPreferences({ ...preferences, mode: 'practice' })}
+                    className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+                      preferences.mode === 'practice'
+                        ? 'border-amber-300 bg-amber-50 shadow-md'
+                        : 'border-gray-200 hover:border-amber-200'
+                    }`}
+                  >
+                    <div className="flex items-center mb-2">
+                      <BookOpen className="w-6 h-6 mr-2 text-amber-600" />
+                      <span className="font-semibold text-lg">Practice Mode</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      Get immediate feedback after each question. Perfect for learning and understanding concepts.
+                    </p>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setPreferences({ ...preferences, mode: 'exam' })}
+                    className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+                      preferences.mode === 'exam'
+                        ? 'border-amber-300 bg-amber-50 shadow-md'
+                        : 'border-gray-200 hover:border-amber-200'
+                    }`}
+                  >
+                    <div className="flex items-center mb-2">
+                      <BarChart3 className="w-6 h-6 mr-2 text-amber-600" />
+                      <span className="font-semibold text-lg">Exam Mode</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      See results only at the end. Simulates real exam conditions for better preparation.
+                    </p>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+          )}
           
           {error && (
             <div className="p-4 bg-red-50 border-l-4 border-red-500">
