@@ -16,7 +16,7 @@ const AuthPage: React.FC = () => {
   }, [mode]);
   
   if (isLoggedIn) {
-    return <Navigate to="/quiz" />;
+    return <Navigate to="/" />;
   }
   
   return (
