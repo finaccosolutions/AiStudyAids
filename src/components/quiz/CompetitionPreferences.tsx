@@ -5,7 +5,8 @@ import { Select } from '../ui/Select';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import { 
   Trophy, Users, Clock, Target, Brain, 
-  Settings, Zap, Crown, Sparkles, Info
+  Settings, Zap, Crown, Sparkles, Info,
+  CheckCircle2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { QuizPreferences } from '../../types';
@@ -29,7 +30,10 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
     timeLimitEnabled: true, // Always enable time limits for competitions
     timeLimit: '30', // Default 30 seconds per question
     negativeMarking: true, // Enable negative marking for competitive fairness
-    negativeMarks: -0.25
+    negativeMarks: -0.25,
+    questionTypes: initialPreferences.questionTypes.length > 0 
+      ? initialPreferences.questionTypes 
+      : ['multiple-choice', 'true-false', 'short-answer'] // Default competitive question types
   });
 
   const difficultyOptions = [
@@ -53,6 +57,16 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
       value: 'short-answer', 
       label: 'Short Answer',
       description: 'Brief knowledge-based responses'
+    },
+    { 
+      value: 'fill-blank', 
+      label: 'Fill in the Blank',
+      description: 'Complete sentences with missing words'
+    },
+    { 
+      value: 'multi-select', 
+      label: 'Multi-Select',
+      description: 'Choose multiple correct options'
     }
   ];
 
@@ -68,21 +82,21 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
     setPreferences(prev => {
       const currentTypes = prev.questionTypes;
       
-      if (currentTypes.includes(type) && currentTypes.length > 1) {
+      if (currentTypes.includes(type)) {
+        // Don't allow removing all question types
+        if (currentTypes.length === 1) {
+          return prev;
+        }
         return {
           ...prev,
           questionTypes: currentTypes.filter(t => t !== type)
         };
       }
       
-      if (!currentTypes.includes(type)) {
-        return {
-          ...prev,
-          questionTypes: [...currentTypes, type]
-        };
-      }
-      
-      return prev;
+      return {
+        ...prev,
+        questionTypes: [...currentTypes, type]
+      };
     });
   };
 
@@ -91,8 +105,21 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
   };
 
   const handleStartCompetition = () => {
+    // Ensure we have at least one question type
+    if (preferences.questionTypes.length === 0) {
+      setPreferences(prev => ({
+        ...prev,
+        questionTypes: ['multiple-choice']
+      }));
+      return;
+    }
+    
     onStartCompetition(preferences);
   };
+
+  const canStartCompetition = preferences.course && 
+                             preferences.course.trim() !== '' && 
+                             preferences.questionTypes.length > 0;
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -239,7 +266,7 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {competitionQuestionTypes.map((type) => (
                 <motion.button
                   key={type.value}
@@ -261,7 +288,7 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
                         animate={{ scale: 1 }}
                         className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center"
                       >
-                        <Zap className="w-4 h-4 text-white" />
+                        <CheckCircle2 className="w-4 h-4 text-white" />
                       </motion.div>
                     )}
                   </div>
@@ -269,6 +296,14 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
                 </motion.button>
               ))}
             </div>
+
+            {preferences.questionTypes.length === 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-red-700 text-sm">
+                  Please select at least one question type for your competition.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Competition Settings Summary */}
@@ -291,9 +326,17 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
                 <span className="ml-2 font-medium capitalize">{preferences.difficulty}</span>
               </div>
               <div>
-                <span className="text-gray-600">Negative Marking:</span>
-                <span className="ml-2 font-medium text-red-600">{preferences.negativeMarks} per wrong</span>
+                <span className="text-gray-600">Question Types:</span>
+                <span className="ml-2 font-medium">{preferences.questionTypes.length} selected</span>
               </div>
+            </div>
+            <div className="mt-3 text-sm">
+              <span className="text-gray-600">Selected Types:</span>
+              <span className="ml-2 font-medium">
+                {preferences.questionTypes.map(type => 
+                  competitionQuestionTypes.find(t => t.value === type)?.label
+                ).join(', ') || 'None selected'}
+              </span>
             </div>
           </div>
 
@@ -319,8 +362,10 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
             
             <Button
               onClick={handleStartCompetition}
-              disabled={!preferences.course || preferences.questionTypes.length === 0}
-              className="gradient-bg px-8 py-3"
+              disabled={!canStartCompetition}
+              className={`gradient-bg px-8 py-3 ${
+                !canStartCompetition ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <Sparkles className="w-5 h-5 mr-2" />
               Create Competition
