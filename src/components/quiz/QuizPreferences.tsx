@@ -7,10 +7,11 @@ import { Card, CardBody, CardFooter } from '../ui/Card';
 import { 
   BookOpen, Save, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2, AlarmClock, Info, Trophy, Users,
+  CheckCircle2, AlarmClock, Info, Brain, Users,
   Zap, Target, Crown, Sparkles
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { QuizPreferences } from '../../types';
 
 interface QuizPreferencesFormProps {
   userId: string;
@@ -45,48 +46,66 @@ const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({
     { value: 'hard', label: 'Hard' },
   ];
   
-const questionTypeOptions = [
-  { 
-    value: 'multiple-choice', 
-    label: 'Multiple Choice',
-    description: 'Select one correct answer from multiple options'
-  },
+  const soloQuestionTypeOptions = [
     { 
-    value: 'multi-select', 
-    label: 'Select All That Apply',
-    description: 'Choose multiple correct options'
-  },
-  { 
-    value: 'true-false', 
-    label: 'True/False',
-    description: 'Determine if a statement is true or false'
-  },
-  { 
-    value: 'fill-blank', 
-    label: 'Fill in the Blank',
-    description: 'Complete sentences with missing words'
-  },
-  { 
-    value: 'short-answer', 
-    label: 'Short Answer',
-    description: 'Provide brief 1-2 word answers'
-  },
-  { 
-    value: 'sequence', 
-    label: 'Sequence/Ordering',
-    description: 'Arrange items in the correct order'
-  },
-  { 
-    value: 'case-study', 
-    label: 'Case Study',
-    description: 'Analyze real-world scenarios and answer questions'
-  },
-  { 
-    value: 'situation', 
-    label: 'Situation Judgment',
-    description: 'Choose the best action in given scenarios'
-  }
-];
+      value: 'multiple-choice', 
+      label: 'Multiple Choice',
+      description: 'Select one correct answer from multiple options'
+    },
+    { 
+      value: 'multi-select', 
+      label: 'Select All That Apply',
+      description: 'Choose multiple correct options'
+    },
+    { 
+      value: 'true-false', 
+      label: 'True/False',
+      description: 'Determine if a statement is true or false'
+    },
+    { 
+      value: 'fill-blank', 
+      label: 'Fill in the Blank',
+      description: 'Complete sentences with missing words'
+    },
+    { 
+      value: 'short-answer', 
+      label: 'Short Answer',
+      description: 'Provide brief 1-2 word answers'
+    },
+    { 
+      value: 'sequence', 
+      label: 'Sequence/Ordering',
+      description: 'Arrange items in the correct order'
+    },
+    { 
+      value: 'case-study', 
+      label: 'Case Study',
+      description: 'Analyze real-world scenarios and answer questions'
+    },
+    { 
+      value: 'situation', 
+      label: 'Situation Judgment',
+      description: 'Choose the best action in given scenarios'
+    }
+  ];
+
+  const competitionQuestionTypeOptions = [
+    { 
+      value: 'multiple-choice', 
+      label: 'Multiple Choice',
+      description: 'Fast-paced single answer questions'
+    },
+    { 
+      value: 'true-false', 
+      label: 'True/False',
+      description: 'Quick decision-making questions'
+    },
+    { 
+      value: 'short-answer', 
+      label: 'Short Answer',
+      description: 'Brief knowledge-based responses'
+    }
+  ];
   
   const languageOptions = [
     { value: 'English', label: 'English' },
@@ -99,12 +118,24 @@ const questionTypeOptions = [
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const updatedPreferences = {
+    let updatedPreferences = {
       ...preferences,
       timeLimit: timingMode === 'total' ? null : preferences.timeLimit,
       totalTimeLimit: timingMode === 'per-question' ? null : preferences.totalTimeLimit,
       timeLimitEnabled: preferences.timeLimitEnabled
     };
+
+    // Apply competition-specific settings
+    if (selectedMode === 'competition') {
+      updatedPreferences = {
+        ...updatedPreferences,
+        mode: 'exam', // Always exam mode for competitions
+        timeLimitEnabled: true, // Always enable time limits
+        timeLimit: updatedPreferences.timeLimit || '30', // Default 30 seconds
+        negativeMarking: true, // Enable negative marking
+        negativeMarks: updatedPreferences.negativeMarks || -0.25
+      };
+    }
     
     await savePreferences(userId, updatedPreferences);
     
@@ -186,6 +217,11 @@ const questionTypeOptions = [
       return `${minutes}:${seconds.toString().padStart(2, '0')} minutes total (${perQuestion} seconds per question)`;
     }
   };
+
+  // Get the appropriate question types based on mode
+  const questionTypeOptions = selectedMode === 'competition' 
+    ? competitionQuestionTypeOptions 
+    : soloQuestionTypeOptions;
   
   return (
     <div className="max-w-4xl mx-auto">
@@ -279,7 +315,7 @@ const questionTypeOptions = [
                   <div className={`p-4 rounded-full ${
                     selectedMode === 'competition' ? 'bg-purple-100' : 'bg-gray-100'
                   }`}>
-                    <Trophy className={`w-8 h-8 ${
+                    <Crown className={`w-8 h-8 ${
                       selectedMode === 'competition' ? 'text-purple-600' : 'text-gray-400'
                     }`} />
                   </div>
@@ -439,41 +475,62 @@ const questionTypeOptions = [
                   />
                 </div>
 
-                <div className="space-y-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={preferences.negativeMarking || false}
-                      onChange={(e) => setPreferences({ 
-                        ...preferences, 
-                        negativeMarking: e.target.checked,
-                        negativeMarks: e.target.checked ? -0.25 : 0
-                      })}
-                      className="form-checkbox h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500 transition-colors"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Enable Negative Marking</span>
-                  </label>
-                  
-                  {preferences.negativeMarking && (
-                    <div className="pl-7">
-                      <Input
-                        type="number"
-                        min={-5}
-                        max={0}
-                        step={0.25}
-                        value={preferences.negativeMarks || -0.25}
+                {selectedMode === 'solo' && (
+                  <div className="space-y-4">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        checked={preferences.negativeMarking || false}
                         onChange={(e) => setPreferences({ 
                           ...preferences, 
-                          negativeMarks: parseFloat(e.target.value) 
+                          negativeMarking: e.target.checked,
+                          negativeMarks: e.target.checked ? -0.25 : 0
                         })}
-                        className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        className="form-checkbox h-5 w-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500 transition-colors"
                       />
-                      <p className="text-sm text-gray-500 mt-1">
-                        Enter negative marks (between -5 and 0)
-                      </p>
-                    </div>
-                  )}
-                </div>
+                      <span className="text-sm font-medium text-gray-700">Enable Negative Marking</span>
+                    </label>
+                    
+                    {preferences.negativeMarking && (
+                      <div className="pl-7">
+                        <Input
+                          type="number"
+                          min={-5}
+                          max={0}
+                          step={0.25}
+                          value={preferences.negativeMarks || -0.25}
+                          onChange={(e) => setPreferences({ 
+                            ...preferences, 
+                            negativeMarks: parseFloat(e.target.value) 
+                          })}
+                          className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400"
+                        />
+                        <p className="text-sm text-gray-500 mt-1">
+                          Enter negative marks (between -5 and 0)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {selectedMode === 'competition' && (
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Time per Question
+                    </label>
+                    <Select
+                      options={[
+                        { value: '15', label: '15 seconds (Lightning)' },
+                        { value: '30', label: '30 seconds (Standard)' },
+                        { value: '45', label: '45 seconds (Relaxed)' },
+                        { value: '60', label: '60 seconds (Extended)' }
+                      ]}
+                      value={preferences.timeLimit || '30'}
+                      onChange={(e) => setPreferences({ ...preferences, timeLimit: e.target.value })}
+                      className="w-full transition-all duration-300 hover:border-purple-400 focus:ring-purple-400 text-lg"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -486,7 +543,12 @@ const questionTypeOptions = [
                 <h3 className="text-xl font-semibold text-gray-800">Question Types</h3>
                 <div className="tooltip ml-2">
                   <Info className="w-4 h-4 text-gray-400 hover:text-blue-600 cursor-help" />
-                  <span className="tooltiptext z-50">Choose the types of questions you want in your quiz</span>
+                  <span className="tooltiptext z-50">
+                    {selectedMode === 'competition' 
+                      ? 'Question types optimized for competitive play'
+                      : 'Choose the types of questions you want in your quiz'
+                    }
+                  </span>
                 </div>
               </div>
               
@@ -507,7 +569,10 @@ const questionTypeOptions = [
                     ) : (
                       <div className="w-5 h-5 mb-2" />
                     )}
-                    {option.label}
+                    <div className="text-center">
+                      <div className="font-medium">{option.label}</div>
+                      <div className="text-xs text-gray-500 mt-1">{option.description}</div>
+                    </div>
                   </button>
                 ))}
               </div>
@@ -651,6 +716,40 @@ const questionTypeOptions = [
               </div>
             </div>
           )}
+
+          {/* Competition Settings Summary - Only show for competition mode */}
+          {selectedMode === 'competition' && (
+            <div className="p-8 space-y-6 relative overflow-hidden group bg-gradient-to-r from-yellow-50/30 to-orange-50/30">
+              <div className="relative">
+                <div className="flex items-center mb-6 relative">
+                  <Crown className="w-6 h-6 mr-3 text-yellow-600" />
+                  <h3 className="text-xl font-semibold text-gray-800">Competition Settings</h3>
+                </div>
+                
+                <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl border border-yellow-200">
+                  <h4 className="font-semibold text-yellow-900 mb-4">Competition Rules Applied</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <span className="text-yellow-700">Mode:</span>
+                      <span className="ml-2 font-medium">Exam Only</span>
+                    </div>
+                    <div>
+                      <span className="text-yellow-700">Time/Question:</span>
+                      <span className="ml-2 font-medium">{preferences.timeLimit || '30'}s</span>
+                    </div>
+                    <div>
+                      <span className="text-yellow-700">Negative Marking:</span>
+                      <span className="ml-2 font-medium text-red-600">-0.25 per wrong</span>
+                    </div>
+                    <div>
+                      <span className="text-yellow-700">Results:</span>
+                      <span className="ml-2 font-medium">End of quiz</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           
           {error && (
             <div className="p-4 bg-red-50 border-l-4 border-red-500">
@@ -667,9 +766,9 @@ const questionTypeOptions = [
               disabled={isLoading || !preferences.course}
               className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group text-lg px-8 py-3"
             >
-              {isLoading ? 'Generating...' : selectedMode === 'competition' ? 'Start Competition' : 'Start Quiz'}
+              {isLoading ? 'Generating...' : selectedMode === 'competition' ? 'Create Competition' : 'Start Quiz'}
               {selectedMode === 'competition' ? (
-                <Trophy className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
+                <Crown className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
               ) : (
                 <Save className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
               )}

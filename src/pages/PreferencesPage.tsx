@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
+import CompetitionPreferences from '../components/quiz/CompetitionPreferences';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 
 const PreferencesPage: React.FC = () => {
@@ -23,8 +24,13 @@ const PreferencesPage: React.FC = () => {
     navigate('/quiz', { state: { from: '/preferences' } });
   };
 
-  const handleStartCompetition = () => {
-    navigate('/quiz', { state: { mode: 'competition' } });
+  const handleStartCompetition = (competitionPreferences: any) => {
+    navigate('/quiz', { 
+      state: { 
+        mode: 'competition',
+        preferences: competitionPreferences
+      } 
+    });
   };
 
   const handleJoinCompetition = () => {
@@ -32,6 +38,22 @@ const PreferencesPage: React.FC = () => {
   };
 
   if (!user) return null;
+
+  // Check if we should show competition preferences
+  const showCompetitionPrefs = location.state?.mode === 'competition';
+
+  if (showCompetitionPrefs) {
+    return (
+      <div className="space-y-6">
+        <CompetitionPreferences
+          initialPreferences={preferences || defaultPreferences}
+          onStartCompetition={handleStartCompetition}
+          onJoinCompetition={handleJoinCompetition}
+          onCancel={() => navigate('/preferences')}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
