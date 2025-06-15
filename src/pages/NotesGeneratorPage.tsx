@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useStudyAidsStore } from '../store/useStudyAidsStore';
 import { Card, CardBody, CardHeader } from '../components/ui/Card';
@@ -10,7 +10,7 @@ import {
   ListChecks, FileSpreadsheet, FileBox,
   Sparkles, Loader2, Download, Copy,
   CheckCircle2, ChevronDown, ChevronUp,
-  GraduationCap, Lightbulb
+  GraduationCap, Lightbulb, Trash2, AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -56,7 +56,7 @@ const outputFormats: OutputFormat[] = [
 
 const NotesGeneratorPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { createNote, notes, isLoading } = useStudyAidsStore();
+  const { createNote, deleteNote, notes, isLoading, error, loadNotes } = useStudyAidsStore();
   const [file, setFile] = useState<File | null>(null);
   const [content, setContent] = useState('');
   const [source, setSource] = useState<'text' | 'pdf'>('text');
@@ -66,6 +66,12 @@ const NotesGeneratorPage: React.FC = () => {
   const [topic, setTopic] = useState('');
   const [showContent, setShowContent] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (user) {
+      loadNotes(user.id);
+    }
+  }, [user, loadNotes]);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -94,18 +100,44 @@ const NotesGeneratorPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || (!content && !file) || selectedFormats.length === 0) return;
+    if (!user || (!content && !file) || selectedFormats.length === 0 || !subject) return;
 
-    const formData = new FormData();
-    if (file) {
-      formData.append('file', file);
+    try {
+      // Create a plain object with the data
+      const noteData = {
+        course: subject, // Map subject to course for database
+        topic: topic || null,
+        source,
+        content: source === 'text' ? content : null,
+        file: source === 'pdf' ? file : null,
+        output_format: selectedFormats,
+        language: 'English' // Default language
+      };
+
+      await createNote(user.id, noteData);
+      
+      // Reset form after successful submission
+      setContent('');
+      setFile(null);
+      setSubject('');
+      setTopic('');
+      setSelectedFormats(['summary']);
+      setSource('text');
+    } catch (error) {
+      console.error('Failed to create note:', error);
     }
-    formData.append('content', content);
-    formData.append('subject', subject);
-    formData.append('topic', topic);
-    formData.append('outputFormats', JSON.stringify(selectedFormats));
+  };
 
-    await createNote(user.id, formData);
+  const handleDeleteNote = async (noteId: string) => {
+    if (!user) return;
+    
+    if (window.confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+      try {
+        await deleteNote(user.id, noteId);
+      } catch (error) {
+        console.error('Failed to delete note:', error);
+      }
+    }
   };
 
   const toggleContent = (id: string) => {
@@ -125,6 +157,49 @@ const NotesGeneratorPage: React.FC = () => {
     }
   };
 
+  const downloadNote = (note: any) => {
+    let content = `${note.course}${note.topic ? ` - ${note.topic}` : ''}\n`;
+    content += `Generated on ${new Date(note.created_at).toLocaleDateString()}\n\n`;
+    
+    if (note.generated_content.summary) {
+      content += `SUMMARY:\n${note.generated_content.summary}\n\n`;
+    }
+    
+    if (note.generated_content.keyPoints) {
+      content += `KEY POINTS:\n`;
+      note.generated_content.keyPoints.forEach((point: string, index: number) => {
+        content += `${index + 1}. ${point}\n`;
+      });
+      content += '\n';
+    }
+    
+    if (note.generated_content.definitions) {
+      content += `DEFINITIONS:\n`;
+      note.generated_content.definitions.forEach((def: any) => {
+        content += `${def.term}: ${def.definition}\n`;
+      });
+      content += '\n';
+    }
+    
+    if (note.generated_content.questions) {
+      content += `PRACTICE QUESTIONS:\n`;
+      note.generated_content.questions.forEach((q: any, index: number) => {
+        content += `Q${index + 1}: ${q.question}\n`;
+        content += `A: ${q.answer}\n\n`;
+      });
+    }
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${note.course}_${note.topic || 'notes'}_${new Date(note.created_at).toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       <div className="flex items-center justify-between">
@@ -138,6 +213,15 @@ const NotesGeneratorPage: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-red-700">
+            <AlertTriangle className="w-5 h-5" />
+            <p className="font-medium">{error}</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Input Form */}
@@ -159,7 +243,7 @@ const NotesGeneratorPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Subject
+                      Subject *
                     </label>
                     <Input
                       type="text"
@@ -180,7 +264,6 @@ const NotesGeneratorPage: React.FC = () => {
                       placeholder="e.g., Data Structures"
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
-                      required
                       className="w-full"
                     />
                   </div>
@@ -231,7 +314,7 @@ const NotesGeneratorPage: React.FC = () => {
                 {source === 'text' ? (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Study Material
+                      Study Material *
                     </label>
                     <textarea
                       value={content}
@@ -262,6 +345,7 @@ const NotesGeneratorPage: React.FC = () => {
                         }
                       }}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      required={source === 'pdf'}
                     />
                     <div className="space-y-4">
                       <Upload className={`w-12 h-12 mx-auto ${
@@ -290,7 +374,7 @@ const NotesGeneratorPage: React.FC = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Output Formats
+                    Output Formats *
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     {outputFormats.map((format) => (
@@ -325,7 +409,7 @@ const NotesGeneratorPage: React.FC = () => {
 
                 <Button
                   type="submit"
-                  disabled={isLoading || (!content && !file) || selectedFormats.length === 0}
+                  disabled={isLoading || (!content && !file) || selectedFormats.length === 0 || !subject}
                   className="w-full gradient-bg"
                 >
                   {isLoading ? (
@@ -376,13 +460,21 @@ const NotesGeneratorPage: React.FC = () => {
                           </div>
                           <div>
                             <h3 className="font-medium text-gray-900">
-                              {note.subject} - {note.topic}
+                              {note.course} {note.topic && `- ${note.topic}`}
                             </h3>
                             <p className="text-sm text-gray-500">
                               {new Date(note.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteNote(note.id)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
 
                       <div className="flex flex-wrap gap-2 mb-4">
@@ -440,6 +532,7 @@ const NotesGeneratorPage: React.FC = () => {
                           <Button
                             variant="outline"
                             size="sm"
+                            onClick={() => downloadNote(note)}
                             className="text-green-600 hover:text-green-700 hover:bg-green-50"
                           >
                             <Download className="w-4 h-4" />
@@ -485,9 +578,25 @@ const NotesGeneratorPage: React.FC = () => {
                                 <div>
                                   <h4 className="font-medium text-gray-900 mb-2">Mind Map</h4>
                                   <div className="bg-gray-50 p-4 rounded-lg">
-                                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                                      {JSON.stringify(note.generated_content.mindMap, null, 2)}
-                                    </pre>
+                                    <div className="text-center mb-4">
+                                      <div className="inline-block bg-purple-100 text-purple-800 px-4 py-2 rounded-lg font-medium">
+                                        {note.generated_content.mindMap.central}
+                                      </div>
+                                    </div>
+                                    {note.generated_content.mindMap.branches && (
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {note.generated_content.mindMap.branches.map((branch: any, index: number) => (
+                                          <div key={index} className="bg-white p-3 rounded-lg">
+                                            <h5 className="font-medium text-gray-800 mb-2">{branch.name}</h5>
+                                            <ul className="space-y-1">
+                                              {branch.subtopics?.map((subtopic: string, i: number) => (
+                                                <li key={i} className="text-sm text-gray-600">• {subtopic}</li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               )}
