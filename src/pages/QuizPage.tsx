@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 import { useCompetitionStore } from '../store/useCompetitionStore';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import ApiKeyForm from '../components/quiz/ApiKeyForm';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import QuizQuestion from '../components/quiz/QuizQuestion';
@@ -37,6 +37,7 @@ const QuizPage: React.FC = () => {
   } = useCompetitionStore();
   
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const joinCode = searchParams.get('join');
   
@@ -44,7 +45,6 @@ const QuizPage: React.FC = () => {
   const [totalTimeRemaining, setTotalTimeRemaining] = useState<number | null>(null);
   const [competitionMode, setCompetitionMode] = useState<'private' | 'random' | null>(null);
   const [competitionQuestions, setCompetitionQuestions] = useState<any[]>([]);
-  const [showCompetitionOptions, setShowCompetitionOptions] = useState(false);
   
   useEffect(() => {
     if (user) {
@@ -59,6 +59,16 @@ const QuizPage: React.FC = () => {
       handleJoinCompetition(joinCode);
     }
   }, [joinCode, apiKey]);
+
+  // Handle navigation state for competition mode
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.mode === 'competition') {
+      setStep('competition-mode');
+    } else if (state?.mode === 'join-competition') {
+      setStep('join-competition');
+    }
+  }, [location.state]);
   
   useEffect(() => {
     if (apiKey && !preferences) {
@@ -116,12 +126,15 @@ const QuizPage: React.FC = () => {
   };
 
   const handleStartCompetition = () => {
-    setShowCompetitionOptions(true);
+    setStep('competition-mode');
+  };
+
+  const handleJoinCompetitionFromPrefs = () => {
+    setStep('join-competition');
   };
 
   const handleCompetitionModeSelect = (mode: 'private' | 'random') => {
     setCompetitionMode(mode);
-    setShowCompetitionOptions(false);
     
     if (mode === 'private') {
       setStep('create-competition');
@@ -226,31 +239,13 @@ const QuizPage: React.FC = () => {
       
       case 'preferences':
         return (
-          <div className="space-y-6">
-            <QuizPreferencesForm
-              userId={user.id}
-              initialPreferences={preferences || defaultPreferences}
-              onSave={handleStartSoloQuiz}
-            />
-            
-            <div className="flex justify-center space-x-4">
-              <Button
-                onClick={handleStartCompetition}
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:opacity-90 transition-all duration-300 transform hover:scale-105"
-              >
-                <Trophy className="w-5 h-5 mr-2" />
-                Start Competition
-              </Button>
-              <Button
-                onClick={() => setStep('join-competition')}
-                variant="outline"
-                className="border-2 border-purple-200 text-purple-600 hover:bg-purple-50"
-              >
-                <Users className="w-5 h-5 mr-2" />
-                Join Competition
-              </Button>
-            </div>
-          </div>
+          <QuizPreferencesForm
+            userId={user.id}
+            initialPreferences={preferences || defaultPreferences}
+            onSave={handleStartSoloQuiz}
+            onStartCompetition={handleStartCompetition}
+            onJoinCompetition={handleJoinCompetitionFromPrefs}
+          />
         );
 
       case 'competition-mode':
@@ -373,14 +368,6 @@ const QuizPage: React.FC = () => {
   
   return (
     <div className="relative min-h-screen bg-gray-50">
-      {/* Competition Mode Selector Modal */}
-      {showCompetitionOptions && (
-        <CompetitionModeSelector
-          onSelectMode={handleCompetitionModeSelect}
-          onCancel={() => setShowCompetitionOptions(false)}
-        />
-      )}
-
       {/* Invite Notifications */}
       <InviteNotification />
       

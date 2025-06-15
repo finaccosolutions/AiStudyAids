@@ -7,26 +7,32 @@ import { Card, CardBody, CardFooter } from '../ui/Card';
 import { 
   BookOpen, Save, Clock, Languages, ListChecks, 
   BarChart3, Timer, AlertTriangle, Settings, 
-  CheckCircle2, AlarmClock, Info
+  CheckCircle2, AlarmClock, Info, Trophy, Users,
+  Zap, Target, Crown, Sparkles
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface QuizPreferencesFormProps {
   userId: string;
   initialPreferences: QuizPreferences;
   onSave?: () => void;
+  onStartCompetition?: () => void;
+  onJoinCompetition?: () => void;
 }
 
 const QuizPreferencesForm: React.FC<QuizPreferencesFormProps> = ({ 
   userId, 
   initialPreferences,
-  onSave
+  onSave,
+  onStartCompetition,
+  onJoinCompetition
 }) => {
   const [preferences, setPreferences] = useState<QuizPreferences>(initialPreferences);
   const { savePreferences, isLoading, error } = useQuizStore();
   const [timingMode, setTimingMode] = useState<'per-question' | 'total'>(
     preferences.totalTimeLimit ? 'total' : 'per-question'
   );
+  const [selectedMode, setSelectedMode] = useState<'solo' | 'competition'>('solo');
   
   useEffect(() => {
     setPreferences(initialPreferences);
@@ -101,7 +107,12 @@ const questionTypeOptions = [
     };
     
     await savePreferences(userId, updatedPreferences);
-    if (onSave) onSave();
+    
+    if (selectedMode === 'competition') {
+      if (onStartCompetition) onStartCompetition();
+    } else {
+      if (onSave) onSave();
+    }
   };
   
   const handleQuestionTypeToggle = (type: string) => {
@@ -182,6 +193,156 @@ const questionTypeOptions = [
         <div className="p-8 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50">
           <h2 className="text-3xl font-bold gradient-text mb-2">Quiz Preferences</h2>
           <p className="text-gray-600">Customize your learning experience</p>
+        </div>
+        
+        {/* Mode Selection */}
+        <div className="p-8 border-b border-purple-100 bg-gradient-to-r from-blue-50/30 to-purple-50/30">
+          <div className="flex items-center mb-6">
+            <Target className="w-6 h-6 mr-3 text-purple-600" />
+            <h3 className="text-xl font-semibold text-gray-800">Choose Your Experience</h3>
+            <div className="tooltip ml-2">
+              <Info className="w-4 h-4 text-gray-400 hover:text-purple-600 cursor-help" />
+              <span className="tooltiptext z-50">Select between solo practice or competitive multiplayer quiz</span>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <motion.button
+              type="button"
+              onClick={() => setSelectedMode('solo')}
+              className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
+                selectedMode === 'solo' 
+                  ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
+                  : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
+              }`}
+              whileHover={{ scale: selectedMode === 'solo' ? 1.02 : 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-indigo-400/10" />
+              <div className="relative p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className={`p-4 rounded-full ${
+                    selectedMode === 'solo' ? 'bg-purple-100' : 'bg-gray-100'
+                  }`}>
+                    <BookOpen className={`w-8 h-8 ${
+                      selectedMode === 'solo' ? 'text-purple-600' : 'text-gray-400'
+                    }`} />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Solo Practice</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Practice at your own pace with instant feedback and detailed explanations
+                </p>
+                <div className="space-y-2 text-xs text-gray-500">
+                  <div className="flex items-center">
+                    <CheckCircle2 className="w-3 h-3 mr-2 text-green-500" />
+                    <span>Immediate feedback</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle2 className="w-3 h-3 mr-2 text-green-500" />
+                    <span>Detailed explanations</span>
+                  </div>
+                  <div className="flex items-center">
+                    <CheckCircle2 className="w-3 h-3 mr-2 text-green-500" />
+                    <span>Self-paced learning</span>
+                  </div>
+                </div>
+                {selectedMode === 'solo' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-3 bg-white bg-opacity-80 rounded-lg border border-purple-200"
+                  >
+                    <div className="flex items-center space-x-2 text-purple-700">
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-sm font-medium">Selected</span>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.button>
+
+            <motion.button
+              type="button"
+              onClick={() => setSelectedMode('competition')}
+              className={`relative overflow-hidden rounded-2xl border-2 transition-all duration-300 cursor-pointer ${
+                selectedMode === 'competition' 
+                  ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]' 
+                  : 'border-gray-200 hover:border-purple-200 hover:bg-purple-50/50'
+              }`}
+              whileHover={{ scale: selectedMode === 'competition' ? 1.02 : 1.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-pink-400/10" />
+              <div className="relative p-6">
+                <div className="flex items-center justify-center mb-4">
+                  <div className={`p-4 rounded-full ${
+                    selectedMode === 'competition' ? 'bg-purple-100' : 'bg-gray-100'
+                  }`}>
+                    <Trophy className={`w-8 h-8 ${
+                      selectedMode === 'competition' ? 'text-purple-600' : 'text-gray-400'
+                    }`} />
+                  </div>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Competition Mode</h3>
+                <p className="text-gray-600 text-sm mb-4">
+                  Compete with friends or random players in real-time quiz battles
+                </p>
+                <div className="space-y-2 text-xs text-gray-500">
+                  <div className="flex items-center">
+                    <Crown className="w-3 h-3 mr-2 text-yellow-500" />
+                    <span>Real-time competition</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users className="w-3 h-3 mr-2 text-blue-500" />
+                    <span>Multiplayer battles</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Zap className="w-3 h-3 mr-2 text-purple-500" />
+                    <span>Live leaderboards</span>
+                  </div>
+                </div>
+                {selectedMode === 'competition' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-4 p-3 bg-white bg-opacity-80 rounded-lg border border-purple-200"
+                  >
+                    <div className="flex items-center space-x-2 text-purple-700">
+                      <Sparkles className="w-4 h-4" />
+                      <span className="text-sm font-medium">Selected</span>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </motion.button>
+          </div>
+
+          {selectedMode === 'competition' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border border-purple-200"
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-semibold text-purple-800 mb-1">Competition Options</h4>
+                  <p className="text-sm text-purple-600">Choose how you want to compete</p>
+                </div>
+                <div className="flex space-x-3">
+                  <Button
+                    type="button"
+                    onClick={onJoinCompetition}
+                    variant="outline"
+                    className="text-purple-600 hover:text-purple-700 hover:bg-purple-100 border-purple-300"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Join Competition
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
         
         <form onSubmit={handleSubmit} className="divide-y divide-purple-100">
@@ -502,8 +663,12 @@ const questionTypeOptions = [
               disabled={isLoading || !preferences.course}
               className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group text-lg px-8 py-3"
             >
-              {isLoading ? 'Generating...' : 'Start Quiz'}
-              <Save className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
+              {isLoading ? 'Generating...' : selectedMode === 'competition' ? 'Start Competition' : 'Start Quiz'}
+              {selectedMode === 'competition' ? (
+                <Trophy className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
+              ) : (
+                <Save className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
+              )}
             </Button>
           </div>
         </form>

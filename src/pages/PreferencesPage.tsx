@@ -23,6 +23,14 @@ const PreferencesPage: React.FC = () => {
     navigate('/quiz', { state: { from: '/preferences' } });
   };
 
+  const handleStartCompetition = () => {
+    navigate('/quiz', { state: { mode: 'competition' } });
+  };
+
+  const handleJoinCompetition = () => {
+    navigate('/quiz', { state: { mode: 'join-competition' } });
+  };
+
   if (!user) return null;
 
   return (
@@ -31,6 +39,8 @@ const PreferencesPage: React.FC = () => {
         userId={user.id}
         initialPreferences={preferences || defaultPreferences}
         onSave={handleStartQuiz}
+        onStartCompetition={handleStartCompetition}
+        onJoinCompetition={handleJoinCompetition}
       />
     </div>
   );
