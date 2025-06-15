@@ -502,7 +502,7 @@ const questionTypeOptions = [
               disabled={isLoading || !preferences.course}
               className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group text-lg px-8 py-3"
             >
-              {isLoading ? 'Saving...' : 'Start Quiz'}
+              {isLoading ? 'Generating...' : 'Start Quiz'}
               <Save className="ml-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
             </Button>
           </div>

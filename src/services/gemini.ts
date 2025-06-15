@@ -148,6 +148,34 @@ Example:
   "explanation": "Analysis of each action and its consequences:\\n1. Rolling back immediately: Risky without understanding the issue, could cause data inconsistencies and might not solve the problem if it's unrelated to the deployment.\\n2. Scaling database resources: Premature solution without understanding if database is the real bottleneck, wastes time and resources if the issue lies elsewhere.\\n3. Analyzing logs and metrics: Best first action as it quickly identifies the root cause, minimizes risk, and ensures the correct solution is implemented. Allows for informed decision-making.\\n4. Restoring backup: Most disruptive option with guaranteed data loss, should only be used as a last resort after other options are exhausted."
 }
 
+For short-answer:
+- MUST have "text": clear, specific question
+- MUST have "correctAnswer": concise, accurate answer (1-3 words typically)
+- MUST have "explanation": detailed explanation of the answer
+- MUST have "keywords": array of key terms that should be present in a correct answer
+Example:
+{
+  "type": "short-answer",
+  "text": "What is the time complexity of binary search algorithm?",
+  "correctAnswer": "O(log n)",
+  "explanation": "Binary search has O(log n) time complexity because it eliminates half of the remaining elements in each iteration, resulting in a logarithmic number of comparisons.",
+  "keywords": ["O(log n)", "logarithmic", "log n"]
+}
+
+For fill-blank:
+- MUST have "text": sentence with ONE blank marked as _____ 
+- MUST have "correctAnswer": the word/phrase that fills the blank
+- MUST have "explanation": detailed explanation
+- MUST have "keywords": array of acceptable variations of the answer
+Example:
+{
+  "type": "fill-blank",
+  "text": "The _____ design pattern ensures that a class has only one instance and provides global access to it.",
+  "correctAnswer": "Singleton",
+  "explanation": "The Singleton pattern restricts instantiation of a class to one object and provides a global point of access to that instance.",
+  "keywords": ["Singleton", "singleton"]
+}
+
 CRITICAL REQUIREMENTS:
 1. Every question MUST include:
    - Complete "text" field with clear question
@@ -163,7 +191,8 @@ CRITICAL REQUIREMENTS:
 7. For multi-select questions, ALWAYS include EXACTLY 2 OR 3 correct options - no more, no less
 8. For sequence questions, ALWAYS provide step-by-step explanation
 9. For case-study and situation questions, ALWAYS include detailed scenario (100+ words)
-10. ALWAYS analyze ALL options in explanations for case-study and situation questions`;
+10. ALWAYS analyze ALL options in explanations for case-study and situation questions
+11. For short-answer and fill-blank questions, ALWAYS include keywords array for flexible matching`;
 
   try {
     // First try the edge function
@@ -286,6 +315,21 @@ CRITICAL REQUIREMENTS:
               throw new Error(`Question ${index + 1} correctAnswer must match one of the options exactly`);
             }
             break;
+
+          case 'short-answer':
+            if (!q.correctAnswer || !Array.isArray(q.keywords)) {
+              throw new Error(`Question ${index + 1} (short-answer) must have correctAnswer and keywords array`);
+            }
+            break;
+
+          case 'fill-blank':
+            if (!q.correctAnswer || !Array.isArray(q.keywords)) {
+              throw new Error(`Question ${index + 1} (fill-blank) must have correctAnswer and keywords array`);
+            }
+            if (!q.text.includes('_____')) {
+              throw new Error(`Question ${index + 1} (fill-blank) must contain _____ in the text`);
+            }
+            break;
         }
       });
 
@@ -303,6 +347,7 @@ CRITICAL REQUIREMENTS:
         sequence: q.sequence,
         correctSequence: q.correctSequence,
         correctOptions: q.correctOptions,
+        keywords: q.keywords,
         language: quizLanguage
       }));
     } catch (error: any) {
@@ -360,5 +405,127 @@ Requirements:
   } catch (error: any) {
     console.error('Explanation error:', error);
     throw new Error(`Failed to get explanation: ${error.message}`);
+  }
+};
+
+// Function to evaluate short answer or fill-blank questions
+export const evaluateTextAnswer = async (
+  apiKey: string,
+  question: string,
+  userAnswer: string,
+  correctAnswer: string,
+  keywords: string[],
+  language: string
+): Promise<{ isCorrect: boolean; feedback: string; score: number }> => {
+  const prompt = `Evaluate this student answer for the question:
+
+Question: "${question}"
+Correct Answer: "${correctAnswer}"
+Student Answer: "${userAnswer}"
+Key Terms: ${keywords.join(', ')}
+
+Evaluation Criteria:
+1. Check if the student answer contains the core concepts
+2. Look for key terms or their synonyms
+3. Consider spelling variations and abbreviations
+4. Evaluate partial correctness
+5. Provide constructive feedback
+
+Respond in JSON format:
+{
+  "isCorrect": boolean (true if answer demonstrates understanding, even with minor errors),
+  "score": number (0-100, percentage of correctness),
+  "feedback": "detailed explanation in ${language}"
+}
+
+Be lenient with:
+- Minor spelling mistakes
+- Different word order
+- Synonyms and abbreviations
+- Partial answers that show understanding
+
+Be strict with:
+- Completely wrong concepts
+- Missing core elements
+- Contradictory information`;
+
+  try {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/gemini`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        prompt,
+        apiKey,
+        temperature: 0.1
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to evaluate answer: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format from Gemini API');
+    }
+
+    const responseText = data.candidates[0].content.parts[0].text;
+    
+    // Extract JSON from the response
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      // Fallback evaluation
+      const userLower = userAnswer.toLowerCase().trim();
+      const correctLower = correctAnswer.toLowerCase().trim();
+      const hasKeywords = keywords.some(keyword => 
+        userLower.includes(keyword.toLowerCase())
+      );
+      
+      return {
+        isCorrect: userLower === correctLower || hasKeywords,
+        score: userLower === correctLower ? 100 : hasKeywords ? 75 : 0,
+        feedback: `Your answer "${userAnswer}" ${hasKeywords ? 'contains key concepts but' : 'does not match'} the expected answer "${correctAnswer}".`
+      };
+    }
+
+    try {
+      const evaluation = JSON.parse(jsonMatch[0]);
+      return {
+        isCorrect: evaluation.isCorrect || false,
+        score: evaluation.score || 0,
+        feedback: evaluation.feedback || 'No feedback available'
+      };
+    } catch (parseError) {
+      // Fallback evaluation
+      const userLower = userAnswer.toLowerCase().trim();
+      const correctLower = correctAnswer.toLowerCase().trim();
+      const hasKeywords = keywords.some(keyword => 
+        userLower.includes(keyword.toLowerCase())
+      );
+      
+      return {
+        isCorrect: userLower === correctLower || hasKeywords,
+        score: userLower === correctLower ? 100 : hasKeywords ? 75 : 0,
+        feedback: `Your answer "${userAnswer}" ${hasKeywords ? 'contains key concepts but may need refinement' : 'does not match the expected answer'}. The correct answer is "${correctAnswer}".`
+      };
+    }
+  } catch (error: any) {
+    console.error('Answer evaluation error:', error);
+    // Fallback evaluation
+    const userLower = userAnswer.toLowerCase().trim();
+    const correctLower = correctAnswer.toLowerCase().trim();
+    const hasKeywords = keywords && keywords.some(keyword => 
+      userLower.includes(keyword.toLowerCase())
+    );
+    
+    return {
+      isCorrect: userLower === correctLower || hasKeywords,
+      score: userLower === correctLower ? 100 : hasKeywords ? 75 : 0,
+      feedback: `Your answer "${userAnswer}" ${hasKeywords ? 'contains some correct elements' : 'needs improvement'}. The expected answer is "${correctAnswer}".`
+    };
   }
 };

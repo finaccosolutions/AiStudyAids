@@ -144,7 +144,7 @@ const ApiKeyForm: React.FC<ApiKeyFormProps> = ({ userId, onSave }) => {
           disabled={isLoading || !key}
           className="min-w-[120px]"
         >
-          {isLoading ? 'Saving...' : 'Save API Key'}
+          {isLoading ? 'Generating...' : 'Save API Key'}
           <Save className="ml-2 h-4 w-4" />
         </Button>
       </CardFooter>

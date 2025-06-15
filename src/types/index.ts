@@ -69,6 +69,7 @@ interface BaseQuestion {
   difficulty: 'basic' | 'intermediate' | 'advanced';
   userAnswer?: string;
   language?: QuizLanguage;
+  keywords?: string[]; // For flexible answer matching
 }
 
 // Multiple choice question
@@ -89,12 +90,14 @@ interface TrueFalseQuestion extends BaseQuestion {
 interface FillBlankQuestion extends BaseQuestion {
   type: 'fill-blank';
   correctAnswer: string;
+  keywords: string[]; // Alternative acceptable answers
 }
 
 // Short answer question
 interface ShortAnswerQuestion extends BaseQuestion {
   type: 'short-answer';
   correctAnswer: string;
+  keywords: string[]; // Key terms that should be present
 }
 
 // Sequence question

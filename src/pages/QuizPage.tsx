@@ -95,15 +95,7 @@ const QuizPage: React.FC = () => {
             />
             
             <div className="flex justify-center">
-              <Button
-                onClick={handleStartQuiz}
-                size="lg"
-                disabled={!preferences?.topic}
-                className="gradient-bg hover:opacity-90 transition-all duration-300 transform hover:scale-105 group"
-              >
-                <RefreshCw className="w-5 h-5 mr-2 group-hover:rotate-180 transition-transform duration-500" />
-                Generate Quiz
-              </Button>
+
             </div>
           </div>
         );
