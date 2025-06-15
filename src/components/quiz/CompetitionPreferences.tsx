@@ -28,7 +28,7 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
     ...initialPreferences,
     mode: 'exam', // Always exam mode for competitions
     timeLimitEnabled: true, // Always enable time limits for competitions
-    timeLimit: '30', // Default 30 seconds per question
+    timeLimit: initialPreferences.timeLimit || '30', // Default 30 seconds per question
     negativeMarking: true, // Enable negative marking for competitive fairness
     negativeMarks: -0.25,
     questionTypes: initialPreferences.questionTypes.length > 0 
@@ -272,10 +272,10 @@ const CompetitionPreferences: React.FC<CompetitionPreferencesProps> = ({
                   key={type.value}
                   type="button"
                   onClick={() => handleQuestionTypeToggle(type.value)}
-                  className={`p-6 rounded-xl text-left transition-all duration-300 ${
+                  className={`p-6 rounded-xl text-left transition-all duration-300 transform hover:scale-[1.02] bg-white border-2 ${
                     isQuestionTypeSelected(type.value)
-                      ? 'bg-purple-50 border-2 border-purple-500 shadow-lg scale-[1.02]'
-                      : 'bg-white border-2 border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
+                      ? 'border-purple-500 bg-purple-50 shadow-lg scale-[1.02]'
+                      : 'border-gray-200 hover:border-purple-300 hover:bg-purple-50/50'
                   }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
