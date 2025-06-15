@@ -128,7 +128,20 @@ const AnswerEvaluationPage: React.FC = () => {
         .order('evaluated_at', { ascending: false });
 
       if (error) throw error;
-      setEvaluationResults(data || []);
+      
+      // Transform database results to match EvaluationResult interface
+      const transformedResults = (data || []).map((dbResult: any) => ({
+        id: dbResult.id,
+        score: typeof dbResult.score === 'number' ? dbResult.score : 0,
+        totalMarks: 100, // Default total marks
+        percentage: typeof dbResult.score === 'number' ? dbResult.score : 0,
+        feedback: dbResult.feedback || '',
+        improvements: dbResult.improvements || [],
+        questionAnalysis: [], // Database doesn't store detailed analysis
+        evaluatedAt: dbResult.evaluated_at
+      }));
+      
+      setEvaluationResults(transformedResults);
     } catch (error) {
       console.error('Error loading evaluation history:', error);
     }
@@ -309,15 +322,27 @@ const AnswerEvaluationPage: React.FC = () => {
         .from('answer_evaluations')
         .insert({
           user_id: user.id,
-          score: result.percentage,
-          feedback: result.feedback,
+          score: result.percentage || 0,
+          feedback: result.feedback || '',
           improvements: result.improvements || [],
           answer_sheet_url: mode === 'upload' ? evaluationData.answerSheetPath : null
         });
 
       if (saveError) throw saveError;
 
-      setEvaluationResults([result, ...evaluationResults]);
+      // Create a properly formatted result object
+      const newResult: EvaluationResult = {
+        id: `temp-${Date.now()}`,
+        score: result.percentage || 0,
+        totalMarks: result.totalMarks || 100,
+        percentage: result.percentage || 0,
+        feedback: result.feedback || '',
+        improvements: result.improvements || [],
+        questionAnalysis: result.questionAnalysis || [],
+        evaluatedAt: new Date().toISOString()
+      };
+
+      setEvaluationResults([newResult, ...evaluationResults]);
       
       // Reset forms
       if (mode === 'generate') {
@@ -866,14 +891,14 @@ const AnswerEvaluationPage: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className={`text-2xl font-bold ${
-                      result.percentage >= 80 ? 'text-green-600' :
-                      result.percentage >= 60 ? 'text-blue-600' :
-                      result.percentage >= 40 ? 'text-yellow-600' : 'text-red-600'
+                      (result.percentage || 0) >= 80 ? 'text-green-600' :
+                      (result.percentage || 0) >= 60 ? 'text-blue-600' :
+                      (result.percentage || 0) >= 40 ? 'text-yellow-600' : 'text-red-600'
                     }`}>
-                      {result.percentage.toFixed(1)}%
+                      {(result.percentage || 0).toFixed(1)}%
                     </div>
                     <p className="text-sm text-gray-600">
-                      {result.score}/{result.totalMarks} marks
+                      {result.score || 0}/{result.totalMarks || 100} marks
                     </p>
                   </div>
                 </div>
@@ -882,7 +907,7 @@ const AnswerEvaluationPage: React.FC = () => {
                 <div className="space-y-6">
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Overall Feedback</h4>
-                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: result.feedback }} />
+                    <div className="prose max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: result.feedback || 'No feedback available' }} />
                   </div>
 
                   {result.improvements && result.improvements.length > 0 && (
@@ -938,19 +963,19 @@ const AnswerEvaluationPage: React.FC = () => {
                                     Question {analysis.questionNumber}
                                   </h5>
                                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    (analysis.score / analysis.maxMarks) >= 0.8
+                                    ((analysis.score || 0) / (analysis.maxMarks || 1)) >= 0.8
                                       ? 'bg-green-100 text-green-700'
-                                      : (analysis.score / analysis.maxMarks) >= 0.6
+                                      : ((analysis.score || 0) / (analysis.maxMarks || 1)) >= 0.6
                                       ? 'bg-blue-100 text-blue-700'
-                                      : (analysis.score / analysis.maxMarks) >= 0.4
+                                      : ((analysis.score || 0) / (analysis.maxMarks || 1)) >= 0.4
                                       ? 'bg-yellow-100 text-yellow-700'
                                       : 'bg-red-100 text-red-700'
                                   }`}>
-                                    {analysis.score}/{analysis.maxMarks} marks
+                                    {analysis.score || 0}/{analysis.maxMarks || 0} marks
                                   </span>
                                 </div>
 
-                                <div className="prose max-w-none text-sm mb-3" dangerouslySetInnerHTML={{ __html: analysis.feedback }} />
+                                <div className="prose max-w-none text-sm mb-3" dangerouslySetInnerHTML={{ __html: analysis.feedback || 'No feedback available' }} />
                                 
                                 {analysis.mistakes && analysis.mistakes.length > 0 && (
                                   <div className="mb-3">
