@@ -180,7 +180,55 @@ export const useQuizStore = create<QuizState>((set, get) => ({
     
     const questionsWithAnswers = questions.map(question => {
       const userAnswer = answers[question.id];
-      const isCorrect = userAnswer && userAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
+      let isCorrect = false;
+      
+      // Handle different question types correctly
+      switch (question.type) {
+        case 'multiple-choice':
+        case 'true-false':
+        case 'case-study':
+        case 'situation':
+          isCorrect = userAnswer && question.correctAnswer && 
+                     userAnswer.toLowerCase() === question.correctAnswer.toLowerCase();
+          break;
+          
+        case 'multi-select':
+          if (userAnswer && question.correctOptions) {
+            const userOptions = userAnswer.split(',').sort();
+            const correctOptions = question.correctOptions.sort();
+            isCorrect = userOptions.length === correctOptions.length &&
+                       userOptions.every((opt, index) => opt === correctOptions[index]);
+          }
+          break;
+          
+        case 'sequence':
+          if (userAnswer && question.correctSequence) {
+            const userSequence = userAnswer.split(',');
+            isCorrect = userSequence.length === question.correctSequence.length &&
+                       userSequence.every((step, index) => step === question.correctSequence![index]);
+          }
+          break;
+          
+        case 'short-answer':
+        case 'fill-blank':
+          if (userAnswer && question.correctAnswer) {
+            // Check exact match or keyword match
+            const userLower = userAnswer.toLowerCase().trim();
+            const correctLower = question.correctAnswer.toLowerCase().trim();
+            isCorrect = userLower === correctLower;
+            
+            // If not exact match, check keywords
+            if (!isCorrect && question.keywords) {
+              isCorrect = question.keywords.some(keyword => 
+                userLower.includes(keyword.toLowerCase())
+              );
+            }
+          }
+          break;
+          
+        default:
+          isCorrect = false;
+      }
       
       if (isCorrect) {
         correctAnswers++;
@@ -188,7 +236,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       
       return {
         ...question,
-        userAnswer
+        userAnswer,
+        isCorrect
       };
     });
     
@@ -234,8 +283,8 @@ export const useQuizStore = create<QuizState>((set, get) => ({
       const explanation = await getAnswerExplanation(
         apiKey,
         question.text,
-        question.correctAnswer,
-        preferences.topic,
+        question.correctAnswer || 'N/A',
+        preferences.topic || preferences.course,
         preferences.language
       );
       

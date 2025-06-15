@@ -17,7 +17,7 @@ ${topic ? `- Topic: ${topic}` : '- Topic: General concepts and principles'}
 ${subtopic ? `- Subtopic: ${subtopic}` : ''}
 - Language: ${quizLanguage} (flawless grammar)
 - Difficulty: ${difficulty} (with natural variation)
-- Question Types: ONLY ${questionTypes.join(', ')}
+- Question Types: ONLY ${questionTypes.join(', ')} - DO NOT include any other question types
 - Each question must be unique and not repetitive
 - Include practical applications and real-world scenarios
 - Ensure progressive complexity within the chosen difficulty level
@@ -192,7 +192,8 @@ CRITICAL REQUIREMENTS:
 8. For sequence questions, ALWAYS provide step-by-step explanation
 9. For case-study and situation questions, ALWAYS include detailed scenario (100+ words)
 10. ALWAYS analyze ALL options in explanations for case-study and situation questions
-11. For short-answer and fill-blank questions, ALWAYS include keywords array for flexible matching`;
+11. For short-answer and fill-blank questions, ALWAYS include keywords array for flexible matching
+12. CRITICAL: Generate ONLY questions of the specified types: ${questionTypes.join(', ')}`;
 
   try {
     // First try the edge function
@@ -234,8 +235,17 @@ CRITICAL REQUIREMENTS:
         throw new Error('Invalid questions format');
       }
 
+      // Filter questions to ensure only requested types are included
+      const filteredQuestions = questions.filter((q: any) => 
+        questionTypes.includes(q.type)
+      );
+
+      if (filteredQuestions.length === 0) {
+        throw new Error('No questions of the requested types were generated');
+      }
+
       // Validate each question has the required fields for its type
-      questions.forEach((q: any, index: number) => {
+      filteredQuestions.forEach((q: any, index: number) => {
         if (!q.text || !q.type || !q.explanation) {
           throw new Error(`Question ${index + 1} missing required base fields (text, type, or explanation)`);
         }
@@ -333,7 +343,7 @@ CRITICAL REQUIREMENTS:
         }
       });
 
-      return questions.map((q: any, index: number) => ({
+      return filteredQuestions.map((q: any, index: number) => ({
         id: index + 1,
         text: q.text,
         type: q.type,
