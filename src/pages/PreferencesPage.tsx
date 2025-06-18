@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
-import CompetitionModeSelector from '../components/competition/CompetitionModeSelector';
-import CreateCompetitionModal from '../components/competition/CreateCompetitionModal';
+import CompetitionPreferencesForm from '../components/competition/CompetitionPreferencesForm';
 import JoinCompetitionModal from '../components/competition/JoinCompetitionModal';
-import RandomMatchmaking from '../components/competition/RandomMatchmaking';
 import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 import { useCompetitionStore } from '../store/useCompetitionStore';
 
@@ -16,11 +14,9 @@ const PreferencesPage: React.FC = () => {
   const { preferences, loadPreferences, generateQuiz } = useQuizStore();
   const { createCompetition } = useCompetitionStore();
 
-  const [showCompetitionModeSelector, setShowCompetitionModeSelector] = useState(false);
-  const [showCreateCompetitionModal, setShowCreateCompetitionModal] = useState(false);
+  const [showCompetitionForm, setShowCompetitionForm] = useState(false);
   const [showJoinCompetitionModal, setShowJoinCompetitionModal] = useState(false);
-  const [showRandomMatchmaking, setShowRandomMatchmaking] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<'private' | 'random' | null>(null);
+  const [isCreatingCompetition, setIsCreatingCompetition] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -36,38 +32,28 @@ const PreferencesPage: React.FC = () => {
   };
 
   const handleStartCompetition = () => {
-    setShowCompetitionModeSelector(true);
+    setShowCompetitionForm(true);
   };
 
   const handleJoinCompetition = () => {
     setShowJoinCompetitionModal(true);
   };
 
-  const handleModeSelected = (mode: 'private' | 'random') => {
-    setSelectedMode(mode);
-    setShowCompetitionModeSelector(false);
-    
-    if (mode === 'private') {
-      setShowCreateCompetitionModal(true);
-    } else {
-      setShowRandomMatchmaking(true);
-    }
-  };
-
-  const handleCreateCompetition = async (competitionPreferences: any, competitionData: any) => {
+  const handleCreateCompetition = async (competitionData: any) => {
     if (!user) return;
 
+    setIsCreatingCompetition(true);
     try {
       const competition = await createCompetition({
         title: competitionData.title,
         description: competitionData.description,
-        type: selectedMode,
+        type: 'private',
         maxParticipants: competitionData.maxParticipants,
-        quizPreferences: competitionPreferences,
+        quizPreferences: competitionData.quizPreferences,
         emails: competitionData.emails || []
       });
 
-      setShowCreateCompetitionModal(false);
+      setShowCompetitionForm(false);
       
       // Navigate to competition lobby
       navigate('/quiz', { 
@@ -78,6 +64,8 @@ const PreferencesPage: React.FC = () => {
       });
     } catch (error) {
       console.error('Failed to create competition:', error);
+    } finally {
+      setIsCreatingCompetition(false);
     }
   };
 
@@ -91,22 +79,9 @@ const PreferencesPage: React.FC = () => {
     });
   };
 
-  const handleMatchFound = (competitionId: string) => {
-    setShowRandomMatchmaking(false);
-    navigate('/quiz', { 
-      state: { 
-        mode: 'competition-lobby',
-        competitionId
-      } 
-    });
-  };
-
   const handleCloseModals = () => {
-    setShowCompetitionModeSelector(false);
-    setShowCreateCompetitionModal(false);
+    setShowCompetitionForm(false);
     setShowJoinCompetitionModal(false);
-    setShowRandomMatchmaking(false);
-    setSelectedMode(null);
   };
 
   if (!user) return null;
@@ -121,21 +96,12 @@ const PreferencesPage: React.FC = () => {
         onJoinCompetition={handleJoinCompetition}
       />
 
-      {/* Competition Mode Selector */}
-      {showCompetitionModeSelector && (
-        <CompetitionModeSelector
-          onSelectMode={handleModeSelected}
+      {/* Competition Creation Form */}
+      {showCompetitionForm && (
+        <CompetitionPreferencesForm
+          onCreateCompetition={handleCreateCompetition}
           onCancel={handleCloseModals}
-        />
-      )}
-
-      {/* Create Competition Modal */}
-      {showCreateCompetitionModal && selectedMode && (
-        <CreateCompetitionModal
-          mode={selectedMode}
-          quizPreferences={preferences || defaultPreferences}
-          onClose={handleCloseModals}
-          onSuccess={handleCreateCompetition}
+          isLoading={isCreatingCompetition}
         />
       )}
 
@@ -144,14 +110,6 @@ const PreferencesPage: React.FC = () => {
         <JoinCompetitionModal
           onClose={handleCloseModals}
           onSuccess={handleJoinSuccess}
-        />
-      )}
-
-      {/* Random Matchmaking */}
-      {showRandomMatchmaking && (
-        <RandomMatchmaking
-          onClose={handleCloseModals}
-          onMatchFound={handleMatchFound}
         />
       )}
     </div>
