@@ -1,322 +1,382 @@
 import React, { useState, useEffect } from 'react';
+import { useCompetitionStore } from '../../store/useCompetitionStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
+import { Card, CardBody, CardHeader } from '../ui/Card';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { Shuffle, Users, MessageCircle, Clock, Zap } from 'lucide-react';
+import { 
+  Zap, Users, Search, MessageCircle, Clock, 
+  Target, Brain, Globe, X, Send, Crown
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCompetitionStore } from '../../store/useCompetitionStore';
 
 interface RandomMatchmakingProps {
-  onClose: () => void;
   onMatchFound: (competitionId: string) => void;
+  onCancel: () => void;
 }
 
 const RandomMatchmaking: React.FC<RandomMatchmakingProps> = ({
-  onClose,
-  onMatchFound
+  onMatchFound,
+  onCancel
 }) => {
+  const { user } = useAuthStore();
   const { 
-    joinRandomQueue, 
-    leaveRandomQueue, 
     queueEntry, 
-    isLoading,
-    sendChatMessage,
+    joinRandomQueue, 
+    leaveRandomQueue,
+    chatMessages,
     loadChatMessages,
-    chatMessages
+    sendChatMessage,
+    subscribeToChat
   } = useCompetitionStore();
-  
+
   const [preferences, setPreferences] = useState({
     topic: '',
-    difficulty: 'medium',
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
     language: 'English'
   });
+  const [isSearching, setIsSearching] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
-  const [timeInQueue, setTimeInQueue] = useState(0);
+  const [showChat, setShowChat] = useState(false);
+  const [matchedUsers, setMatchedUsers] = useState<any[]>([]);
+
+  const difficultyOptions = [
+    { value: 'easy', label: 'Easy' },
+    { value: 'medium', label: 'Medium' },
+    { value: 'hard', label: 'Hard' }
+  ];
+
+  const languageOptions = [
+    { value: 'English', label: 'English' },
+    { value: 'Hindi', label: 'Hindi' },
+    { value: 'Malayalam', label: 'Malayalam' },
+    { value: 'Tamil', label: 'Tamil' },
+    { value: 'Telugu', label: 'Telugu' }
+  ];
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (queueEntry?.status === 'waiting') {
-      interval = setInterval(() => {
-        setTimeInQueue(prev => prev + 1);
-      }, 1000);
+    if (queueEntry?.status === 'matched') {
+      // Simulate finding a match and creating competition
+      setTimeout(() => {
+        onMatchFound('random-competition-id');
+      }, 2000);
     }
-    return () => clearInterval(interval);
-  }, [queueEntry]);
+  }, [queueEntry, onMatchFound]);
 
-  const handleJoinQueue = async () => {
+  const handleStartSearch = async () => {
     if (!preferences.topic.trim()) return;
     
-    try {
-      await joinRandomQueue(preferences.topic, preferences.difficulty, preferences.language);
-      setTimeInQueue(0);
-    } catch (error) {
-      console.error('Error joining queue:', error);
-    }
+    setIsSearching(true);
+    await joinRandomQueue(preferences.topic, preferences.difficulty, preferences.language);
+    
+    // Simulate finding other users with same preferences
+    setTimeout(() => {
+      setMatchedUsers([
+        { id: '1', name: 'Alex Kumar', avatar: 'AK' },
+        { id: '2', name: 'Sarah Chen', avatar: 'SC' }
+      ]);
+      setShowChat(true);
+    }, 3000);
   };
 
-  const handleLeaveQueue = async () => {
+  const handleCancelSearch = async () => {
+    setIsSearching(false);
+    setShowChat(false);
+    setMatchedUsers([]);
     await leaveRandomQueue();
-    setTimeInQueue(0);
   };
 
   const handleSendMessage = async () => {
-    if (!chatMessage.trim() || !queueEntry) return;
-    
-    try {
-      await sendChatMessage(queueEntry.id, chatMessage);
+    if (chatMessage.trim()) {
+      // In real implementation, this would send to a temporary chat room
       setChatMessage('');
-    } catch (error) {
-      console.error('Error sending message:', error);
     }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleStartQuiz = () => {
+    // In real implementation, this would create a competition with matched users
+    onMatchFound('random-competition-id');
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.9 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-      >
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-pink-50">
+    <div className="max-w-4xl mx-auto">
+      <Card className="shadow-2xl border-2 border-purple-100 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Shuffle className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                <Zap className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Random Matchmaking</h2>
-                <p className="text-gray-600">Find opponents with similar interests</p>
+                <h2 className="text-2xl font-bold">Random Matchmaking</h2>
+                <p className="text-purple-100">Find opponents with similar interests</p>
               </div>
             </div>
             <Button
               variant="ghost"
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              onClick={onCancel}
+              className="text-white hover:bg-white hover:bg-opacity-20"
             >
-              ×
+              <X className="w-5 h-5" />
             </Button>
           </div>
-        </div>
+        </CardHeader>
 
-        <div className="p-6">
-          <AnimatePresence mode="wait">
-            {!queueEntry ? (
-              <motion.div
-                key="setup"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-6"
-              >
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-purple-600" />
-                  </div>
-                  <p className="text-gray-600">
-                    Set your preferences and we'll match you with other players
-                  </p>
+        <CardBody className="p-8">
+          {!isSearching ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              <div className="text-center mb-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                  Set Your Quiz Preferences
+                </h3>
+                <p className="text-gray-600">
+                  We'll match you with other players who have similar preferences
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    <Brain className="w-4 h-4 inline mr-2" />
+                    Topic/Subject
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="e.g., Computer Science, Mathematics"
+                    value={preferences.topic}
+                    onChange={(e) => setPreferences({ ...preferences, topic: e.target.value })}
+                    className="w-full"
+                  />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Topic/Subject *
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="e.g., Computer Science"
-                      value={preferences.topic}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, topic: e.target.value }))}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Difficulty
-                    </label>
-                    <Select
-                      options={[
-                        { value: 'easy', label: 'Easy' },
-                        { value: 'medium', label: 'Medium' },
-                        { value: 'hard', label: 'Hard' }
-                      ]}
-                      value={preferences.difficulty}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, difficulty: e.target.value }))}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Language
-                    </label>
-                    <Select
-                      options={[
-                        { value: 'English', label: 'English' },
-                        { value: 'Hindi', label: 'Hindi' },
-                        { value: 'Malayalam', label: 'Malayalam' },
-                        { value: 'Tamil', label: 'Tamil' },
-                        { value: 'Telugu', label: 'Telugu' }
-                      ]}
-                      value={preferences.language}
-                      onChange={(e) => setPreferences(prev => ({ ...prev, language: e.target.value }))}
-                      className="w-full"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    <Target className="w-4 h-4 inline mr-2" />
+                    Difficulty Level
+                  </label>
+                  <Select
+                    options={difficultyOptions}
+                    value={preferences.difficulty}
+                    onChange={(e) => setPreferences({ ...preferences, difficulty: e.target.value as any })}
+                    className="w-full"
+                  />
                 </div>
 
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
-                  <h4 className="font-medium text-purple-800 mb-2">How it works:</h4>
-                  <ul className="text-sm text-purple-700 space-y-1">
-                    <li>• We'll match you with 1-3 other players with similar preferences</li>
-                    <li>• You can chat with matched players before the quiz starts</li>
-                    <li>• Quiz begins automatically when all players are ready</li>
-                    <li>• Compete in real-time and see live rankings</li>
-                  </ul>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    <Globe className="w-4 h-4 inline mr-2" />
+                    Language
+                  </label>
+                  <Select
+                    options={languageOptions}
+                    value={preferences.language}
+                    onChange={(e) => setPreferences({ ...preferences, language: e.target.value })}
+                    className="w-full"
+                  />
                 </div>
+              </div>
 
-                <div className="flex justify-end space-x-4">
+              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-xl border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                  <Users className="w-5 h-5 mr-2" />
+                  How Random Matchmaking Works
+                </h4>
+                <div className="space-y-2 text-sm text-blue-700">
+                  <div className="flex items-start space-x-2">
+                    <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">1</span>
+                    <span>Set your quiz preferences and start searching</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">2</span>
+                    <span>We'll find other players with matching preferences</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">3</span>
+                    <span>Chat with matched players and decide quiz settings</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <span className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold mt-0.5">4</span>
+                    <span>Start the competition when everyone is ready!</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <Button
+                  onClick={handleStartSearch}
+                  disabled={!preferences.topic.trim()}
+                  className="gradient-bg hover:opacity-90 transition-all duration-300 px-8 py-3 text-lg"
+                >
+                  <Search className="w-5 h-5 mr-2" />
+                  Find Opponents
+                </Button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center space-y-6"
+            >
+              {!showChat ? (
+                <>
+                  <div className="relative">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      className="w-20 h-20 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                    >
+                      <Search className="w-10 h-10 text-white" />
+                    </motion.div>
+                    <div className="absolute inset-0 bg-purple-500 rounded-full opacity-20 animate-ping" />
+                  </div>
+
+                  <div>
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                      Searching for Opponents...
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Looking for players interested in <span className="font-semibold text-purple-600">{preferences.topic}</span>
+                    </p>
+                    <div className="text-sm text-gray-500">
+                      Difficulty: <span className="font-medium capitalize">{preferences.difficulty}</span> • 
+                      Language: <span className="font-medium">{preferences.language}</span>
+                    </div>
+                  </div>
+
                   <Button
+                    onClick={handleCancelSearch}
                     variant="outline"
-                    onClick={onClose}
+                    className="border-red-300 text-red-600 hover:bg-red-50"
                   >
-                    Cancel
+                    Cancel Search
                   </Button>
-                  <Button
-                    onClick={handleJoinQueue}
-                    disabled={!preferences.topic.trim() || isLoading}
-                    className="gradient-bg"
-                  >
-                    {isLoading ? 'Joining...' : 'Find Match'}
-                    <Shuffle className="w-4 h-4 ml-2" />
-                  </Button>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="waiting"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="space-y-6"
-              >
-                <div className="text-center">
+                </>
+              ) : (
+                <div className="space-y-6">
                   <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center"
                   >
-                    <Shuffle className="w-8 h-8 text-white" />
-                  </motion.div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                    {queueEntry.status === 'waiting' ? 'Finding opponents...' : 'Match found!'}
-                  </h3>
-                  <p className="text-gray-600">
-                    {queueEntry.status === 'waiting' 
-                      ? `Looking for players interested in ${preferences.topic}`
-                      : 'Preparing your competition...'
-                    }
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-purple-600">{formatTime(timeInQueue)}</div>
-                      <div className="text-sm text-gray-600">Time in queue</div>
+                    <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-8 h-8 text-white" />
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold text-blue-600">{preferences.topic}</div>
-                      <div className="text-sm text-gray-600">Topic</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-green-600 capitalize">{preferences.difficulty}</div>
-                      <div className="text-sm text-gray-600">Difficulty</div>
-                    </div>
-                  </div>
-                </div>
-
-                {queueEntry.status === 'matched' && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="bg-green-50 border border-green-200 p-4 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-2 text-green-700 mb-2">
-                      <Zap className="w-5 h-5" />
-                      <span className="font-medium">Match Found!</span>
-                    </div>
-                    <p className="text-green-600 text-sm">
-                      Great! We found other players. You can chat with them below while we prepare the quiz.
+                    <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                      Players Found!
+                    </h3>
+                    <p className="text-gray-600">
+                      {matchedUsers.length + 1} players ready for {preferences.topic}
                     </p>
                   </motion.div>
-                )}
 
-                {/* Chat Section */}
-                {queueEntry.status === 'matched' && (
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <div className="bg-gray-50 p-3 border-b border-gray-200">
-                      <div className="flex items-center space-x-2">
-                        <MessageCircle className="w-4 h-4 text-gray-600" />
-                        <span className="text-sm font-medium text-gray-700">Pre-game Chat</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Matched Players */}
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                        <Users className="w-5 h-5 mr-2 text-purple-600" />
+                        Matched Players
+                      </h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                            {user?.profile?.fullName?.charAt(0) || 'Y'}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium">{user?.profile?.fullName || 'You'}</p>
+                            <div className="flex items-center space-x-1">
+                              <Crown className="w-4 h-4 text-yellow-500" />
+                              <span className="text-xs text-gray-600">Host</span>
+                            </div>
+                          </div>
+                        </div>
+                        {matchedUsers.map((matchedUser) => (
+                          <div key={matchedUser.id} className="flex items-center space-x-3 p-3 bg-white rounded-lg border border-gray-200">
+                            <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-white font-bold">
+                              {matchedUser.avatar}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium">{matchedUser.name}</p>
+                              <div className="flex items-center space-x-1">
+                                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <span className="text-xs text-gray-600">Ready</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    
-                    <div className="h-32 overflow-y-auto p-3 space-y-2">
-                      {chatMessages.map((message) => (
-                        <div key={message.id} className="text-sm">
-                          <span className="font-medium text-purple-600">
-                            {message.profile?.full_name || 'Player'}:
-                          </span>
-                          <span className="ml-2 text-gray-700">{message.message}</span>
+
+                    {/* Quick Chat */}
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                        <MessageCircle className="w-5 h-5 mr-2 text-blue-600" />
+                        Quick Chat
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg border border-gray-200 h-48 flex flex-col">
+                        <div className="flex-1 p-3 overflow-y-auto space-y-2">
+                          <div className="text-xs text-gray-500 text-center">
+                            Chat with your opponents before starting
+                          </div>
+                          <div className="bg-blue-100 p-2 rounded text-sm">
+                            <span className="font-medium text-blue-800">Alex:</span>
+                            <span className="ml-2">Ready for the challenge! 🚀</span>
+                          </div>
+                          <div className="bg-green-100 p-2 rounded text-sm">
+                            <span className="font-medium text-green-800">Sarah:</span>
+                            <span className="ml-2">Let's do this! Good luck everyone 👍</span>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    <div className="p-3 border-t border-gray-200">
-                      <div className="flex space-x-2">
-                        <Input
-                          type="text"
-                          placeholder="Say hello to your opponents..."
-                          value={chatMessage}
-                          onChange={(e) => setChatMessage(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={handleSendMessage}
-                          disabled={!chatMessage.trim()}
-                          className="gradient-bg"
-                        >
-                          Send
-                        </Button>
+                        <div className="p-3 border-t border-gray-200">
+                          <div className="flex space-x-2">
+                            <input
+                              type="text"
+                              value={chatMessage}
+                              onChange={(e) => setChatMessage(e.target.value)}
+                              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                              placeholder="Type a message..."
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                            <Button
+                              onClick={handleSendMessage}
+                              size="sm"
+                              className="gradient-bg"
+                            >
+                              <Send className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
 
-                <div className="flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={handleLeaveQueue}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    Leave Queue
-                  </Button>
+                  <div className="flex justify-center space-x-4">
+                    <Button
+                      onClick={handleStartQuiz}
+                      className="gradient-bg hover:opacity-90 transition-all duration-300 px-8 py-3"
+                    >
+                      <Zap className="w-5 h-5 mr-2" />
+                      Start Quiz Competition
+                    </Button>
+                    <Button
+                      onClick={handleCancelSearch}
+                      variant="outline"
+                      className="border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-3"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
+              )}
+            </motion.div>
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 };

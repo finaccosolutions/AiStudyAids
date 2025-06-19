@@ -1,12 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useCompetitionStore } from '../../store/useCompetitionStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import { 
-  Trophy, Medal, Clock, Target, Users, 
-  Star, TrendingUp, Award, Crown, Zap 
+  Trophy, Crown, Medal, Star, Clock, Target, 
+  TrendingUp, Award, Zap, Users, Home, RefreshCw,
+  ChevronDown, ChevronUp, BarChart3
 } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { useCompetitionStore } from '../../store/useCompetitionStore';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Competition } from '../../types/competition';
 
 interface CompetitionResultsProps {
@@ -20,299 +22,402 @@ const CompetitionResults: React.FC<CompetitionResultsProps> = ({
   onNewCompetition,
   onBackToHome
 }) => {
-  const { participants, loadParticipants } = useCompetitionStore();
+  const { user } = useAuthStore();
+  const { participants, userStats, loadUserStats } = useCompetitionStore();
+  const [showDetailedStats, setShowDetailedStats] = useState(false);
+  const [confettiVisible, setConfettiVisible] = useState(true);
 
-  useEffect(() => {
-    loadParticipants(competition.id);
-  }, [competition.id]);
-
-  const sortedParticipants = participants
+  const completedParticipants = participants
     .filter(p => p.status === 'completed')
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return a.time_taken - b.time_taken;
     });
 
+  const userParticipant = completedParticipants.find(p => p.user_id === user?.id);
+  const userRank = completedParticipants.findIndex(p => p.user_id === user?.id) + 1;
+
+  useEffect(() => {
+    if (user) {
+      loadUserStats(user.id);
+    }
+    
+    // Hide confetti after 5 seconds
+    const timer = setTimeout(() => setConfettiVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, [user, loadUserStats]);
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1: return <Crown className="w-6 h-6 text-yellow-500" />;
-      case 2: return <Medal className="w-6 h-6 text-gray-400" />;
-      case 3: return <Award className="w-6 h-6 text-orange-400" />;
-      default: return <Star className="w-6 h-6 text-purple-500" />;
-    }
+  const getPerformanceMessage = () => {
+    if (!userParticipant) return { message: 'Thanks for participating!', color: 'text-gray-600' };
+    
+    const percentage = (userParticipant.score / competition.quiz_preferences?.questionCount) * 100;
+    
+    if (userRank === 1) return { 
+      message: '🎉 Congratulations! You won the competition!', 
+      color: 'text-yellow-600' 
+    };
+    if (userRank <= 3) return { 
+      message: '🏆 Excellent! You finished in the top 3!', 
+      color: 'text-blue-600' 
+    };
+    if (percentage >= 70) return { 
+      message: '👏 Great performance! Well done!', 
+      color: 'text-green-600' 
+    };
+    if (percentage >= 50) return { 
+      message: '👍 Good effort! Keep practicing!', 
+      color: 'text-orange-600' 
+    };
+    return { 
+      message: '💪 Keep learning and improving!', 
+      color: 'text-purple-600' 
+    };
   };
 
-  const getRankColor = (rank: number) => {
-    switch (rank) {
-      case 1: return 'from-yellow-400 to-yellow-600';
-      case 2: return 'from-gray-300 to-gray-500';
-      case 3: return 'from-orange-400 to-orange-600';
-      default: return 'from-purple-400 to-purple-600';
-    }
-  };
-
-  const getRankBg = (rank: number) => {
-    switch (rank) {
-      case 1: return 'from-yellow-50 to-yellow-100 border-yellow-200';
-      case 2: return 'from-gray-50 to-gray-100 border-gray-200';
-      case 3: return 'from-orange-50 to-orange-100 border-orange-200';
-      default: return 'from-purple-50 to-purple-100 border-purple-200';
-    }
-  };
+  const performance = getPerformanceMessage();
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <div className="flex justify-center mb-6">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-8 relative overflow-hidden">
+      {/* Confetti Animation */}
+      <AnimatePresence>
+        {confettiVisible && (
+          <div className="fixed inset-0 pointer-events-none z-10">
+            {Array.from({ length: 50 }).map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full"
+                initial={{
+                  x: Math.random() * window.innerWidth,
+                  y: -10,
+                  rotate: 0,
+                }}
+                animate={{
+                  y: window.innerHeight + 10,
+                  rotate: 360,
+                }}
+                transition={{
+                  duration: Math.random() * 3 + 2,
+                  ease: "easeOut",
+                  delay: Math.random() * 2,
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div className="max-w-6xl mx-auto px-4 relative z-20">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="flex items-center justify-center mb-4">
+            <div className="w-20 h-20 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full flex items-center justify-center mr-4">
+              <Trophy className="w-10 h-10 text-white" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-800">Competition Complete!</h1>
+              <p className="text-xl text-gray-600">{competition.title}</p>
+            </div>
+          </div>
+          
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="p-6 bg-gradient-to-r from-purple-100 to-indigo-100 rounded-full"
+            transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
+            className={`text-2xl font-bold ${performance.color} mb-4`}
           >
-            <Trophy className="w-16 h-16 text-purple-600" />
+            {performance.message}
           </motion.div>
-        </div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Competition Complete!</h1>
-        <h2 className="text-2xl font-semibold text-purple-600 mb-2">{competition.title}</h2>
-        <p className="text-gray-600">
-          {sortedParticipants.length} participants • {competition.quiz_preferences.questionCount} questions
-        </p>
-      </motion.div>
+        </motion.div>
 
-      {/* Podium */}
-      {sortedParticipants.length >= 3 && (
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex justify-center items-end space-x-8 mb-12"
-        >
-          {/* 2nd Place */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="text-center"
-          >
-            <div className="w-24 h-24 bg-gradient-to-r from-gray-300 to-gray-500 rounded-full flex items-center justify-center mb-4 mx-auto">
-              <span className="text-white text-2xl font-bold">2</span>
-            </div>
-            <div className="bg-gray-100 p-4 rounded-t-lg w-32 h-20 flex flex-col justify-center">
-              <div className="font-semibold text-gray-900 truncate">
-                {sortedParticipants[1]?.profile?.full_name || 'Player 2'}
-              </div>
-              <div className="text-sm text-gray-600">{sortedParticipants[1]?.score} pts</div>
-            </div>
-          </motion.div>
-
-          {/* 1st Place */}
+        {/* User Performance Summary */}
+        {userParticipant && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="text-center"
+            className="mb-8"
           >
-            <div className="w-32 h-32 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full flex items-center justify-center mb-4 mx-auto relative">
-              <span className="text-white text-3xl font-bold">1</span>
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="absolute -top-2 -right-2"
-              >
-                <Crown className="w-8 h-8 text-yellow-300" />
-              </motion.div>
-            </div>
-            <div className="bg-yellow-100 p-6 rounded-t-lg w-36 h-28 flex flex-col justify-center">
-              <div className="font-bold text-yellow-800 truncate text-lg">
-                {sortedParticipants[0]?.profile?.full_name || 'Winner'}
-              </div>
-              <div className="text-yellow-700 font-semibold">{sortedParticipants[0]?.score} pts</div>
-            </div>
+            <Card className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white border-0 shadow-2xl">
+              <CardBody className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center">
+                  <div>
+                    <div className="flex items-center justify-center mb-2">
+                      {userRank === 1 ? <Crown className="w-8 h-8 text-yellow-300" /> :
+                       userRank === 2 ? <Medal className="w-8 h-8 text-gray-300" /> :
+                       userRank === 3 ? <Medal className="w-8 h-8 text-orange-300" /> :
+                       <Target className="w-8 h-8 text-white" />}
+                    </div>
+                    <div className="text-3xl font-bold">{userRank}</div>
+                    <div className="text-purple-100">Rank</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center mb-2">
+                      <Zap className="w-8 h-8 text-yellow-300" />
+                    </div>
+                    <div className="text-3xl font-bold">{userParticipant.score.toFixed(1)}</div>
+                    <div className="text-purple-100">Score</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center mb-2">
+                      <Target className="w-8 h-8 text-green-300" />
+                    </div>
+                    <div className="text-3xl font-bold">
+                      {userParticipant.correct_answers}/{competition.quiz_preferences?.questionCount}
+                    </div>
+                    <div className="text-purple-100">Correct</div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-center mb-2">
+                      <Clock className="w-8 h-8 text-blue-300" />
+                    </div>
+                    <div className="text-3xl font-bold">{formatTime(userParticipant.time_taken)}</div>
+                    <div className="text-purple-100">Time</div>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
           </motion.div>
+        )}
 
-          {/* 3rd Place */}
+        {/* Leaderboard */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="mb-8"
+        >
+          <Card className="shadow-2xl">
+            <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-gray-800 flex items-center">
+                  <Trophy className="w-7 h-7 mr-3 text-yellow-500" />
+                  Final Rankings
+                </h3>
+                <div className="text-sm text-gray-600">
+                  {completedParticipants.length} participants
+                </div>
+              </div>
+            </CardHeader>
+            <CardBody className="p-6">
+              <div className="space-y-4">
+                {completedParticipants.map((participant, index) => (
+                  <motion.div
+                    key={participant.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 + index * 0.1 }}
+                    className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                      participant.user_id === user?.id
+                        ? 'border-purple-500 bg-purple-50 shadow-lg scale-105'
+                        : 'border-gray-200 bg-white hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-4">
+                      {/* Rank Badge */}
+                      <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl ${
+                        index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-500' :
+                        index === 1 ? 'bg-gradient-to-r from-gray-400 to-gray-500' :
+                        index === 2 ? 'bg-gradient-to-r from-orange-400 to-orange-500' :
+                        'bg-gradient-to-r from-purple-400 to-purple-500'
+                      }`}>
+                        {index === 0 ? <Crown className="w-8 h-8" /> :
+                         index === 1 ? <Medal className="w-8 h-8" /> :
+                         index === 2 ? <Medal className="w-8 h-8" /> :
+                         index + 1}
+                      </div>
+
+                      {/* Participant Info */}
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="text-xl font-bold text-gray-800">
+                            {participant.profile?.full_name || 'Anonymous'}
+                          </h4>
+                          {participant.user_id === user?.id && (
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                              You
+                            </span>
+                          )}
+                          {participant.user_id === competition.creator_id && (
+                            <Crown className="w-5 h-5 text-yellow-500" />
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                          <div>
+                            <span className="text-gray-600">Score:</span>
+                            <span className="ml-2 font-bold text-purple-600">
+                              {participant.score.toFixed(1)} pts
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Correct:</span>
+                            <span className="ml-2 font-bold text-green-600">
+                              {participant.correct_answers}/{competition.quiz_preferences?.questionCount}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Accuracy:</span>
+                            <span className="ml-2 font-bold text-blue-600">
+                              {((participant.correct_answers / competition.quiz_preferences?.questionCount) * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Time:</span>
+                            <span className="ml-2 font-bold text-orange-600">
+                              {formatTime(participant.time_taken)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Points Earned */}
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">
+                          +{participant.points_earned}
+                        </div>
+                        <div className="text-xs text-gray-600">points</div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </CardBody>
+          </Card>
+        </motion.div>
+
+        {/* User Statistics */}
+        {userStats && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            className="text-center"
+            transition={{ delay: 0.8 }}
+            className="mb-8"
           >
-            <div className="w-20 h-20 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full flex items-center justify-center mb-4 mx-auto">
-              <span className="text-white text-xl font-bold">3</span>
-            </div>
-            <div className="bg-orange-100 p-3 rounded-t-lg w-28 h-16 flex flex-col justify-center">
-              <div className="font-semibold text-orange-900 truncate text-sm">
-                {sortedParticipants[2]?.profile?.full_name || 'Player 3'}
-              </div>
-              <div className="text-xs text-orange-700">{sortedParticipants[2]?.score} pts</div>
-            </div>
+            <Card className="shadow-xl">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-gray-800 flex items-center">
+                    <BarChart3 className="w-6 h-6 mr-2 text-blue-600" />
+                    Your Overall Statistics
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowDetailedStats(!showDetailedStats)}
+                    className="text-blue-600"
+                  >
+                    {showDetailedStats ? (
+                      <>
+                        <ChevronUp className="w-4 h-4 mr-2" />
+                        Hide Details
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="w-4 h-4 mr-2" />
+                        Show Details
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardBody className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6 text-center">
+                  <div>
+                    <div className="text-3xl font-bold text-blue-600">{userStats.total_competitions}</div>
+                    <div className="text-gray-600">Total Competitions</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-green-600">{userStats.wins}</div>
+                    <div className="text-gray-600">Wins</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-red-600">{userStats.losses}</div>
+                    <div className="text-gray-600">Losses</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-purple-600">{userStats.total_points}</div>
+                    <div className="text-gray-600">Total Points</div>
+                  </div>
+                  <div>
+                    <div className="text-3xl font-bold text-yellow-600">
+                      {userStats.best_rank || 'N/A'}
+                    </div>
+                    <div className="text-gray-600">Best Rank</div>
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {showDetailedStats && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-6 pt-6 border-t border-gray-200"
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-green-800 mb-2">Win Rate</h4>
+                          <div className="text-2xl font-bold text-green-600">
+                            {userStats.total_competitions > 0 
+                              ? ((userStats.wins / userStats.total_competitions) * 100).toFixed(1)
+                              : 0}%
+                          </div>
+                        </div>
+                        <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-blue-800 mb-2">Average Score</h4>
+                          <div className="text-2xl font-bold text-blue-600">
+                            {userStats.average_score?.toFixed(1) || '0.0'}
+                          </div>
+                        </div>
+                        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-purple-800 mb-2">Time Played</h4>
+                          <div className="text-2xl font-bold text-purple-600">
+                            {formatTime(userStats.total_time_played)}
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardBody>
+            </Card>
           </motion.div>
+        )}
+
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0 }}
+          className="flex flex-col sm:flex-row justify-center gap-4"
+        >
+          <Button
+            onClick={onNewCompetition}
+            className="gradient-bg hover:opacity-90 transition-all duration-300 px-8 py-3 text-lg"
+          >
+            <RefreshCw className="w-5 h-5 mr-2" />
+            New Competition
+          </Button>
+          <Button
+            onClick={onBackToHome}
+            variant="outline"
+            className="border-2 border-purple-200 text-purple-600 hover:bg-purple-50 px-8 py-3 text-lg"
+          >
+            <Home className="w-5 h-5 mr-2" />
+            Back to Home
+          </Button>
         </motion.div>
-      )}
-
-      {/* Detailed Results */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.7 }}
-      >
-        <Card>
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-purple-100">
-            <div className="flex items-center space-x-3">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
-              <h2 className="text-2xl font-semibold">Final Rankings</h2>
-            </div>
-          </CardHeader>
-          
-          <CardBody>
-            <div className="space-y-4">
-              {sortedParticipants.map((participant, index) => (
-                <motion.div
-                  key={participant.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.8 + index * 0.1 }}
-                  className={`p-6 rounded-2xl border-2 bg-gradient-to-r ${getRankBg(index + 1)} transition-all duration-300 hover:shadow-lg`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${getRankColor(index + 1)} flex items-center justify-center shadow-lg`}>
-                        <span className="text-white text-xl font-bold">#{index + 1}</span>
-                      </div>
-                      
-                      <div>
-                        <div className="flex items-center space-x-2 mb-1">
-                          <h3 className="text-xl font-bold text-gray-900">
-                            {participant.profile?.full_name || 'Anonymous Player'}
-                          </h3>
-                          {getRankIcon(index + 1)}
-                        </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-600">
-                          <span className="flex items-center">
-                            <Target className="w-4 h-4 mr-1" />
-                            {participant.correct_answers}/{competition.quiz_preferences.questionCount} correct
-                          </span>
-                          <span className="flex items-center">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {formatTime(participant.time_taken)}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      <div className="text-3xl font-bold text-gray-900 mb-1">
-                        {participant.score}
-                      </div>
-                      <div className="text-sm text-gray-600">points</div>
-                      <div className="text-xs text-purple-600 font-medium">
-                        +{participant.points_earned} XP
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Performance Bar */}
-                  <div className="mt-4">
-                    <div className="flex justify-between text-xs text-gray-600 mb-1">
-                      <span>Accuracy</span>
-                      <span>{Math.round((participant.correct_answers / competition.quiz_preferences.questionCount) * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <motion.div
-                        className={`h-2 rounded-full bg-gradient-to-r ${getRankColor(index + 1)}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${(participant.correct_answers / competition.quiz_preferences.questionCount) * 100}%` }}
-                        transition={{ duration: 1, delay: 1 + index * 0.1 }}
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </CardBody>
-        </Card>
-      </motion.div>
-
-      {/* Competition Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-6"
-      >
-        <Card className="text-center">
-          <CardBody>
-            <Users className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">{sortedParticipants.length}</div>
-            <div className="text-sm text-gray-600">Participants</div>
-          </CardBody>
-        </Card>
-        
-        <Card className="text-center">
-          <CardBody>
-            <Target className="w-8 h-8 text-green-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">
-              {Math.round(sortedParticipants.reduce((sum, p) => sum + (p.correct_answers / competition.quiz_preferences.questionCount) * 100, 0) / sortedParticipants.length)}%
-            </div>
-            <div className="text-sm text-gray-600">Avg. Accuracy</div>
-          </CardBody>
-        </Card>
-        
-        <Card className="text-center">
-          <CardBody>
-            <Clock className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">
-              {formatTime(Math.round(sortedParticipants.reduce((sum, p) => sum + p.time_taken, 0) / sortedParticipants.length))}
-            </div>
-            <div className="text-sm text-gray-600">Avg. Time</div>
-          </CardBody>
-        </Card>
-        
-        <Card className="text-center">
-          <CardBody>
-            <Zap className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-gray-900">
-              {sortedParticipants.reduce((sum, p) => sum + p.points_earned, 0)}
-            </div>
-            <div className="text-sm text-gray-600">Total XP</div>
-          </CardBody>
-        </Card>
-      </motion.div>
-
-      {/* Action Buttons */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.4 }}
-        className="flex justify-center space-x-4"
-      >
-        <Button
-          variant="outline"
-          onClick={onBackToHome}
-          className="px-8 py-3"
-        >
-          Back to Home
-        </Button>
-        <Button
-          onClick={onNewCompetition}
-          className="gradient-bg px-8 py-3"
-        >
-          <Trophy className="w-4 h-4 mr-2" />
-          New Competition
-        </Button>
-      </motion.div>
+      </div>
     </div>
   );
 };
