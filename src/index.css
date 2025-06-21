@@ -1,52 +1,284 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
 
 @layer base {
   :root {
-    --gradient-start: #6366f1;
-    --gradient-end: #8b5cf6;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;
+  }
+  
+  * {
+    @apply border-[color:hsl(var(--border))];
+  }
+  body {
+    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
   }
 }
 
-@layer components {
-  .nav-link {
-    @apply text-gray-600 hover:text-purple-600 transition-colors font-medium relative after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-0 after:bg-purple-600 after:transition-all hover:after:w-full;
+@layer utilities {
+  .animate-shake {
+    animation: shake 0.5s ease-in-out;
   }
   
-  .auth-input {
-    @apply w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-gray-800 bg-white/50 backdrop-blur-sm;
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
   }
   
-  .feature-card {
-    @apply bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl hover:scale-105 transition-all duration-300 backdrop-blur-sm;
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
   
-  .gradient-text {
-    @apply bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] bg-clip-text text-transparent;
+  .backdrop-blur-xl {
+    backdrop-filter: blur(20px);
   }
   
+  .bg-gradient-radial {
+    background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+  }
+
   .gradient-bg {
-    @apply bg-gradient-to-r from-[var(--gradient-start)] to-[var(--gradient-end)] text-white;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Smooth transitions for all interactive elements */
+button, input, select, textarea {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus styles */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Hover effects for cards */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Glass morphism effect */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Loading spinner */
+.spinner {
+  border: 2px solid #f3f4f6;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 640px) {
+  .mobile-padding {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .mobile-text {
+    font-size: 0.875rem;
   }
 
-  .tooltip {
-    @apply relative inline-block;
+  /* Ensure text is readable on mobile */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    color: #1f2937; /* Ensure dark text */
   }
 
-  .tooltip .tooltiptext {
-    @apply invisible absolute z-10 w-48 bg-gray-900 text-white text-xs rounded-lg py-2 px-3 
-    bottom-full left-1/2 transform -translate-x-1/2 mb-2
-    opacity-0 transition-all duration-200;
+  /* Better touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
   }
 
-  .tooltip .tooltiptext::after {
-    content: "";
-    @apply absolute top-full left-1/2 transform -translate-x-1/2
-    border-4 border-transparent border-t-gray-900;
+  /* Improved spacing for mobile */
+  .space-y-4 > * + * {
+    margin-top: 1rem;
   }
 
-  .tooltip:hover .tooltiptext {
-    @apply visible opacity-100;
+  .space-y-6 > * + * {
+    margin-top: 1.5rem;
+  }
+
+  .space-y-8 > * + * {
+    margin-top: 2rem;
+  }
+
+  /* Better grid layouts for mobile */
+  .grid-cols-1 {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  /* Responsive text sizes */
+  .text-xs { font-size: 0.75rem; }
+  .text-sm { font-size: 0.875rem; }
+  .text-base { font-size: 1rem; }
+  .text-lg { font-size: 1.125rem; }
+  .text-xl { font-size: 1.25rem; }
+  .text-2xl { font-size: 1.5rem; }
+  .text-3xl { font-size: 1.875rem; }
+  .text-4xl { font-size: 2.25rem; }
+  .text-5xl { font-size: 3rem; }
+
+  /* Responsive padding */
+  .p-2 { padding: 0.5rem; }
+  .p-3 { padding: 0.75rem; }
+  .p-4 { padding: 1rem; }
+  .p-6 { padding: 1.5rem; }
+  .p-8 { padding: 2rem; }
+
+  /* Responsive margins */
+  .m-2 { margin: 0.5rem; }
+  .m-3 { margin: 0.75rem; }
+  .m-4 { margin: 1rem; }
+  .m-6 { margin: 1.5rem; }
+  .m-8 { margin: 2rem; }
+
+  /* Better flex layouts */
+  .flex-col {
+    flex-direction: column;
+  }
+
+  .flex-wrap {
+    flex-wrap: wrap;
+  }
+
+  /* Responsive widths */
+  .w-full { width: 100%; }
+  .max-w-full { max-width: 100%; }
+  .min-w-0 { min-width: 0; }
+
+  /* Better overflow handling */
+  .overflow-hidden { overflow: hidden; }
+  .overflow-x-auto { overflow-x: auto; }
+  .overflow-y-auto { overflow-y: auto; }
+
+  /* Word breaking for long text */
+  .break-words { word-wrap: break-word; }
+  .break-all { word-break: break-all; }
+
+  /* Better line heights for readability */
+  .leading-tight { line-height: 1.25; }
+  .leading-normal { line-height: 1.5; }
+  .leading-relaxed { line-height: 1.625; }
+}
+
+/* Tablet responsive improvements */
+@media (min-width: 641px) and (max-width: 1024px) {
+  /* Better grid layouts for tablets */
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .md\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Responsive flex direction */
+  .md\:flex-row {
+    flex-direction: row;
+  }
+
+  /* Better spacing for tablets */
+  .md\:space-x-4 > * + * {
+    margin-left: 1rem;
+  }
+
+  .md\:space-x-6 > * + * {
+    margin-left: 1.5rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+  }
+
+  /* Ensure inputs remain readable in dark mode */
+  input, select, textarea {
+    background-color: white;
+    color: #1f2937;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  input, select, textarea {
+    border-width: 2px;
+    border-color: #000;
+  }
+
+  button {
+    border-width: 2px;
+    border-color: #000;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  * {
+    background: white !important;
+    color: black !important;
   }
 }

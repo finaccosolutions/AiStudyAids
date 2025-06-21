@@ -122,16 +122,6 @@ export const signUp = async (
   countryCode: string = 'IN',
   countryName: string = 'India'
 ) => {
-  // First check if mobile number exists
-  const { data: existingProfiles } = await supabase
-    .from('profiles')
-    .select('mobile_number')
-    .eq('mobile_number', mobileNumber);
-
-  if (existingProfiles && existingProfiles.length > 0) {
-    throw new Error('Mobile number already registered');
-  }
-
   // Sign up user with email confirmation required
   const { data, error } = await supabase.auth.signUp({ 
     email, 
@@ -146,30 +136,53 @@ export const signUp = async (
     }
   });
 
-  if (error) throw error;
-
-  if (data.user) {
-    // Call the send-verification function to create profile and send verification email
-    const response = await fetch(`${supabaseUrl}/functions/v1/send-verification`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabaseAnonKey}`,
-      },
-      body: JSON.stringify({
-        userId: data.user.id,
-        email,
-        name: fullName,
-        mobileNumber,
-        countryCode,
-        countryName,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create profile');
+  if (error) {
+    // Check if email already exists
+    if (error.message.includes('already registered') || error.message.includes('already been registered')) {
+      throw new Error('This email address is already registered. Please sign in instead.');
     }
+    throw error;
+  }
+
+  if (data?.user) {
+    // Use the send-verification Edge Function to create profile with service role privileges
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`,
+        },
+        body: JSON.stringify({
+          userId: data.user.id,
+          email: email,
+          name: fullName,
+          mobileNumber: mobileNumber,
+          countryCode: countryCode,
+          countryName: countryName
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        const errorMessage = errorData?.error || 'Failed to create profile';
+        const errorDetails = errorData?.details || '';
+        console.error('Profile creation via Edge Function failed:', errorMessage, errorDetails);
+        throw new Error(`${errorMessage}${errorDetails ? ': ' + errorDetails : ''}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Profile creation successful:', responseData);
+    } catch (fetchError: any) {
+      console.error('Profile creation error:', fetchError);
+      // If it's a network error or other fetch error, provide a more specific message
+      if (fetchError.name === 'TypeError' && fetchError.message.includes('fetch')) {
+        throw new Error('Network error: Unable to complete registration');
+      }
+      throw new Error(fetchError.message || 'Failed to create profile');
+    }
+  } else {
+    throw new Error('User registration failed - no user data returned');
   }
 
   return data;
