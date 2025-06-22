@@ -75,14 +75,6 @@ function App() {
             }
           />
           <Route
-            path="preferences"
-            element={
-              <ProtectedRoute>
-                <PreferencesPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
             path="api-settings"
             element={
               <ProtectedRoute>
