@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+// src/components/competition/CompetitionPanel.tsx
+import React, { useState, useEffect } from 'react'; // Add useState and useEffect
 import { useCompetitionStore } from '../../store/useCompetitionStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { Button } from '../ui/Button';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import { 
@@ -10,18 +12,20 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Competition } from '../../types/competition';
+import { useNavigate } from 'react-router-dom';
+import QuizHistory from './QuizHistory'; // Import QuizHistory
 
-interface CompetitionManagementProps {
+interface CompetitionPanelProps {
   userId: string;
 }
 
-const CompetitionManagement: React.FC<CompetitionManagementProps> = ({ userId }) => {
+const CompetitionPanel: React.FC<CompetitionPanelProps> = ({ userId }) => {
   const { 
     competitions, 
     loadUserCompetitions, 
     deleteCompetition, 
-    loadCompetition,
-    isLoading, 
+    loadCompetition, // Keep this for other uses
+    isCompetitionsLoading, // Use the specific loading state
     error 
   } = useCompetitionStore();
   
@@ -84,7 +88,7 @@ const filteredCompetitions = (competitions ?? []).filter(competition => {
     return Math.floor(Math.random() * 10) + 1;
   };
 
-  if (isLoading) {
+   if (isCompetitionsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
@@ -419,8 +423,16 @@ const filteredCompetitions = (competitions ?? []).filter(competition => {
           <p className="text-red-700">{error}</p>
         </div>
       )}
+      {/* Display Competition History */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+      >
+        <QuizHistory userId={userId} filter="competition" />
+      </motion.div>
     </div>
   );
 };
 
-export default CompetitionManagement;
+export default CompetitionPanel;

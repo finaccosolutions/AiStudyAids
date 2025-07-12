@@ -1,3 +1,5 @@
+// src/types/index.ts
+// src/types/index.ts
 import { QuizLanguage } from './languages';
 
 export type UserData = {
@@ -71,6 +73,7 @@ interface BaseQuestion {
   userAnswer?: string;
   language?: QuizLanguage;
   keywords?: string[]; // For flexible answer matching
+  isCorrect?: boolean; // Added for tracking correctness
 }
 
 // Multiple choice question
@@ -145,6 +148,7 @@ export type Question =
   | MultiSelectQuestion;
 
   export type QuizResult = {
+  id: string; // Added for tracking quiz result ID
   totalQuestions: number;
   correctAnswers: number;
   questionsAttempted: number;
@@ -155,13 +159,26 @@ export type Question =
   finalScore: number;
   rawScore: number;
   negativeMarksDeducted?: number;
-  timeAnalytics?: {
-    totalTime: number;
-    averageTimePerQuestion: number;
-  };
-  strengths?: string[];
-  weaknesses?: string[];
-  recommendations?: string[];
+  totalTimeTaken: number; // Added
+  accuracyRate: number; // Added
+  completionRate: number; // Added
+  strengths?: string[]; // Added
+  weaknesses?: string[]; // Added
+  recommendations?: string[]; // Added
+  comparativePerformance?: any; // Added
+
+  // Add quiz preferences directly to the result for display purposes
+  course?: string;
+  topic?: string;
+  subtopic?: string;
+  difficulty?: 'easy' | 'medium' | 'hard';
+  language?: QuizLanguage;
+  timeLimitEnabled?: boolean;
+  timeLimit?: string | null;
+  totalTimeLimit?: string | null;
+  negativeMarking?: boolean;
+  negativeMarks?: number;
+  mode?: 'practice' | 'exam';
 };
 
 
