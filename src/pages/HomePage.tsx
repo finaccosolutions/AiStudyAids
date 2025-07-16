@@ -1,137 +1,130 @@
-// src/pages/HomePage.tsx
-import { supabase } from '../services/supabase';
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
-import { useCompetitionStore } from '../store/useCompetitionStore';
-import { Navigate, useNavigate, useLocation } from 'react-router-dom';
-import ApiKeyForm from '../components/quiz/ApiKeyForm';
-import QuizModeSelector from '../components/quiz/QuizModeSelector';
-import QuizPreferencesForm from '../components/quiz/QuizPreferences';
-import JoinCompetitionForm from '../components/quiz/JoinCompetitionForm';
-import RandomMatchmaking from '../components/competition/RandomMatchmaking'; // CORRECTED IMPORT PATH
-import QuizQuestion from '../components/quiz/QuizQuestion';
-import QuizResults from '../components/quiz/QuizResults';
-import CompetitionLobby from '../components/competition/CompetitionLobby';
-import CompetitionQuiz from '../components/competition/CompetitionQuiz';
-import CompetitionResults from '../components/competition/CompetitionResults';
-import CompetitionManagement from '../components/competition/CompetitionManagement';
 import { Button } from '../components/ui/Button';
-import { Card, CardBody } from '../components/ui/Card';
-import { ArrowLeft, Trophy, Users, Clock, Brain, GraduationCap, FileQuestion, PenTool, BookOpen, Calendar, LineChart, Rocket, Target, Award, Zap, CheckCircle, Star, TrendingUp, Shield, Globe, Sparkles, ArrowRight, Play, Crown, Hash, Gamepad2 } from 'lucide-react';
+import { 
+  Brain, GraduationCap, 
+  FileQuestion, PenTool, BookOpen, Calendar, 
+  LineChart, Rocket, Target,
+  Award, Users, Zap, CheckCircle, Star,
+  TrendingUp, Shield, Globe, Sparkles,
+  ArrowRight, Play, Trophy, Clock,
+  Lightbulb, BarChart3, Activity,
+  Layers, Cpu, Database, Code,
+  Palette, Briefcase, Heart
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const HomePage: React.FC = () => {
-  const { user, isLoggedIn } = useAuthStore();
-  const {
-    apiKey, loadApiKey,
-    preferences, loadPreferences,
-    questions, generateQuiz,
-    currentQuestionIndex, answers, answerQuestion,
-    nextQuestion, prevQuestion,
-    finishQuiz, resetQuiz, result,
-    totalTimeElapsed, setTotalTimeElapsed,
-    totalTimeRemaining, setTotalTimeRemaining,
-  } = useQuizStore();
-
-  const {
-    currentCompetition,
-    loadCompetition,
-    loadUserCompetitions,
-    loadUserActiveCompetitions,
-    userActiveCompetitions,
-    participants,
-    loadParticipants,
-    clearCurrentCompetition,
-    createCompetition,
-    cleanupSubscriptions,
-    setCleanupFlag
-  } = useCompetitionStore();
-
+  const { isLoggedIn } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isInitializedRef = useRef(false);
-  const competitionCompletedRef = useRef(false);
-  const isOnResultsPageRef = useRef(false);
-  const isComponentMountedRef = useRef(true);
+  const handleGetStarted = () => {
+      if (isLoggedIn) {
+        // If logged in, scroll to the "Powerful Study Tools" section
+        const studyToolsSection = document.getElementById('study-tools');
+        if (studyToolsSection) {
+          studyToolsSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          // Fallback if section not found
+          navigate('/quiz');
+        }
+      } else {
+        navigate('/auth', { state: { from: location } });
+      }
+    };
 
-  const [step, setStep] = useState<
-    'api-key' | 'mode-selector' | 'solo-preferences' | 'create-competition' |
-    'join-competition' | 'random-match' | 'quiz' | 'results' |
-    'competition-lobby' | 'competition-quiz' | 'competition-results' |
-    'competition-management' | 'active-competitions-selector'
-  >('mode-selector'); // Default to mode-selector
-
-  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<string | null>(null);
-  const quizStartTimeRef = useRef<number | null>(null);
-
-  // Marketing content data
   const studyAids = [
     {
-      title: 'Solo Quiz',
-      description: 'Generate personalized quizzes with intelligent questions and get instant feedback.',
+      title: 'AI Quiz',
+      description: 'Generate personalized quizzes with intelligent question generation and adaptive difficulty.',
       icon: Brain,
-      path: '/', // Navigate to homepage
-      state: { mode: 'solo-preferences' }, // Pass state for specific mode
-      gradient: 'from-blue-500 to-indigo-600',
-      hoverGradient: 'hover:from-blue-600 hover:to-indigo-700',
+      path: '/quiz',
+      gradient: 'from-violet-500 via-purple-500 to-indigo-600',
+      hoverGradient: 'hover:from-violet-600 hover:via-purple-600 hover:to-indigo-700',
+      shadowColor: 'shadow-violet-500/25',
+      hoverShadow: 'hover:shadow-violet-500/40',
+      stats: '10M+ questions',
+      badge: 'Most Popular',
+      badgeColor: 'bg-violet-500',
+      pattern: 'bg-gradient-to-br from-violet-100/50 to-purple-100/30',
+      iconBg: 'bg-gradient-to-br from-violet-400 to-purple-500'
+    },
+    {
+      title: 'AI Tutorial',
+      description: 'Learn complex topics with interactive AI-guided tutorials and explanations.',
+      icon: Lightbulb,
+      path: '/ai-tutorial',
+      gradient: 'from-yellow-500 via-amber-500 to-orange-600',
+      hoverGradient: 'hover:from-yellow-600 hover:via-amber-600 hover:to-orange-700',
+      shadowColor: 'shadow-yellow-500/25',
+      hoverShadow: 'hover:shadow-yellow-500/40',
+      stats: 'Interactive',
+      badge: 'New!',
+      badgeColor: 'bg-yellow-500',
+      pattern: 'bg-gradient-to-br from-yellow-100/50 to-amber-100/30',
+      iconBg: 'bg-gradient-to-br from-yellow-400 to-orange-500'
+    },
+    {
+      title: 'Question Bank',
+      description: 'Generate comprehensive question banks from text or PDFs with intelligent analysis.',
+      icon: FileQuestion,
+      path: '/question-bank',
+      gradient: 'from-blue-500 via-cyan-500 to-teal-600',
+      hoverGradient: 'hover:from-blue-600 hover:via-cyan-600 hover:to-teal-700',
       shadowColor: 'shadow-blue-500/25',
       hoverShadow: 'hover:shadow-blue-500/40',
-      stats: 'Personalized learning',
-      badge: 'Practice Mode',
+      stats: '500K+ banks',
+      badge: 'AI Powered',
       badgeColor: 'bg-blue-500',
-      pattern: 'bg-gradient-to-br from-blue-100/50 to-indigo-100/30',
-      iconBg: 'bg-gradient-to-br from-blue-400 to-indigo-500'
+      pattern: 'bg-gradient-to-br from-blue-100/50 to-cyan-100/30',
+      iconBg: 'bg-gradient-to-br from-blue-400 to-cyan-500'
     },
     {
-      title: 'Create Competition',
-      description: 'Design custom quizzes and invite friends for a competitive challenge.',
-      icon: Crown,
-      path: '/', // Navigate to homepage
-      state: { mode: 'create-competition' }, // Pass state for specific mode
-      gradient: 'from-purple-500 to-pink-500',
-      hoverGradient: 'hover:from-purple-600 hover:to-pink-600',
+      title: 'Answer Evaluation',
+      description: 'Get detailed feedback on your written answers using advanced AI analysis.',
+      icon: PenTool,
+      path: '/answer-evaluation',
+      gradient: 'from-emerald-500 via-green-500 to-teal-600',
+      hoverGradient: 'hover:from-emerald-600 hover:via-green-600 hover:to-teal-700',
+      shadowColor: 'shadow-emerald-500/25',
+      hoverShadow: 'hover:shadow-emerald-500/40',
+      stats: '95% accuracy',
+      badge: 'Smart Grading',
+      badgeColor: 'bg-emerald-500',
+      pattern: 'bg-gradient-to-br from-emerald-100/50 to-green-100/30',
+      iconBg: 'bg-gradient-to-br from-emerald-400 to-green-500'
+    },
+    {
+      title: 'Smart Notes',
+      description: 'Generate summaries, mind maps, and interactive study materials.',
+      icon: BookOpen,
+      path: '/notes',
+      gradient: 'from-purple-500 via-indigo-500 to-blue-600',
+      hoverGradient: 'hover:from-purple-600 hover:via-indigo-600 hover:to-blue-700',
       shadowColor: 'shadow-purple-500/25',
       hoverShadow: 'hover:shadow-purple-500/40',
-      stats: 'Host your own quiz',
-      badge: 'Host Battle',
+      stats: '1M+ notes',
+      badge: 'Interactive',
       badgeColor: 'bg-purple-500',
-      pattern: 'bg-gradient-to-br from-purple-100/50 to-pink-100/30',
-      iconBg: 'bg-gradient-to-br from-purple-400 to-pink-500'
+      pattern: 'bg-gradient-to-br from-purple-100/50 to-indigo-100/30',
+      iconBg: 'bg-gradient-to-br from-purple-400 to-indigo-500'
     },
     {
-      title: 'Join Competition',
-      description: 'Enter existing competitions using a unique code and test your knowledge against others.',
-      icon: Hash,
-      path: '/', // Navigate to homepage
-      state: { mode: 'join-competition' }, // Pass state for specific mode
-      gradient: 'from-green-500 to-emerald-500',
-      hoverGradient: 'hover:from-green-600 hover:to-emerald-600',
-      shadowColor: 'shadow-green-500/25',
-      hoverShadow: 'hover:shadow-green-500/40',
-      stats: 'Compete with friends',
-      badge: 'Quick Join',
-      badgeColor: 'bg-green-500',
-      pattern: 'bg-gradient-to-br from-green-100/50 to-emerald-100/30',
-      iconBg: 'bg-gradient-to-br from-green-400 to-emerald-500'
-    },
-    {
-      title: 'Random Match',
-      description: 'Get instantly matched with players globally for quick, exciting quiz battles.',
-      icon: Zap,
-      path: '/', // Navigate to homepage
-      state: { mode: 'random-match' }, // Pass state for specific mode
-      gradient: 'from-orange-500 to-red-500',
-      hoverGradient: 'hover:from-orange-600 hover:to-red-600',
+      title: 'Study Planner',
+      description: 'Create personalized study schedules optimized for your learning goals.',
+      icon: Calendar,
+      path: '/study-plan',
+      gradient: 'from-orange-500 via-amber-500 to-yellow-600',
+      hoverGradient: 'hover:from-orange-600 hover:via-amber-600 hover:to-yellow-700',
       shadowColor: 'shadow-orange-500/25',
       hoverShadow: 'hover:shadow-orange-500/40',
-      stats: 'Global matchmaking',
-      badge: 'Instant Battle',
+      stats: 'Optimized',
+      badge: 'Personalized',
       badgeColor: 'bg-orange-500',
-      pattern: 'bg-gradient-to-br from-orange-100/50 to-red-100/30',
-      iconBg: 'bg-gradient-to-br from-orange-400 to-red-500'
+      pattern: 'bg-gradient-to-br from-orange-100/50 to-amber-100/30',
+      iconBg: 'bg-gradient-to-br from-orange-400 to-amber-500'
     }
   ];
 
@@ -199,745 +192,7 @@ const HomePage: React.FC = () => {
     { icon: Target, value: '50M+', label: 'Questions Solved', gradient: 'from-green-500 to-emerald-500' },
     { icon: Award, value: '95%', label: 'Success Rate', gradient: 'from-orange-500 to-red-500' }
   ];
-
-  // Component lifecycle management
-  useEffect(() => {
-    isComponentMountedRef.current = true;
-
-    return () => {
-      console.log('HomePage component unmounting, cleaning up...');
-      isComponentMountedRef.current = false;
-
-      setCleanupFlag(true);
-      cleanupSubscriptions();
-    };
-  }, [setCleanupFlag, cleanupSubscriptions]);
-
-  // Initial data load and step determination
-  useEffect(() => {
-    if (!user || isInitializedRef.current || !isComponentMountedRef.current) return;
-
-    const initializeQuizPage = async () => {
-      try {
-        await Promise.all([
-          loadApiKey(user.id),
-          loadPreferences(user.id),
-          loadUserCompetitions(user.id)
-        ]);
-
-        if (isComponentMountedRef.current) {
-          isInitializedRef.current = true;
-        }
-      } catch (error) {
-        console.error('Failed to initialize quiz page:', error);
-      }
-    };
-
-    initializeQuizPage();
-  }, [user, loadApiKey, loadPreferences, loadUserCompetitions]);
-
-  // Step determination logic (from QuizPage.tsx)
-  useEffect(() => {
-    if (!isComponentMountedRef.current) return; // Ensure component is mounted
-
-    const determineStep = async () => {
-      // 1. Prioritize location.state for direct navigation from marketing cards
-      if (location.state?.mode) {
-        const modeFromState = location.state.mode;
-        if (modeFromState === 'solo-preferences' || modeFromState === 'create-competition' ||
-            modeFromState === 'join-competition' || modeFromState === 'random-match') {
-          setStep(modeFromState);
-          setSelectedMode(modeFromState.split('-')[0]); // Set selectedMode for back navigation
-          // Clear location state to prevent re-triggering on subsequent renders
-          navigate(location.pathname, { replace: true, state: {} });
-          return; // Exit early after handling direct navigation
-        }
-      }
-
-      // If not navigating directly via location.state, proceed with normal initialization/step determination
-      // This part runs only once after initial data load, or if user/currentCompetition changes
-      if (!user || !isInitializedRef.current) {
-        // If user is not loaded or not initialized, keep default step or wait for initialization
-        return;
-      }
-
-      // 2. Handle competition completion flag (highest priority after direct navigation)
-      if (competitionCompletedRef.current && step !== 'competition-results') {
-        setStep('competition-results');
-        isOnResultsPageRef.current = true;
-        return;
-      }
-
-      // 3. Prevent auto-redirect if already on results page
-      if (isOnResultsPageRef.current && step === 'competition-results') {
-        return;
-      }
-
-      // 4. Check for active competitions (if user is logged in)
-      if (user && isComponentMountedRef.current) {
-        const activeCompetitions = await loadUserActiveCompetitions(user.id);
-
-        if (activeCompetitions.length > 0 && isComponentMountedRef.current) {
-          if (activeCompetitions.length === 1) {
-            const competition = activeCompetitions[0];
-            loadCompetition(competition.id);
-
-            const { data: userParticipant } = await supabase
-              .from('competition_participants')
-              .select('status')
-              .eq('competition_id', competition.id)
-              .eq('user_id', user.id)
-              .maybeSingle();
-
-            if ((userParticipant?.status === 'completed' || competition.status === 'completed') && isComponentMountedRef.current) {
-              if (step !== 'competition-results' && !competitionCompletedRef.current) {
-                setStep('competition-results');
-                competitionCompletedRef.current = true;
-                isOnResultsPageRef.current = true;
-              }
-              return;
-            }
-
-            if (isComponentMountedRef.current) {
-              const newStep = competition.status === 'waiting' ? 'competition-lobby' :
-                            competition.status === 'active' ? 'competition-quiz' : 'competition-lobby';
-              setStep(newStep);
-            }
-            return;
-          } else {
-            if (isComponentMountedRef.current) {
-              setStep('active-competitions-selector');
-            }
-            return;
-          }
-        }
-      }
-
-      // 5. Handle current competition state (if one is loaded)
-      if (currentCompetition && isComponentMountedRef.current) {
-        const { data: competitionCheck } = await supabase
-          .from('competitions')
-          .select('status')
-          .eq('id', currentCompetition.id)
-          .maybeSingle();
-
-        if (!competitionCheck) {
-          clearCurrentCompetition();
-          competitionCompletedRef.current = false;
-          isOnResultsPageRef.current = false;
-          if (isComponentMountedRef.current) {
-            setStep('mode-selector');
-          }
-          return;
-        }
-
-        if (user && isComponentMountedRef.current) {
-          const { data: userParticipant } = await supabase
-            .from('competition_participants')
-            .select('status')
-            .eq('competition_id', currentCompetition.id)
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if ((userParticipant?.status === 'completed' || competitionCheck.status === 'completed') &&
-              step !== 'competition-results' && !competitionCompletedRef.current && isComponentMountedRef.current) {
-            setStep('competition-results');
-            competitionCompletedRef.current = true;
-            isOnResultsPageRef.current = true;
-            return;
-          }
-        }
-
-        if (step !== 'competition-results' && !competitionCompletedRef.current && isComponentMountedRef.current) {
-          const newStep = competitionCheck.status === 'waiting' ? 'competition-lobby' :
-                        competitionCheck.status === 'active' ? 'competition-quiz' :
-                        competitionCheck.status === 'completed' ? 'competition-results' : 'mode-selector';
-
-          if (newStep === 'mode-selector') {
-            clearCurrentCompetition();
-            competitionCompletedRef.current = false;
-            isOnResultsPageRef.current = false;
-          } else if (newStep === 'competition-results') {
-            competitionCompletedRef.current = true;
-            isOnResultsPageRef.current = true;
-          }
-
-          setStep(newStep);
-          return;
-        }
-      }
-
-      // 6. Default to mode-selector or current quiz state if no other conditions met
-      if (!currentCompetition && !competitionCompletedRef.current && isComponentMountedRef.current) {
-        let newStep: string;
-
-        if (isGeneratingQuiz) {
-          return; // Stay on current step if quiz is generating
-        }
-
-        if (result && result.questions && result.questions.length > 0) {
-          newStep = 'results';
-        } else if (questions.length > 0 && !result) {
-          newStep = 'quiz';
-          if (preferences?.timeLimitEnabled && preferences?.totalTimeLimit && totalTimeRemaining === null) {
-            setTotalTimeRemaining(parseInt(preferences.totalTimeLimit));
-          }
-        } else {
-          newStep = 'mode-selector';
-        }
-
-        setStep(newStep as any);
-      }
-    };
-
-    // Execute determineStep directly without setTimeout
-    determineStep();
-  }, [user, isInitializedRef.current, location.state, // Add location.state as a dependency
-      competitionCompletedRef, isOnResultsPageRef, currentCompetition,
-      loadUserActiveCompetitions, loadCompetition, clearCurrentCompetition,
-      isGeneratingQuiz, result, questions, preferences, totalTimeRemaining,
-      navigate, step, selectedMode]);
-
-
-  const handleFinishQuiz = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    finishQuiz();
-    setStep('results');
-    setTotalTimeRemaining(null);
-  }, [finishQuiz, setTotalTimeRemaining]);
-
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (preferences?.timeLimitEnabled && preferences?.totalTimeLimit && preferences?.timeLimit === null && step === 'quiz' && questions.length > 0 && isComponentMountedRef.current) {
-      if (totalTimeRemaining === null) {
-        setTotalTimeRemaining(parseInt(preferences.totalTimeLimit));
-      }
-
-      timer = setInterval(() => {
-        setTotalTimeRemaining(prev => {
-          if (prev === null || prev <= 1) {
-            clearInterval(timer!);
-            if (isComponentMountedRef.current) {
-              setTimeout(() => {
-                handleFinishQuiz();
-              }, 100);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timer) clearInterval(timer);
-    }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [step, questions.length, handleFinishQuiz, preferences, totalTimeRemaining, setTotalTimeRemaining]);
-
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    if (step === 'quiz' && questions.length > 0 && isComponentMountedRef.current) {
-      if (quizStartTimeRef.current === null || totalTimeElapsed === 0) {
-        quizStartTimeRef.current = Date.now() - (totalTimeElapsed * 1000);
-      }
-
-      timer = setInterval(() => {
-        if (quizStartTimeRef.current !== null) {
-          setTotalTimeElapsed(Math.floor((Date.now() - quizStartTimeRef.current) / 1000));
-        }
-      }, 1000);
-    } else {
-      if (timer) {
-        clearInterval(timer);
-      }
-      quizStartTimeRef.current = null;
-    }
-
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [step, questions.length, setTotalTimeElapsed, totalTimeElapsed]);
-
-
-  if (!isLoggedIn) {
-    return <Navigate to="/auth" />;
-  }
-
-  const handleApiKeySaved = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-    setStep('mode-selector');
-  }, []);
-
-  const handleModeSelect = useCallback((mode: 'solo' | 'create-competition' | 'join-competition' | 'random-match') => {
-    if (!isComponentMountedRef.current) return;
-    setSelectedMode(mode);
-    const newStep = mode === 'solo' ? 'solo-preferences' :
-                   mode === 'create-competition' ? 'create-competition' :
-                   mode === 'join-competition' ? 'join-competition' : 'random-match';
-    setStep(newStep);
-  }, []);
-
-  const handleBackToModeSelector = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    resetQuiz();
-    clearCurrentCompetition();
-    setCleanupFlag(false);
-    competitionCompletedRef.current = false;
-    isOnResultsPageRef.current = false;
-    setSelectedMode(null);
-    setTotalTimeElapsed(0);
-    setTotalTimeRemaining(null);
-    setStep('mode-selector');
-  }, [resetQuiz, clearCurrentCompetition, setCleanupFlag, setTotalTimeElapsed, setTotalTimeRemaining]);
-
-  const handleShowCompetitionManagement = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-    setStep('competition-management');
-  }, []);
-
-    const handleStartSoloQuiz = useCallback(async () => {
-      if (!user || !isComponentMountedRef.current) return;
-
-      if (!apiKey) {
-        setStep('api-key');
-        return;
-      }
-
-      setIsGeneratingQuiz(true);
-      try {
-        await generateQuiz(user.id);
-        if (isComponentMountedRef.current) {
-          setStep('quiz');
-        }
-      } catch (error) {
-        console.error('Failed to generate quiz:', error);
-      } finally {
-        setIsGeneratingQuiz(false);
-      }
-    }, [user, generateQuiz, apiKey]);
-
-
-  const handleNewQuiz = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    resetQuiz();
-    competitionCompletedRef.current = false;
-    isOnResultsPageRef.current = false;
-    setTotalTimeElapsed(0);
-    setTotalTimeRemaining(null);
-    setStep('mode-selector');
-  }, [resetQuiz, setTotalTimeElapsed, setTotalTimeRemaining]);
-
-  const handleChangePreferences = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    resetQuiz();
-    setTotalTimeElapsed(0);
-    setTotalTimeRemaining(null);
-    const newStep = selectedMode === 'solo' ? 'solo-preferences' : 'mode-selector';
-    setStep(newStep);
-  }, [resetQuiz, selectedMode, setTotalTimeElapsed, setTotalTimeRemaining]);
-
-  const handleNext = useCallback(() => {
-    nextQuestion();
-  }, [nextQuestion]);
-
-  const handlePrevious = useCallback(() => {
-    prevQuestion();
-  }, [prevQuestion]);
-
-  const handleJoinSuccess = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-    setStep('competition-lobby');
-  }, []);
-
-  const handleMatchFound = useCallback((competitionId: string) => {
-    if (!isComponentMountedRef.current) return;
-    setStep('competition-lobby');
-  }, []);
-
-const handleStartCompetitionQuiz = useCallback(async () => {
-  if (!currentCompetition || !user || !apiKey || !isComponentMountedRef.current) return;
-
-  try {
-    setStep('competition-quiz');
-  } catch (error) {
-    console.error('Failed to start competition quiz:', error);
-  }
-}, [currentCompetition, user, apiKey]);
-
-  const handleCompetitionComplete = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    competitionCompletedRef.current = true;
-    isOnResultsPageRef.current = true;
-
-    setStep('competition-results');
-  }, []);
-
-  const handleNewCompetition = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    clearCurrentCompetition();
-    setCleanupFlag(false);
-    competitionCompletedRef.current = false;
-    isOnResultsPageRef.current = false;
-    setStep('mode-selector');
-  }, [clearCurrentCompetition, setCleanupFlag]);
-
-  const handleBackToHome = useCallback(() => {
-    setCleanupFlag(true);
-    cleanupSubscriptions();
-    clearCurrentCompetition();
-    competitionCompletedRef.current = false;
-    isOnResultsPageRef.current = false;
-    // This navigate is now to the marketing section of the homepage
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    setStep('mode-selector'); // Reset step to show quiz mode selector if user clicks "Start Learning Now" again
-  }, [clearCurrentCompetition, setCleanupFlag, cleanupSubscriptions]);
-
-const handleCreateCompetitionSuccess = useCallback(async (preferences, title, description) => {
-  if (!user || !isComponentMountedRef.current) return;
-
-  setIsGeneratingQuiz(true);
-  try {
-    await createCompetition({ preferences, userId: user.id, title, description, type: 'private' });
-    if (isComponentMountedRef.current) {
-      setStep('competition-lobby');
-    }
-  } catch (error) {
-    console.error('Failed to create competition:', error);
-  } finally {
-    setIsGeneratingQuiz(false);
-  }
-}, [user, createCompetition]);
-
-  const handleSelectActiveCompetition = useCallback((competition: any) => {
-    if (!isComponentMountedRef.current) return;
-
-    loadCompetition(competition.id);
-
-    const newStep = competition.status === 'waiting' ? 'competition-lobby' :
-                   competition.status === 'active' ? 'competition-quiz' : 'competition-lobby';
-    setStep(newStep);
-  }, [loadCompetition]);
-
-  const handleLeaveCompetition = useCallback(() => {
-    if (!isComponentMountedRef.current) return;
-
-    setCleanupFlag(true);
-    cleanupSubscriptions();
-    clearCurrentCompetition();
-    competitionCompletedRef.current = false;
-    isOnResultsPageRef.current = false;
-    setStep('mode-selector');
-  }, [clearCurrentCompetition, setCleanupFlag, cleanupSubscriptions]);
-
-  // Render content based on step
-  const renderQuizContent = () => {
-    if (!user) return null;
-
-    switch (step) {
-      case 'api-key':
-        return <ApiKeyForm userId={user.id} onSave={handleApiKeySaved} />;
-
-      case 'active-competitions-selector':
-        return (
-          <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-8">
-            <div className="w-full px-4 py-8">
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center mb-8"
-              >
-                <div className="flex items-center justify-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center mr-4 shadow-xl">
-                    <Trophy className="w-8 h-8 text-white" />
-                  </div>
-                  <div>
-                    <h1 className="text-4xl font-bold text-gray-800">Active Competitions</h1>
-                    <p className="text-gray-600 text-lg">You have multiple active competitions. Choose one to continue:</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <div className="space-y-4 mb-8">
-                {userActiveCompetitions.map((competition, index) => (
-                  <motion.div
-                    key={competition.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <Card className="hover:shadow-xl transition-all duration-300 cursor-pointer border-2 border-gray-200 hover:border-purple-300"
-                          onClick={() => handleSelectActiveCompetition(competition)}>
-                      <CardBody className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-xl flex items-center justify-center">
-                              <Trophy className="w-6 h-6 text-white" />
-                            </div>
-                            <div>
-                              <h3 className="text-xl font-bold text-gray-800">{competition.title}</h3>
-                              <p className="text-gray-600">{competition.description}</p>
-                              <div className="flex items-center space-x-4 mt-2 text-sm">
-                                <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                  competition.status === 'waiting'
-                                    ? 'bg-yellow-100 text-yellow-700'
-                                    : 'bg-green-100 text-green-700'
-                                }`}>
-                                  {competition.status === 'waiting' ? 'Waiting for participants' : 'Active'}
-                                </span>
-                                <span className="flex items-center text-gray-500">
-                                  <Users className="w-4 h-4 mr-1" />
-                                  {competition.participant_count || 0} participants
-                                </span>
-                                <span className="flex items-center text-gray-500">
-                                  <Clock className="w-4 h-4 mr-1" />
-                                  Created {new Date(competition.created_at).toLocaleDateString()}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-lg font-bold text-purple-600">#{competition.competition_code}</div>
-                            <div className="text-sm text-gray-500">Competition Code</div>
-                          </div>
-                        </div>
-                      </CardBody>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-
-              <div className="text-center">
-                <Button
-                  variant="outline"
-                  onClick={handleBackToModeSelector}
-                  className="border-2 border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-3"
-                >
-                  <ArrowLeft className="w-5 h-5 mr-2" />
-                  Start New Quiz Instead
-                </Button>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'mode-selector':
-        return (
-          <QuizModeSelector
-            onSelectMode={handleModeSelect}
-            onShowCompetitionManagement={handleShowCompetitionManagement}
-          />
-        );
-
-      case 'competition-management':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between mb-6">
-              <Button
-                variant="ghost"
-                onClick={handleBackToModeSelector}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Quiz Modes
-              </Button>
-            </div>
-            <CompetitionManagement userId={user.id} />
-          </div>
-        );
-
-        case 'solo-preferences':
-          return (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between mb-6">
-                <Button
-                  variant="ghost"
-                  onClick={handleBackToModeSelector}
-                  className="text-gray-600 hover:text-gray-800"
-                  disabled={isGeneratingQuiz}
-                >
-                  <ArrowLeft className="w-5 h-5 mr-2" />
-                    Back to Quiz Modes
-                </Button>
-              </div>
-               {isGeneratingQuiz ? (
-                <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-lg text-gray-600">Generating your quiz...</p>
-                  </div>
-                </div>
-              ) : (
-                <QuizPreferencesForm
-                  userId={user.id}
-                  initialPreferences={preferences || defaultPreferences}
-                  onSave={handleStartSoloQuiz}
-                />
-              )}
-            </div>
-          );
-
-          case 'create-competition':
-            return (
-              <div className="space-y-6">
-                <div className="flex items-center justify-between mb-6">
-                  <Button
-                    variant="ghost"
-                    onClick={handleBackToModeSelector}
-                    className="text-gray-600 hover:text-gray-800"
-                    disabled={isGeneratingQuiz}
-                  >
-                    <ArrowLeft className="w-5 h-5 mr-2" />
-                    Back to Quiz Modes
-                  </Button>
-                </div>
-                {isGeneratingQuiz ? (
-                  <div className="min-h-[calc(100vh-200px)] flex items-center justify-center">
-                    <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                      <p className="text-lg text-gray-600">Creating your competition...</p>
-                    </div>
-                  </div>
-                ) : (
-                  <QuizPreferencesForm
-                    userId={user.id}
-                    initialPreferences={preferences || defaultPreferences}
-                    onStartCompetition={handleCreateCompetitionSuccess}
-                  />
-                )}
-              </div>
-            );
-
-      case 'join-competition':
-        return (
-          <JoinCompetitionForm
-            onJoinSuccess={handleJoinSuccess}
-            onCancel={handleBackToModeSelector}
-          />
-        );
-
-      case 'random-match':
-        return (
-          <RandomMatchmaking
-            onMatchFound={handleMatchFound}
-            onCancel={handleBackToModeSelector}
-          />
-        );
-
-      case 'competition-lobby':
-        if (!currentCompetition) {
-          return <div>Loading competition...</div>;
-        }
-        return (
-          <CompetitionLobby
-            competition={currentCompetition}
-            onStartQuiz={handleStartCompetitionQuiz}
-            onLeave={handleLeaveCompetition}
-          />
-        );
-
-        case 'competition-quiz':
-          if (!currentCompetition) {
-            return <div>Loading competition...</div>;
-          }
-          return (
-            <CompetitionQuiz
-              competition={currentCompetition}
-              onComplete={handleCompetitionComplete}
-              onLeave={handleLeaveCompetition}
-            />
-          );
-
-      case 'competition-results':
-        if (!currentCompetition) {
-          return <div>Loading results...</div>;
-        }
-        isOnResultsPageRef.current = true;
-        return (
-          <CompetitionResults
-            competition={currentCompetition}
-            onNewCompetition={handleNewCompetition}
-            onBackToHome={handleBackToHome}
-            onLeave={handleLeaveCompetition}
-          />
-        );
-
-      case 'quiz':
-        if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) {
-          return null;
-        }
-
-        const currentQuestion = questions[currentQuestionIndex];
-        if (!currentQuestion || !preferences) {
-          return null;
-        }
-
-        const handleSoloQuestionSubmit = (answer: string) => {
-          answerQuestion(currentQuestion.id, answer);
-          if (currentQuestionIndex === questions.length - 1) {
-            handleFinishQuiz();
-          } else {
-            nextQuestion();
-          }
-        };
-
-        return (
-           <div className="w-full px-0 py-8">
-              <QuizQuestion
-                question={currentQuestion}
-                questionNumber={currentQuestionIndex + 1}
-                totalQuestions={questions.length}
-                userAnswer={answers[currentQuestion.id]}
-                onAnswer={(answer) => answerQuestion(currentQuestion.id, answer)}
-                onPrevious={handlePrevious}
-                isLastQuestion={currentQuestionIndex === questions.length - 1}
-                onFinish={handleFinishQuiz}
-                language={preferences.language || 'en'}
-                timeLimitEnabled={preferences.timeLimitEnabled || false}
-                timeLimit={preferences.timeLimit}
-                totalTimeLimit={preferences.totalTimeLimit}
-                totalTimeRemaining={totalTimeRemaining}
-                mode={preferences.mode || 'practice'}
-                answerMode={preferences.mode === 'practice' ? 'immediate' : 'end'}
-                onQuitQuiz={handleBackToModeSelector}
-                totalTimeElapsed={totalTimeElapsed}
-                showQuitButton={true}
-                displayHeader={true}
-                showPreviousButton={!(preferences.timeLimitEnabled && preferences.timeLimit)}
-                onQuestionSubmit={handleSoloQuestionSubmit}
-              />
-
-          </div>
-        );
-
-      case 'results':
-        if (!result) return null;
-
-        return (
-          <div className="w-full px-4">
-            <QuizResults
-              result={result}
-              onNewQuiz={handleNewQuiz}
-              onChangePreferences={handleChangePreferences}
-            />
-          </div>
-        );
-    }
-  };
-
-  // Main render for HomePage
+  
   return (
     <div className="flex flex-col items-center bg-white">
       {/* Hero Section */}
@@ -947,7 +202,7 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
           <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-200/30 to-pink-200/30 rounded-full blur-3xl animate-pulse" />
           <div className="absolute top-20 -right-20 w-60 h-60 bg-gradient-to-r from-blue-200/30 to-cyan-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
           <div className="absolute bottom-20 left-20 w-40 h-40 bg-gradient-to-r from-green-200/30 to-teal-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
-
+          
           {/* Floating Elements */}
           <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-purple-400/20 rounded-full animate-bounce" style={{ animationDelay: '1s' }} />
           <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-blue-400/20 rounded-full animate-bounce" style={{ animationDelay: '2s' }} />
@@ -962,12 +217,12 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
             className="flex justify-center mb-8 relative"
           >
             <motion.div
-              animate={{
+              animate={{ 
                 rotate: [0, 10, -10, 0],
                 scale: [1, 1.1, 1]
               }}
-              transition={{
-                duration: 4,
+              transition={{ 
+                duration: 4, 
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
@@ -977,7 +232,7 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
                 <GraduationCap className="h-12 w-12 sm:h-14 sm:w-14 text-white" />
               </div>
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/50 to-blue-400/50 rounded-3xl blur-xl animate-pulse" />
-
+              
               {/* Orbiting Elements */}
               <motion.div
                 animate={{ rotate: 360 }}
@@ -990,8 +245,8 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
               </motion.div>
             </motion.div>
           </motion.div>
-
-          <motion.h1
+          
+          <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -1002,14 +257,14 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
               Learning Companion
             </span>
           </motion.h1>
-
-          <motion.p
+          
+          <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-xl sm:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed"
           >
-            Transform your learning experience with intelligent study tools.
+            Transform your learning experience with intelligent study tools. 
             Get personalized guidance, instant feedback, and comprehensive analytics.
           </motion.p>
 
@@ -1020,20 +275,7 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
             className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12"
           >
             <Button
-              onClick={() => {
-                if (isLoggedIn) {
-                  // Scroll to the quiz content section
-                  const quizContentSection = document.getElementById('quiz-content-section');
-                  if (quizContentSection) {
-                    quizContentSection.scrollIntoView({ behavior: 'smooth' });
-                  } else {
-                    // Fallback if section not found, just set step to mode-selector
-                    setStep('mode-selector');
-                  }
-                } else {
-                  navigate('/auth', { state: { from: location } });
-                }
-              }}
+              onClick={handleGetStarted}
               className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-8 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group relative overflow-hidden"
             >
               <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -1047,12 +289,7 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
         </div>
       </div>
 
-      {/* Quiz Content Section - This is where the QuizPage content will now live */}
-      <div id="quiz-content-section" className="w-full max-w-7xl mx-auto px-4 py-8 sm:py-12">
-        {renderQuizContent()}
-      </div>
-
-      {/* Study Aids Section (Marketing Cards) */}
+      {/* Study Aids Section */}
       <div id="study-tools" className="w-full max-w-7xl mx-auto px-4 py-16 sm:py-24">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1068,32 +305,20 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {studyAids.map((aid, index) => (
             <motion.div
-              key={aid.path + aid.title}
+              key={aid.path}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{
-                scale: 1.05,
+              transition={{ delay: index * 0.1 }} 
+              whileHover={{ 
+                scale: 1.05, 
                 y: -10,
                 rotateY: 5,
                 rotateX: 5
               }}
-              onClick={() => {
-                if (isLoggedIn) {
-                  setStep(aid.state.mode); // Directly set the step
-                  setSelectedMode(aid.state.mode.split('-')[0]); // Set selectedMode for back navigation
-                  // Optionally scroll to the quiz content section if not already there
-                  const quizContentSection = document.getElementById('quiz-content-section');
-                  if (quizContentSection) {
-                    quizContentSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                } else {
-                  navigate('/auth'); // Redirect to auth if not logged in
-                }
-              }}
+              onClick={() => isLoggedIn ? navigate(aid.path) : navigate('/auth')}
               className={`group relative overflow-hidden rounded-3xl p-8 transition-all duration-500 transform bg-white border border-gray-100 shadow-xl ${aid.shadowColor} ${aid.hoverShadow} hover:shadow-2xl cursor-pointer`}
               style={{
                 transformStyle: 'preserve-3d',
@@ -1107,10 +332,10 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
 
               {/* Background Pattern */}
               <div className={`absolute inset-0 ${aid.pattern} opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
-
+              
               {/* Gradient Overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${aid.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-
+              
                {/* Floating Particles */}
             <div className="absolute inset-0 overflow-hidden">
               {[...Array(6)].map((_, i) => (
@@ -1133,17 +358,17 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
                 />
               ))}
             </div>
-
+              
               <div className="relative z-10">
-                <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-6 shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden`}>
+                <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg relative overflow-hidden`}>
                   <aid.icon className="h-8 w-8 text-white relative z-10" />
                   <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
-
+                
                 <h3 className="text-2xl font-bold mb-4 text-gray-900 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300">
                   {aid.title}
                 </h3>
-
+                
                 <p className="text-gray-600 mb-6 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
                   {aid.description}
                 </p>
@@ -1187,7 +412,7 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
               className="text-center group"
             >
               <div className={`w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-r ${stat.gradient} rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-all duration-300 relative overflow-hidden`}>
-                <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
+                <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white relative z-10" />
                 <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
               <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-slate-800 group-hover:to-blue-600 transition-all duration-300">
@@ -1295,7 +520,7 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
           <div className="relative z-10 text-center">
             <h2 className="text-3xl sm:text-5xl font-bold mb-6">Ready to Transform Your Learning?</h2>
             <p className="text-purple-100 mb-8 max-w-2xl mx-auto text-lg sm:text-xl leading-relaxed">
-              Join thousands of students who are already experiencing the power of AI-assisted learning.
+              Join thousands of students who are already experiencing the power of AI-assisted learning. 
               Start your journey today and unlock your full potential.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -1308,4 +533,3 @@ const handleCreateCompetitionSuccess = useCallback(async (preferences, title, de
 };
 
 export default HomePage;
- 
