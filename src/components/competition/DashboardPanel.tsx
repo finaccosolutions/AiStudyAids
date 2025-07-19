@@ -5,7 +5,7 @@ import { useQuizStore } from '../../store/useQuizStore';
 import { useCompetitionStore } from '../../store/useCompetitionStore';
 import { Button } from '../ui/Button';
 import { Card, CardBody, CardHeader } from '../ui/Card';
-import { 
+import {
   Brain, Plus, Users, Zap, Activity, BookOpen, Play, Trophy, Hash
 } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -213,3 +213,4 @@ const DashboardPanel: React.FC<DashboardPanelProps> = ({ userId }) => {
 };
 
 export default DashboardPanel;
+

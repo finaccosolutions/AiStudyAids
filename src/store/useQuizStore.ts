@@ -390,80 +390,8 @@ const validatedPreferences = {
   const accuracyRate = questionsAttempted > 0 ? (correctAnswers / questionsAttempted) * 100 : 0;
   const completionRate = questions.length > 0 ? (questionsAttempted / questions.length) * 100 : 0;
 
-  const { user } = useAuthStore.getState();
-  let strengths: string[] = [];
-  let weaknesses: string[] = [];
-  let recommendations: string[] = [];
-  let comparativePerformance: any = {};
-
-  if (user && preferences && apiKey) {
-    try {
-      const historicalResults = await getQuizResultsWithAnalytics(user.id, 10); // Fetch last 10 quizzes
-      const analysis = await getQuizAnalysisAndRecommendations(
-        apiKey,
-        { // Current quiz result structure for AI
-          totalQuestions: questions.length,
-          correctAnswers,
-          questionsAttempted,
-          questionsSkipped,
-          percentage: questions.length > 0 ? Math.round((finalScore / questions.length) * 100) : 0,
-          questions: questionsWithAnswers,
-          questionTypePerformance,
-          finalScore,
-          rawScore: correctAnswers,
-          negativeMarksDeducted: preferences?.negativeMarking ? Math.abs((correctAnswers - finalScore) * (preferences.negativeMarks || 0)) : 0,
-          totalTimeTaken: totalTimeElapsed,
-          accuracyRate,
-          completionRate,
-          id: '', // Not needed for analysis
-          course: preferences.course,
-          topic: preferences.topic,
-          subtopic: preferences.subtopic,
-          difficulty: preferences.difficulty,
-          language: preferences.language,
-          timeLimitEnabled: preferences.timeLimitEnabled,
-          timeLimit: preferences.timeLimit,
-          totalTimeLimit: preferences.totalTimeLimit,
-          negativeMarking: preferences.negativeMarking,
-          negativeMarks: preferences.negativeMarks,
-          mode: preferences.mode,
-        },
-        historicalResults,
-        preferences
-      );
-      strengths = analysis.strengths;
-      weaknesses = analysis.weaknesses;
-      recommendations = analysis.recommendations;
-      comparativePerformance = analysis.comparativePerformance;
-    } catch (analysisError) {
-      console.error("Failed to get AI analysis and recommendations:", analysisError);
-      // Fallback to simple recommendations if AI analysis fails
-      if (accuracyRate >= 80) {
-        strengths.push('Strong understanding of the topics.');
-        recommendations.push('Continue challenging yourself with advanced questions.');
-      } else if (accuracyRate >= 60) {
-        strengths.push('Good foundational knowledge.');
-        recommendations.push('Review incorrect answers and focus on understanding concepts.');
-      } else {
-        weaknesses.push('Needs improvement in core concepts.');
-        recommendations.push('Revisit study materials and practice more fundamental questions.');
-      }
-    }
-  } else {
-    // Simple rule-based recommendations if no user/preferences/apiKey
-    if (accuracyRate >= 80) {
-      strengths.push('Strong understanding of the topics.');
-      recommendations.push('Continue challenging yourself with advanced questions.');
-    } else if (accuracyRate >= 60) {
-      strengths.push('Good foundational knowledge.');
-      recommendations.push('Review incorrect answers and focus on understanding concepts.');
-    } else {
-      weaknesses.push('Needs improvement in core concepts.');
-      recommendations.push('Revisit study materials and practice more fundamental questions.');
-    }
-  }
-
-  const result: QuizResult = {
+  // Initial result object without AI analysis or DB ID
+  const initialResult: QuizResult = {
     id: '', // Temporary ID, will be updated after saving to DB
     totalQuestions: questions.length,
     correctAnswers,
@@ -479,10 +407,10 @@ const validatedPreferences = {
     totalTimeTaken: totalTimeElapsed, // Added
     accuracyRate, // Added
     completionRate, // Added
-    strengths, // Added
-    weaknesses, // Added
-    recommendations, // Added
-    comparativePerformance, // Added
+    strengths: [], // Will be filled by AI
+    weaknesses: [], // Will be filled by AI
+    recommendations: [], // Will be filled by AI
+    comparativePerformance: {}, // Will be filled by AI
 
     // Add quiz preferences directly to the result
     course: preferences?.course,
@@ -498,25 +426,11 @@ const validatedPreferences = {
     mode: preferences?.mode,
   };
   
-  console.log('Quiz result created:', result);
+  console.log('Quiz result created:', initialResult);
   
-  // Save to database
-  if (user && preferences) {
-    saveQuizResultToDatabase(user.id, result, preferences)
-      .then(data => {
-        if (data?.id) {
-          set({ result: { ...result, id: data.id } }); // Update result with ID from DB
-        } else {
-          set({ result }); // Set result without ID if save failed
-        }
-      })
-      .catch(console.error);
-  } else {
-    set({ result }); // Set result without ID if user or preferences are missing
-  }
-
-  // Clear questions to prevent re-generation and reset state
+  // Set the initial result synchronously
   set({ 
+    result: initialResult,
     currentQuestionIndex: 0, // Reset question index
     totalTimeElapsed: 0, // Reset total time elapsed
     totalTimeRemaining: null, // Reset total time remaining
@@ -524,6 +438,56 @@ const validatedPreferences = {
     answers: {}, // Clear answers
   });
   clearQuizStateFromLocal();
+
+  // Now, perform asynchronous operations (AI analysis and DB save)
+  const { user } = useAuthStore.getState();
+  if (user && preferences && apiKey) {
+    (async () => {
+      let updatedResult = { ...initialResult };
+      try {
+        const historicalResults = await getQuizResultsWithAnalytics(user.id, 10); // Fetch last 10 quizzes
+        const analysis = await getQuizAnalysisAndRecommendations(
+          apiKey,
+          initialResult, // Pass the initial result for analysis
+          historicalResults,
+          preferences
+        );
+        updatedResult = {
+          ...updatedResult,
+          strengths: analysis.strengths,
+          weaknesses: analysis.weaknesses,
+          recommendations: analysis.recommendations,
+          comparativePerformance: analysis.comparativePerformance,
+        };
+      } catch (analysisError) {
+        console.error("Failed to get AI analysis and recommendations:", analysisError);
+        // Fallback to simple recommendations if AI analysis fails
+        if (accuracyRate >= 80) {
+          updatedResult.strengths.push('Strong understanding of the topics.');
+          updatedResult.recommendations.push('Continue challenging yourself with advanced questions.');
+        } else if (accuracyRate >= 60) {
+          updatedResult.strengths.push('Good foundational knowledge.');
+          updatedResult.recommendations.push('Review incorrect answers and focus on understanding concepts.');
+        } else {
+          updatedResult.weaknesses.push('Needs improvement in core concepts.');
+          updatedResult.recommendations.push('Revisit study materials and practice more fundamental questions.');
+        }
+      }
+
+      // Save to database
+      try {
+        const data = await saveQuizResultToDatabase(user.id, updatedResult, preferences);
+        if (data?.id) {
+          updatedResult = { ...updatedResult, id: data.id };
+        }
+      } catch (dbError) {
+        console.error("Failed to save quiz result to database:", dbError);
+      }
+
+      // Update the result in the store with AI analysis and DB ID
+      set({ result: updatedResult });
+    })();
+  }
 },
 
 
