@@ -6,8 +6,7 @@ import { useQuizStore, defaultPreferences } from '../store/useQuizStore';
 import { useCompetitionStore } from '../store/useCompetitionStore';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import ApiKeyForm from '../components/quiz/ApiKeyForm';
-// Removed QuizModeSelector import
-// import QuizModeSelector from '../components/quiz/QuizModeSelector';
+import QuizModeSelector from '../components/quiz/QuizModeSelector';
 import QuizPreferencesForm from '../components/quiz/QuizPreferences';
 import JoinCompetitionForm from '../components/quiz/JoinCompetitionForm';
 import RandomMatchmaking from '../components/competition/RandomMatchmaking';
@@ -23,23 +22,19 @@ import { ArrowLeft, Trophy, Users, Clock } from 'lucide-react';
 import { Question } from '../types';
 import { motion } from 'framer-motion';
 
-interface QuizPageProps {
-  locationState?: any; // Prop to receive location.state
-}
-
-const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
+const QuizPage: React.FC = () => {
   const { user, isLoggedIn } = useAuthStore();
-  const {
-    apiKey, loadApiKey,
-    preferences, loadPreferences,
-    questions, generateQuiz,
-    currentQuestionIndex, answers, answerQuestion,
-    nextQuestion, prevQuestion,
+  const { 
+    apiKey, loadApiKey, 
+    preferences, loadPreferences, 
+    questions, generateQuiz, 
+    currentQuestionIndex, answers, answerQuestion, 
+    nextQuestion, prevQuestion, 
     finishQuiz, resetQuiz, result,
     totalTimeElapsed, setTotalTimeElapsed, // Added
     totalTimeRemaining, setTotalTimeRemaining, // Added
   } = useQuizStore();
-
+  
   const {
     currentCompetition,
     loadCompetition,
@@ -53,53 +48,48 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
     cleanupSubscriptions,
     setCleanupFlag
   } = useCompetitionStore();
-
+  
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   // Use refs to prevent unnecessary re-renders and state resets
   const isInitializedRef = useRef(false);
-  const currentStepRef = useRef<string>('mode-selector'); // Default to mode-selector for initial load
+  const currentStepRef = useRef<string>('api-key');
   const competitionCompletedRef = useRef(false);
   const isOnResultsPageRef = useRef(false); // Flag to prevent auto-redirect from results page
   const isComponentMountedRef = useRef(true);
+  
+const [step, setStep] = useState<
+  'api-key' | 'mode-selector' | 'solo-preferences' | 'create-competition' | 
+  'join-competition' | 'random-match' | 'quiz' | 'results' | 
+  'competition-lobby' | 'competition-quiz' | 'competition-results' |
+  'competition-management' | 'active-competitions-selector'
+>('mode-selector');
 
-  const [step, setStep] = useState<
-    'api-key' | 'solo-preferences' | 'create-competition' |
-    'join-competition' | 'random-match' | 'quiz' | 'results' |
-    'competition-lobby' | 'competition-quiz' | 'competition-results' |
-    'competition-management' | 'active-competitions-selector'
-  >(() => {
-    // Initialize step based on locationState or default
-    if (locationState?.mode) {
-      return locationState.mode;
-    }
-    return 'solo-preferences'; // Default to solo-preferences if no mode is specified
-  });
-
-  // Add a new state for tracking quiz generation
+// Add a new state for tracking quiz generation
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [selectedMode, setSelectedMode] = useState<string | null>(null);
   const quizStartTimeRef = useRef<number | null>(null); // Added for solo quiz timer
 
 
   // Component lifecycle management
   useEffect(() => {
     isComponentMountedRef.current = true;
-
+    
     return () => {
       console.log('QuizPage component unmounting, cleaning up...');
       isComponentMountedRef.current = false;
-
+      
       // Cleanup competition store
       setCleanupFlag(true);
       cleanupSubscriptions();
     };
   }, [setCleanupFlag, cleanupSubscriptions]);
-
+  
   // Prevent auto-refresh by using a stable initialization effect
   useEffect(() => {
     if (!user || isInitializedRef.current || !isComponentMountedRef.current) return;
-
+    
     const initializeQuizPage = async () => {
       try {
         await Promise.all([
@@ -107,7 +97,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
           loadPreferences(user.id),
           loadUserCompetitions(user.id)
         ]);
-
+        
         if (isComponentMountedRef.current) {
           isInitializedRef.current = true;
         }
@@ -119,238 +109,226 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
     initializeQuizPage();
   }, [user, loadApiKey, loadPreferences, loadUserCompetitions]);
 
-  // FIXED: Enhanced step determination with prioritized completion flags
-  useEffect(() => {
-    if (!isInitializedRef.current || !isComponentMountedRef.current) return;
+// FIXED: Enhanced step determination with prioritized completion flags
+useEffect(() => {
+  if (!isInitializedRef.current || !isComponentMountedRef.current) return;
 
-    const determineStep = async () => {
-      try {
-        // CRITICAL FIX: Check completion flags FIRST before any database checks
-        if (competitionCompletedRef.current && step !== 'competition-results') {
-          console.log('Competition completion flag is set, forcing results page');
-          setStep('competition-results');
-          currentStepRef.current = 'competition-results';
-          isOnResultsPageRef.current = true;
-          return; // Exit early to prevent any other logic from overriding this
+  const determineStep = async () => {
+    try {
+      // CRITICAL FIX: Check completion flags FIRST before any database checks
+      if (competitionCompletedRef.current && step !== 'competition-results') {
+        console.log('Competition completion flag is set, forcing results page');
+        setStep('competition-results');
+        currentStepRef.current = 'competition-results';
+        isOnResultsPageRef.current = true;
+        return; // Exit early to prevent any other logic from overriding this
+      }
+
+      // CRITICAL FIX: If user is currently on results page, don't auto-redirect
+      if (isOnResultsPageRef.current && step === 'competition-results') {
+        console.log('User is actively viewing results page, preventing auto-redirect');
+        return;
+      }
+
+      // Handle competition mode from location state
+      if (location.state?.mode === 'competition-lobby' && location.state?.competitionId) {
+        if (isComponentMountedRef.current) {
+          loadCompetition(location.state.competitionId);
+          setStep('competition-lobby');
+          currentStepRef.current = 'competition-lobby';
         }
-
-        // CRITICAL FIX: If user is currently on results page, don't auto-redirect
-        if (isOnResultsPageRef.current && step === 'competition-results') {
-          console.log('User is actively viewing results page, preventing auto-redirect');
-          return;
+        return;
+      }
+      // NEW: Handle solo-preferences and random-match from location state
+      if (location.state?.mode === 'solo-preferences') {
+        if (isComponentMountedRef.current) {
+          setStep('solo-preferences');
+          currentStepRef.current = 'solo-preferences';
+          setSelectedMode('solo'); // Set selected mode to ensure correct back navigation
         }
-
-        // Handle competition mode from location state
-        if (locationState?.mode === 'competition-lobby' && locationState?.competitionId) {
-          if (isComponentMountedRef.current) {
-            loadCompetition(locationState.competitionId);
-            setStep('competition-lobby');
-            currentStepRef.current = 'competition-lobby';
-          }
-          return;
+        return;
+      }
+      if (location.state?.mode === 'random-match') {
+        if (isComponentMountedRef.current) {
+          setStep('random-match');
+          currentStepRef.current = 'random-match';
+          setSelectedMode('random-match'); // Set selected mode
         }
-        // NEW: Handle solo-preferences and random-match from location state
-        if (locationState?.mode === 'solo-preferences') {
-          if (isComponentMountedRef.current) {
-            setStep('solo-preferences');
-            currentStepRef.current = 'solo-preferences';
-          }
-          return;
-        }
-        if (locationState?.mode === 'random-match') {
-          if (isComponentMountedRef.current) {
-            setStep('random-match');
-            currentStepRef.current = 'random-match';
-          }
-          return;
-        }
-        if (locationState?.mode === 'create-competition') {
-          if (isComponentMountedRef.current) {
-            setStep('create-competition');
-            currentStepRef.current = 'create-competition';
-          }
-          return;
-        }
-        if (locationState?.mode === 'join-competition') {
-          if (isComponentMountedRef.current) {
-            setStep('join-competition');
-            currentStepRef.current = 'join-competition';
-          }
-          return;
-        }
+        return;
+      }
 
-        // REMOVED: This block was causing issues by preventing transition to lobby
-        // if (locationState?.mode && (step === 'solo-preferences' || step === 'create-competition' ||
-        //     step === 'join-competition' || step === 'random-match')) {
-        //   console.log('User has selected a mode, maintaining current step:', step);
-        //   return;
-        // }
+      // CRITICAL FIX: Don't override manual step changes from mode selection
+      if (selectedMode && (step === 'solo-preferences' || step === 'create-competition' ||
+          step === 'join-competition' || step === 'random-match')) {
+        console.log('User has selected a mode, maintaining current step:', step);
+        return;
+      }
 
-        // Check if user has active competitions first
-        if (user && isComponentMountedRef.current) {
-          const activeCompetitions = await loadUserActiveCompetitions(user.id);
-
-          if (activeCompetitions.length > 0 && isComponentMountedRef.current) {
-            if (activeCompetitions.length === 1) {
-              const competition = activeCompetitions[0];
-              loadCompetition(competition.id);
-
-              // Check if user has completed this competition
-              const { data: userParticipant } = await supabase
-                .from('competition_participants')
-                .select('status')
-                .eq('competition_id', competition.id)
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-              // If user completed OR competition is completed, go to results
-              if ((userParticipant?.status === 'completed' || competition.status === 'completed') && isComponentMountedRef.current) {
-                // Only set results if not already there AND completion flag not set
-                if (step !== 'competition-results' && !competitionCompletedRef.current) {
-                  console.log('Setting competition as completed from database check');
-                  setStep('competition-results');
-                  currentStepRef.current = 'competition-results';
-                  competitionCompletedRef.current = true;
-                  isOnResultsPageRef.current = true;
-                }
-                return;
-              }
-
-              if (isComponentMountedRef.current) {
-                const newStep = competition.status === 'waiting' ? 'competition-lobby' :
-                              competition.status === 'active' ? 'competition-quiz' : 'competition-lobby';
-                setStep(newStep);
-                currentStepRef.current = newStep;
-              }
-              return;
-            } else {
-              if (isComponentMountedRef.current) {
-                setStep('active-competitions-selector');
-                currentStepRef.current = 'active-competitions-selector';
-              }
-              return;
-            }
-          }
-        }
-
-        // CRITICAL FIX: Check if we're in a competition context
-        if (currentCompetition && isComponentMountedRef.current) {
-          // PRIORITY CHECK: If completion flag is set, force results regardless of database state
-          if (competitionCompletedRef.current) {
-            console.log('Competition completion flag set, forcing results page');
-            if (step !== 'competition-results') {
-              setStep('competition-results');
-              currentStepRef.current = 'competition-results';
-              isOnResultsPageRef.current = true;
-            }
-            return;
-          }
-
-          const { data: competitionCheck } = await supabase
-            .from('competitions')
-            .select('status')
-            .eq('id', currentCompetition.id)
-            .maybeSingle();
-
-          if (!competitionCheck) {
-            clearCurrentCompetition();
-            competitionCompletedRef.current = false;
-            isOnResultsPageRef.current = false;
-            if (isComponentMountedRef.current) {
-              setStep('solo-preferences'); // Default to solo preferences if competition disappears
-              currentStepRef.current = 'solo-preferences';
-            }
-            return;
-          }
-
-          // CRITICAL FIX: Check if user has completed the competition
-          if (user && isComponentMountedRef.current) {
+      // Check if user has active competitions first
+      if (user && isComponentMountedRef.current) {
+        const activeCompetitions = await loadUserActiveCompetitions(user.id);
+        
+        if (activeCompetitions.length > 0 && isComponentMountedRef.current) {
+          if (activeCompetitions.length === 1) {
+            const competition = activeCompetitions[0];
+            loadCompetition(competition.id);
+            
+            // Check if user has completed this competition
             const { data: userParticipant } = await supabase
               .from('competition_participants')
               .select('status')
-              .eq('competition_id', currentCompetition.id)
+              .eq('competition_id', competition.id)
               .eq('user_id', user.id)
               .maybeSingle();
 
-            // CRITICAL FIX: If user has completed OR competition is completed, go to results
-            // BUT only if not already on results page AND completion flag not already set
-            if ((userParticipant?.status === 'completed' || competitionCheck.status === 'completed') &&
-                step !== 'competition-results' && !competitionCompletedRef.current && isComponentMountedRef.current) {
-              console.log('User completed or competition completed, going to results');
-              setStep('competition-results');
-              currentStepRef.current = 'competition-results';
-              competitionCompletedRef.current = true;
-              isOnResultsPageRef.current = true;
+            // If user completed OR competition is completed, go to results
+            if ((userParticipant?.status === 'completed' || competition.status === 'completed') && isComponentMountedRef.current) {
+              // Only set results if not already there AND completion flag not set
+              if (step !== 'competition-results' && !competitionCompletedRef.current) {
+                console.log('Setting competition as completed from database check');
+                setStep('competition-results');
+                currentStepRef.current = 'competition-results';
+                competitionCompletedRef.current = true;
+                isOnResultsPageRef.current = true;
+              }
               return;
             }
-          }
-
-          // Handle competition status changes (but not if on results page or completion flag set)
-          if (step !== 'competition-results' && !competitionCompletedRef.current && isComponentMountedRef.current) {
-            const newStep = competitionCheck.status === 'waiting' ? 'competition-lobby' :
-                          competitionCheck.status === 'active' ? 'competition-quiz' :
-                          competitionCheck.status === 'completed' ? 'competition-results' : 'solo-preferences'; // Default to solo preferences
-
-            if (newStep === 'solo-preferences') {
-              clearCurrentCompetition();
-              competitionCompletedRef.current = false;
-              isOnResultsPageRef.current = false;
-            } else if (newStep === 'competition-results') {
-              competitionCompletedRef.current = true;
-              isOnResultsPageRef.current = true;
+            
+            if (isComponentMountedRef.current) {
+              const newStep = competition.status === 'waiting' ? 'competition-lobby' : 
+                            competition.status === 'active' ? 'competition-quiz' : 'competition-lobby';
+              setStep(newStep);
+              currentStepRef.current = newStep;
             }
-
-            setStep(newStep);
-            currentStepRef.current = newStep;
             return;
-          }
-        }
-
-        // CRITICAL FIX: Only handle solo quiz logic if NOT in competition context AND no mode selected
-        if (!currentCompetition && !competitionCompletedRef.current && isComponentMountedRef.current) {
-          let newStep: string;
-
-          // If quiz is being generated, stay on current step
-          if (isGeneratingQuiz) {
-            return;
-          }
-
-          // Check result first, then questions
-          if (result && result.questions && result.questions.length > 0) {
-            newStep = 'results';
-          } else if (questions.length > 0 && !result) {
-            newStep = 'quiz';
-            // Initialize total time if set
-            if (preferences?.timeLimitEnabled && preferences?.totalTimeLimit && totalTimeRemaining === null) {
-              setTotalTimeRemaining(parseInt(preferences.totalTimeLimit));
-            }
           } else {
-            newStep = 'solo-preferences'; // Default to solo preferences
+            if (isComponentMountedRef.current) {
+              setStep('active-competitions-selector');
+              currentStepRef.current = 'active-competitions-selector';
+            }
+            return;
           }
-
-          // Only update if step actually changed
-          if (currentStepRef.current !== newStep) {
-            console.log(`Step changing from ${currentStepRef.current} to ${newStep}`);
-            setStep(newStep as any);
-            currentStepRef.current = newStep;
-          }
-        }
-      } catch (error: any) {
-        console.error('Step determination error:', error);
-        if (!error.message?.includes('Competition') && !error.message?.includes('competition') && isComponentMountedRef.current) {
-          navigate('/auth');
         }
       }
-    };
 
-    // Removed setTimeout wrapper
-    determineStep();
-  }, [questions, result, locationState, currentCompetition, navigate, user, isInitializedRef.current, isGeneratingQuiz, preferences, step, totalTimeRemaining]);
+      // CRITICAL FIX: Check if we're in a competition context
+      if (currentCompetition && isComponentMountedRef.current) {
+        // PRIORITY CHECK: If completion flag is set, force results regardless of database state
+        if (competitionCompletedRef.current) {
+          console.log('Competition completion flag set, forcing results page');
+          if (step !== 'competition-results') {
+            setStep('competition-results');
+            currentStepRef.current = 'competition-results';
+            isOnResultsPageRef.current = true;
+          }
+          return;
+        }
+
+        const { data: competitionCheck } = await supabase
+          .from('competitions')
+          .select('status')
+          .eq('id', currentCompetition.id)
+          .maybeSingle();
+
+        if (!competitionCheck) {
+          clearCurrentCompetition();
+          competitionCompletedRef.current = false;
+          isOnResultsPageRef.current = false;
+          if (isComponentMountedRef.current) {
+            setStep('mode-selector');
+            currentStepRef.current = 'mode-selector';
+          }
+          return;
+        }
+
+        // CRITICAL FIX: Check if user has completed the competition
+        if (user && isComponentMountedRef.current) {
+          const { data: userParticipant } = await supabase
+            .from('competition_participants')
+            .select('status')
+            .eq('competition_id', currentCompetition.id)
+            .eq('user_id', user.id)
+            .maybeSingle();
+
+          // CRITICAL FIX: If user has completed OR competition is completed, go to results
+          // BUT only if not already on results page AND completion flag not already set
+          if ((userParticipant?.status === 'completed' || competitionCheck.status === 'completed') && 
+              step !== 'competition-results' && !competitionCompletedRef.current && isComponentMountedRef.current) {
+            console.log('User completed or competition completed, going to results');
+            setStep('competition-results');
+            currentStepRef.current = 'competition-results';
+            competitionCompletedRef.current = true;
+            isOnResultsPageRef.current = true;
+            return;
+          }
+        }
+
+        // Handle competition status changes (but not if on results page or completion flag set)
+        if (step !== 'competition-results' && !competitionCompletedRef.current && isComponentMountedRef.current) {
+          const newStep = competitionCheck.status === 'waiting' ? 'competition-lobby' :
+                        competitionCheck.status === 'active' ? 'competition-quiz' :
+                        competitionCheck.status === 'completed' ? 'competition-results' : 'mode-selector';
+          
+          if (newStep === 'mode-selector') {
+            clearCurrentCompetition();
+            competitionCompletedRef.current = false;
+            isOnResultsPageRef.current = false;
+          } else if (newStep === 'competition-results') {
+            competitionCompletedRef.current = true;
+            isOnResultsPageRef.current = true;
+          }
+          
+          setStep(newStep);
+          currentStepRef.current = newStep;
+          return;
+        }
+      }
+    
+      // CRITICAL FIX: Only handle solo quiz logic if NOT in competition context AND no mode selected
+      if (!currentCompetition && !competitionCompletedRef.current && !selectedMode && isComponentMountedRef.current) {
+        let newStep: string;
+        
+        // If quiz is being generated, stay on current step
+        if (isGeneratingQuiz) {
+          return;
+        }
+        
+        // Check result first, then questions
+        if (result && result.questions && result.questions.length > 0) {
+          newStep = 'results';
+        } else if (questions.length > 0 && !result) {
+          newStep = 'quiz';
+          // Initialize total time if set
+          if (preferences?.timeLimitEnabled && preferences?.totalTimeLimit && totalTimeRemaining === null) {
+            setTotalTimeRemaining(parseInt(preferences.totalTimeLimit));
+          }
+        } else {
+          newStep = 'mode-selector';
+        }
+        
+        // Only update if step actually changed
+        if (currentStepRef.current !== newStep) {
+          console.log(`Step changing from ${currentStepRef.current} to ${newStep}`);
+          setStep(newStep as any);
+          currentStepRef.current = newStep;
+        }
+      }
+    } catch (error: any) {
+      console.error('Step determination error:', error);
+      if (!error.message?.includes('Competition') && !error.message?.includes('competition') && isComponentMountedRef.current) {
+        navigate('/auth');
+      }
+    }
+  };
+
+  const timeoutId = setTimeout(determineStep, 100);
+  return () => clearTimeout(timeoutId);
+}, [questions, result, location.state, currentCompetition, navigate, user, isInitializedRef.current, isGeneratingQuiz, preferences, step, selectedMode, totalTimeRemaining]);
 
 
   const handleFinishQuiz = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     console.log('Finishing quiz...');
     finishQuiz();
     // Force step change to results
@@ -359,41 +337,41 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
     setTotalTimeRemaining(null);
   }, [finishQuiz, setTotalTimeRemaining]);
 
-
+  
   // Total quiz timer effect
-  useEffect(() => {
-    let timer: NodeJS.Timeout | null = null;
-    // Only run if totalTimeLimit is enabled and per-question timeLimit is NOT set
-    if (preferences?.timeLimitEnabled && preferences?.totalTimeLimit && preferences?.timeLimit === null && step === 'quiz' && questions.length > 0 && isComponentMountedRef.current) {
-      // Initialize totalTimeRemaining if it's null or quiz just started
-      if (totalTimeRemaining === null) {
-        setTotalTimeRemaining(parseInt(preferences.totalTimeLimit));
-      }
-
-      timer = setInterval(() => {
-        setTotalTimeRemaining(prev => {
-          if (prev === null || prev <= 1) {
-            clearInterval(timer!); // Clear interval immediately
-            if (isComponentMountedRef.current) {
-              setTimeout(() => {
-                handleFinishQuiz();
-              }, 100);
-            }
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      if (timer) clearInterval(timer); // Clear timer if conditions are no longer met
+useEffect(() => {
+  let timer: NodeJS.Timeout | null = null;
+  // Only run if totalTimeLimit is enabled and per-question timeLimit is NOT set
+  if (preferences?.timeLimitEnabled && preferences?.totalTimeLimit && preferences?.timeLimit === null && step === 'quiz' && questions.length > 0 && isComponentMountedRef.current) {
+    // Initialize totalTimeRemaining if it's null or quiz just started
+    if (totalTimeRemaining === null) {
+      setTotalTimeRemaining(parseInt(preferences.totalTimeLimit));
     }
 
-    return () => {
-      if (timer) {
-        clearInterval(timer);
-      }
-    };
-  }, [step, questions.length, handleFinishQuiz, preferences, totalTimeRemaining, setTotalTimeRemaining]);
+    timer = setInterval(() => {
+      setTotalTimeRemaining(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(timer!); // Clear interval immediately
+          if (isComponentMountedRef.current) {
+            setTimeout(() => {
+              handleFinishQuiz();
+            }, 100);
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  } else {
+    if (timer) clearInterval(timer); // Clear timer if conditions are no longer met
+  }
+
+  return () => {
+    if (timer) {
+      clearInterval(timer);
+    }
+  };
+}, [step, questions.length, handleFinishQuiz, preferences, totalTimeRemaining, setTotalTimeRemaining]);
 
     // Total time elapsed timer for solo quiz
   useEffect(() => {
@@ -422,48 +400,58 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
     };
   }, [step, questions.length, setTotalTimeElapsed, totalTimeElapsed]);
 
-
+  
   if (!isLoggedIn) {
     return <Navigate to="/auth" />;
   }
-
+  
   const handleApiKeySaved = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-    setStep('solo-preferences'); // After saving API key, go to solo preferences
-    currentStepRef.current = 'solo-preferences';
+    setStep('mode-selector');
+    currentStepRef.current = 'mode-selector';
   }, []);
 
-  // Removed handleModeSelect as modes are now selected on HomePage
+  const handleModeSelect = useCallback((mode: 'solo' | 'create-competition' | 'join-competition' | 'random-match') => {
+    if (!isComponentMountedRef.current) return;
+    setSelectedMode(mode);
+    const newStep = mode === 'solo' ? 'solo-preferences' :
+                   mode === 'create-competition' ? 'create-competition' :
+                   mode === 'join-competition' ? 'join-competition' : 'random-match';
+    setStep(newStep);
+    currentStepRef.current = newStep;
+  }, []);
 
   const handleBackToModeSelector = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     resetQuiz();
     clearCurrentCompetition();
     setCleanupFlag(false); // Reset cleanup flag for new session
     competitionCompletedRef.current = false;
     isOnResultsPageRef.current = false;
+    setSelectedMode(null);
     setTotalTimeElapsed(0); // Reset total time elapsed
     setTotalTimeRemaining(null); // Reset total time remaining
-    navigate('/'); // Navigate to homepage
-  }, [resetQuiz, clearCurrentCompetition, setCleanupFlag, setTotalTimeElapsed, setTotalTimeRemaining, navigate]);
+    setStep('mode-selector');
+    currentStepRef.current = 'mode-selector';
+  }, [resetQuiz, clearCurrentCompetition, setCleanupFlag, setTotalTimeElapsed, setTotalTimeRemaining]);
 
   const handleShowCompetitionManagement = useCallback(() => {
     if (!isComponentMountedRef.current) return;
     setStep('competition-management');
     currentStepRef.current = 'competition-management';
   }, []);
-
+  
     const handleStartSoloQuiz = useCallback(async () => {
       if (!user || !isComponentMountedRef.current) return;
-
+      
       // Check if API key is required and available
       if (!apiKey) {
         setStep('api-key');
         currentStepRef.current = 'api-key';
         return;
       }
-
+      
       setIsGeneratingQuiz(true);
       try {
         await generateQuiz(user.id);
@@ -479,27 +467,29 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
       }
     }, [user, generateQuiz, apiKey]);
 
-
+  
   const handleNewQuiz = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     resetQuiz();
     competitionCompletedRef.current = false;
     isOnResultsPageRef.current = false;
     setTotalTimeElapsed(0); // Reset total time elapsed
     setTotalTimeRemaining(null); // Reset total time remaining
-    navigate('/'); // Navigate to homepage
-  }, [resetQuiz, setTotalTimeElapsed, setTotalTimeRemaining, navigate]);
-
+    setStep('mode-selector');
+    currentStepRef.current = 'mode-selector';
+  }, [resetQuiz, setTotalTimeElapsed, setTotalTimeRemaining]);
+  
   const handleChangePreferences = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     resetQuiz();
     setTotalTimeElapsed(0); // Reset total time elapsed
     setTotalTimeRemaining(null); // Reset total time remaining
-    setStep('solo-preferences'); // Always go back to solo preferences
-    currentStepRef.current = 'solo-preferences';
-  }, [resetQuiz, setTotalTimeElapsed, setTotalTimeRemaining]);
+    const newStep = selectedMode === 'solo' ? 'solo-preferences' : 'mode-selector';
+    setStep(newStep);
+    currentStepRef.current = newStep;
+  }, [resetQuiz, selectedMode, setTotalTimeElapsed, setTotalTimeRemaining]);
 
   const handleNext = useCallback(() => {
     nextQuestion();
@@ -522,31 +512,31 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
     currentStepRef.current = 'competition-lobby';
   }, []);
 
-  const handleStartCompetitionQuiz = useCallback(async () => {
-    if (!currentCompetition || !user || !apiKey || !isComponentMountedRef.current) return;
+const handleStartCompetitionQuiz = useCallback(async () => {
+  if (!currentCompetition || !user || !apiKey || !isComponentMountedRef.current) return;
 
-    try {
-      setStep('competition-quiz');
-      currentStepRef.current = 'competition-quiz';
-    } catch (error) {
-      console.error('Failed to start competition quiz:', error);
-    }
-  }, [currentCompetition, user, apiKey]);
+  try {
+    setStep('competition-quiz');
+    currentStepRef.current = 'competition-quiz';
+  } catch (error) {
+    console.error('Failed to start competition quiz:', error);
+  }
+}, [currentCompetition, user, apiKey]);
 
   // FIXED: Enhanced completion handler with stronger flag setting
   const handleCompetitionComplete = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     console.log('Competition completed, setting completion flag and navigating to results');
-
+    
     // CRITICAL: Set completion flags IMMEDIATELY and synchronously
     competitionCompletedRef.current = true;
     isOnResultsPageRef.current = true;
-
+    
     // Force immediate step change
     setStep('competition-results');
     currentStepRef.current = 'competition-results';
-
+    
     console.log('Competition completion flags set:', {
       competitionCompleted: competitionCompletedRef.current,
       isOnResultsPage: isOnResultsPageRef.current,
@@ -556,13 +546,14 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
 
   const handleNewCompetition = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     clearCurrentCompetition();
     setCleanupFlag(false); // Reset cleanup flag for new session
     competitionCompletedRef.current = false;
     isOnResultsPageRef.current = false;
-    navigate('/'); // Navigate to homepage
-  }, [clearCurrentCompetition, setCleanupFlag, navigate]);
+    setStep('mode-selector');
+    currentStepRef.current = 'mode-selector';
+  }, [clearCurrentCompetition, setCleanupFlag]);
 
   const handleBackToHome = useCallback(() => {
     // Clear all competition-related state when going back to home
@@ -574,31 +565,31 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
     navigate('/');
   }, [navigate, clearCurrentCompetition, setCleanupFlag, cleanupSubscriptions]);
 
-  const handleCreateCompetitionSuccess = useCallback(async (preferences, title, description) => {
-    if (!user || !isComponentMountedRef.current) return;
+const handleCreateCompetitionSuccess = useCallback(async (preferences, title, description) => {
+  if (!user || !isComponentMountedRef.current) return;
 
-    setIsGeneratingQuiz(true); // Use isGeneratingQuiz for competition creation as well
-    try {
-      // Call the createCompetition function from useCompetitionStore
-      await createCompetition({ preferences, userId: user.id, title, description, type: 'private' });
-      if (isComponentMountedRef.current) {
-        setStep('competition-lobby');
-        currentStepRef.current = 'competition-lobby';
-      }
-    } catch (error) {
-      console.error('Failed to create competition:', error);
-      // Handle error, maybe show a toast
-    } finally {
-      setIsGeneratingQuiz(false);
+  setIsGeneratingQuiz(true); // Use isGeneratingQuiz for competition creation as well
+  try {
+    // Call the createCompetition function from useCompetitionStore 
+    await createCompetition({ preferences, userId: user.id, title, description, type: 'private' }); 
+    if (isComponentMountedRef.current) {
+      setStep('competition-lobby');
+      currentStepRef.current = 'competition-lobby';
     }
-  }, [user, createCompetition]);
+  } catch (error) {
+    console.error('Failed to create competition:', error);
+    // Handle error, maybe show a toast
+  } finally {
+    setIsGeneratingQuiz(false);
+  }
+}, [user, createCompetition]);
 
   const handleSelectActiveCompetition = useCallback((competition: any) => {
     if (!isComponentMountedRef.current) return;
-
+    
     loadCompetition(competition.id);
-
-    const newStep = competition.status === 'waiting' ? 'competition-lobby' :
+    
+    const newStep = competition.status === 'waiting' ? 'competition-lobby' : 
                    competition.status === 'active' ? 'competition-quiz' : 'competition-lobby';
     setStep(newStep);
     currentStepRef.current = newStep;
@@ -607,19 +598,20 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
   // Enhanced leave handler for competitions
   const handleLeaveCompetition = useCallback(() => {
     if (!isComponentMountedRef.current) return;
-
+    
     // Clear competition state and reset flags
     setCleanupFlag(true);
     cleanupSubscriptions();
     clearCurrentCompetition();
     competitionCompletedRef.current = false;
     isOnResultsPageRef.current = false;
-    navigate('/'); // Navigate to homepage
-  }, [clearCurrentCompetition, setCleanupFlag, cleanupSubscriptions, navigate]);
-
+    setStep('mode-selector');
+    currentStepRef.current = 'mode-selector';
+  }, [clearCurrentCompetition, setCleanupFlag, cleanupSubscriptions]);
+  
   const renderContent = () => {
     if (!user) return null;
-
+    
     switch (step) {
       case 'api-key':
         return <ApiKeyForm userId={user.id} onSave={handleApiKeySaved} />;
@@ -665,8 +657,8 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
                               <p className="text-gray-600">{competition.description}</p>
                               <div className="flex items-center space-x-4 mt-2 text-sm">
                                 <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                                  competition.status === 'waiting'
-                                    ? 'bg-yellow-100 text-yellow-700'
+                                  competition.status === 'waiting' 
+                                    ? 'bg-yellow-100 text-yellow-700' 
                                     : 'bg-green-100 text-green-700'
                                 }`}>
                                   {competition.status === 'waiting' ? 'Waiting for participants' : 'Active'}
@@ -706,8 +698,14 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
             </div>
           </div>
         );
-
-      // Removed 'mode-selector' case
+      
+      case 'mode-selector':
+        return (
+          <QuizModeSelector 
+            onSelectMode={handleModeSelect} 
+            onShowCompetitionManagement={handleShowCompetitionManagement}
+          />
+        );
 
       case 'competition-management':
         return (
@@ -719,7 +717,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
                 className="text-gray-600 hover:text-gray-800"
               >
                 <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Home
+                Back to Quiz Modes
               </Button>
             </div>
             <CompetitionManagement userId={user.id} />
@@ -737,7 +735,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
                   disabled={isGeneratingQuiz}
                 >
                   <ArrowLeft className="w-5 h-5 mr-2" />
-                    Back to Home
+                    Back to Quiz Modes
                 </Button>
               </div>
                {isGeneratingQuiz ? (
@@ -768,7 +766,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
                     disabled={isGeneratingQuiz}
                   >
                     <ArrowLeft className="w-5 h-5 mr-2" />
-                    Back to Home
+                    Back to Quiz Modes
                   </Button>
                 </div>
                 {isGeneratingQuiz ? (
@@ -842,12 +840,12 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
             onLeave={handleLeaveCompetition}
           />
         );
-
+      
       case 'quiz':
         if (currentQuestionIndex < 0 || currentQuestionIndex >= questions.length) {
           return null;
         }
-
+        
         const currentQuestion = questions[currentQuestionIndex];
         if (!currentQuestion || !preferences) {
           return null;
@@ -862,7 +860,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
             nextQuestion(); // Move to the next question
           }
         };
-
+        
         return (
            <div className="w-full px-0 py-8">
               <QuizQuestion
@@ -891,10 +889,10 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
 
           </div>
         );
-
+      
       case 'results':
         if (!result) return null;
-
+        
         return (
           <div className="w-full px-4">
             <QuizResults
@@ -906,7 +904,7 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
         );
     }
   };
-
+  
   return (
     <div className="relative min-h-screen bg-gray-50">
       {renderContent()}
@@ -915,4 +913,3 @@ const QuizPage: React.FC<QuizPageProps> = ({ locationState }) => {
 };
 
 export default QuizPage;
-

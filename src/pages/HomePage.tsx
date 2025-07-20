@@ -2,20 +2,18 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button } from '../components/ui/Button';
-import {
-  Brain, GraduationCap,
-  FileQuestion, PenTool, BookOpen, Calendar,
+import { 
+  Brain, GraduationCap, 
+  FileQuestion, PenTool, BookOpen, Calendar, 
   LineChart, Rocket, Target,
   Award, Users, Zap, CheckCircle, Star,
   TrendingUp, Shield, Globe, Sparkles,
   ArrowRight, Play, Trophy, Clock,
   Lightbulb, BarChart3, Activity,
   Layers, Cpu, Database, Code,
-  Palette, Briefcase, Heart,
-  Crown, Hash, Gamepad2, Settings
+  Palette, Briefcase, Heart
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Card, CardBody } from '../components/ui/Card'; // Import Card components
 
 const HomePage: React.FC = () => {
   const { isLoggedIn } = useAuthStore();
@@ -23,77 +21,110 @@ const HomePage: React.FC = () => {
   const location = useLocation();
 
   const handleGetStarted = () => {
-    if (isLoggedIn) {
-      // If logged in, scroll to the "Choose Your Quest" section
-      const quizModesSection = document.getElementById('quiz-modes');
-      if (quizModesSection) {
-        quizModesSection.scrollIntoView({ behavior: 'smooth' });
+      if (isLoggedIn) {
+        // If logged in, scroll to the "Powerful Study Tools" section
+        const studyToolsSection = document.getElementById('study-tools');
+        if (studyToolsSection) {
+          studyToolsSection.scrollIntoView({ behavior: 'smooth' });
+        } else {
+          // Fallback if section not found
+          navigate('/quiz');
+        }
       } else {
-        // Fallback if section not found
-        navigate('/quiz');
+        navigate('/auth', { state: { from: location } });
       }
-    } else {
-      navigate('/auth', { state: { from: location } });
-    }
-  };
+    };
 
-  // Quiz Modes data (copied from QuizModeSelector.tsx)
-  const modes = [
+  const studyAids = [
     {
-      id: 'solo',
-      title: 'Solo Quiz',
-      subtitle: 'Master your skills',
-      description: 'Practice with AI-generated questions and get instant feedback',
+      title: 'AI Quiz',
+      description: 'Generate personalized quizzes with intelligent question generation and adaptive difficulty.',
       icon: Brain,
-      gradient: 'from-blue-500 to-indigo-600',
-      bgGradient: 'from-blue-50 to-indigo-50',
-      borderColor: 'border-blue-200',
-      features: ['Instant feedback', 'Progress tracking', 'Multiple formats'],
-      stats: '10M+ questions solved',
+      path: '/quiz',
+      gradient: 'from-violet-500 via-purple-500 to-indigo-600',
+      hoverGradient: 'hover:from-violet-600 hover:via-purple-600 hover:to-indigo-700',
+      shadowColor: 'shadow-violet-500/25',
+      hoverShadow: 'hover:shadow-violet-500/40',
+      stats: '10M+ questions',
       badge: 'Most Popular',
-      badgeColor: 'bg-blue-500'
+      badgeColor: 'bg-violet-500',
+      pattern: 'bg-gradient-to-br from-violet-100/50 to-purple-100/30',
+      iconBg: 'bg-gradient-to-br from-violet-400 to-purple-500'
     },
     {
-      id: 'create-competition',
-      title: 'Create Competition',
-      subtitle: 'Challenge friends',
-      description: 'Create custom competitions and invite friends to compete',
-      icon: Crown,
-      gradient: 'from-purple-500 to-pink-500',
-      bgGradient: 'from-purple-50 to-pink-50',
-      borderColor: 'border-purple-200',
-      features: ['Invite friends', 'Real-time leaderboard', 'Custom settings'],
-      stats: '500K+ competitions',
-      badge: 'Team Play',
-      badgeColor: 'bg-purple-500'
+      title: 'AI Tutorial',
+      description: 'Learn complex topics with interactive AI-guided tutorials and explanations.',
+      icon: Lightbulb,
+      path: '/ai-tutorial',
+      gradient: 'from-yellow-500 via-amber-500 to-orange-600',
+      hoverGradient: 'hover:from-yellow-600 hover:via-amber-600 hover:to-orange-700',
+      shadowColor: 'shadow-yellow-500/25',
+      hoverShadow: 'hover:shadow-yellow-500/40',
+      stats: 'Interactive',
+      badge: 'New!',
+      badgeColor: 'bg-yellow-500',
+      pattern: 'bg-gradient-to-br from-yellow-100/50 to-amber-100/30',
+      iconBg: 'bg-gradient-to-br from-yellow-400 to-orange-500'
     },
     {
-      id: 'join-competition',
-      title: 'Join Competition',
-      subtitle: 'Enter with code',
-      description: 'Join existing competitions using a 6-digit code',
-      icon: Hash,
-      gradient: 'from-green-500 to-emerald-500',
-      bgGradient: 'from-green-50 to-emerald-50',
-      borderColor: 'border-green-200',
-      features: ['Quick join', 'Global competition', 'Earn achievements'],
-      stats: '2M+ players joined',
-      badge: 'Quick Join',
-      badgeColor: 'bg-green-500'
+      title: 'Question Bank',
+      description: 'Generate comprehensive question banks from text or PDFs with intelligent analysis.',
+      icon: FileQuestion,
+      path: '/question-bank',
+      gradient: 'from-blue-500 via-cyan-500 to-teal-600',
+      hoverGradient: 'hover:from-blue-600 hover:via-cyan-600 hover:to-teal-700',
+      shadowColor: 'shadow-blue-500/25',
+      hoverShadow: 'hover:shadow-blue-500/40',
+      stats: '500K+ banks',
+      badge: 'AI Powered',
+      badgeColor: 'bg-blue-500',
+      pattern: 'bg-gradient-to-br from-blue-100/50 to-cyan-100/30',
+      iconBg: 'bg-gradient-to-br from-blue-400 to-cyan-500'
     },
     {
-      id: 'random-match',
-      title: 'Random Match',
-      subtitle: 'Find opponents',
-      description: 'Get matched with players globally based on your skill level',
-      icon: Zap,
-      gradient: 'from-orange-500 to-red-500',
-      bgGradient: 'from-orange-50 to-red-50',
-      borderColor: 'border-orange-200',
-      features: ['Global matchmaking', 'Skill-based pairing', 'Quick games'],
-      stats: '1M+ matches daily',
-      badge: 'Global Play',
-      badgeColor: 'bg-orange-500'
+      title: 'Answer Evaluation',
+      description: 'Get detailed feedback on your written answers using advanced AI analysis.',
+      icon: PenTool,
+      path: '/answer-evaluation',
+      gradient: 'from-emerald-500 via-green-500 to-teal-600',
+      hoverGradient: 'hover:from-emerald-600 hover:via-green-600 hover:to-teal-700',
+      shadowColor: 'shadow-emerald-500/25',
+      hoverShadow: 'hover:shadow-emerald-500/40',
+      stats: '95% accuracy',
+      badge: 'Smart Grading',
+      badgeColor: 'bg-emerald-500',
+      pattern: 'bg-gradient-to-br from-emerald-100/50 to-green-100/30',
+      iconBg: 'bg-gradient-to-br from-emerald-400 to-green-500'
+    },
+    {
+      title: 'Smart Notes',
+      description: 'Generate summaries, mind maps, and interactive study materials.',
+      icon: BookOpen,
+      path: '/notes',
+      gradient: 'from-purple-500 via-indigo-500 to-blue-600',
+      hoverGradient: 'hover:from-purple-600 hover:via-indigo-600 hover:to-blue-700',
+      shadowColor: 'shadow-purple-500/25',
+      hoverShadow: 'hover:shadow-purple-500/40',
+      stats: '1M+ notes',
+      badge: 'Interactive',
+      badgeColor: 'bg-purple-500',
+      pattern: 'bg-gradient-to-br from-purple-100/50 to-indigo-100/30',
+      iconBg: 'bg-gradient-to-br from-purple-400 to-indigo-500'
+    },
+    {
+      title: 'Study Planner',
+      description: 'Create personalized study schedules optimized for your learning goals.',
+      icon: Calendar,
+      path: '/study-plan',
+      gradient: 'from-orange-500 via-amber-500 to-yellow-600',
+      hoverGradient: 'hover:from-orange-600 hover:via-amber-600 hover:to-yellow-700',
+      shadowColor: 'shadow-orange-500/25',
+      hoverShadow: 'hover:shadow-orange-500/40',
+      stats: 'Optimized',
+      badge: 'Personalized',
+      badgeColor: 'bg-orange-500',
+      pattern: 'bg-gradient-to-br from-orange-100/50 to-amber-100/30',
+      iconBg: 'bg-gradient-to-br from-orange-400 to-amber-500'
     }
   ];
 
@@ -161,9 +192,7 @@ const HomePage: React.FC = () => {
     { icon: Target, value: '50M+', label: 'Questions Solved', gradient: 'from-green-500 to-emerald-500' },
     { icon: Award, value: '95%', label: 'Success Rate', gradient: 'from-orange-500 to-red-500' }
   ];
-
-  const [hoveredMode, setHoveredMode] = React.useState<string | null>(null);
-
+  
   return (
     <div className="flex flex-col items-center bg-white">
       {/* Hero Section */}
@@ -173,7 +202,7 @@ const HomePage: React.FC = () => {
           <div className="absolute -top-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-200/30 to-pink-200/30 rounded-full blur-3xl animate-pulse" />
           <div className="absolute top-20 -right-20 w-60 h-60 bg-gradient-to-r from-blue-200/30 to-cyan-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
           <div className="absolute bottom-20 left-20 w-40 h-40 bg-gradient-to-r from-green-200/30 to-teal-200/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }} />
-
+          
           {/* Floating Elements */}
           <div className="absolute top-1/4 left-1/4 w-4 h-4 bg-purple-400/20 rounded-full animate-bounce" style={{ animationDelay: '1s' }} />
           <div className="absolute top-1/3 right-1/3 w-3 h-3 bg-blue-400/20 rounded-full animate-bounce" style={{ animationDelay: '2s' }} />
@@ -188,12 +217,12 @@ const HomePage: React.FC = () => {
             className="flex justify-center mb-8 relative"
           >
             <motion.div
-              animate={{
+              animate={{ 
                 rotate: [0, 10, -10, 0],
                 scale: [1, 1.1, 1]
               }}
-              transition={{
-                duration: 4,
+              transition={{ 
+                duration: 4, 
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
@@ -203,7 +232,7 @@ const HomePage: React.FC = () => {
                 <GraduationCap className="h-12 w-12 sm:h-14 sm:w-14 text-white" />
               </div>
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/50 to-blue-400/50 rounded-3xl blur-xl animate-pulse" />
-
+              
               {/* Orbiting Elements */}
               <motion.div
                 animate={{ rotate: 360 }}
@@ -216,8 +245,8 @@ const HomePage: React.FC = () => {
               </motion.div>
             </motion.div>
           </motion.div>
-
-          <motion.h1
+          
+          <motion.h1 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -228,14 +257,14 @@ const HomePage: React.FC = () => {
               Learning Companion
             </span>
           </motion.h1>
-
-          <motion.p
+          
+          <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className="text-xl sm:text-2xl text-gray-700 mb-8 max-w-4xl mx-auto leading-relaxed"
           >
-            Transform your learning experience with intelligent study tools.
+            Transform your learning experience with intelligent study tools. 
             Get personalized guidance, instant feedback, and comprehensive analytics.
           </motion.p>
 
@@ -260,225 +289,142 @@ const HomePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Quiz Mode Selector Section (Moved from QuizModeSelector.tsx) */}
-      <div id="quiz-modes" className="w-full max-w-7xl mx-auto px-4 py-8 sm:py-12">
+      {/* Study Aids Section */}
+      <div id="study-tools" className="w-full max-w-7xl mx-auto px-4 py-16 sm:py-24">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8 sm:mb-12"
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
         >
-          <div className="flex flex-col sm:flex-row items-center justify-center mb-6 sm:mb-8">
-            <motion.div
-              animate={{
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-              className="relative w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-4 sm:mb-0 sm:mr-6 shadow-2xl"
-            >
-              <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/50 to-purple-400/50 rounded-2xl sm:rounded-3xl blur-xl animate-pulse" />
-            </motion.div>
-            <div className="text-center sm:text-left">
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-slate-800 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                Choose Your Quest
-              </h1>
-              <p className="text-lg sm:text-xl text-slate-600">Select your learning adventure</p>
-            </div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="mb-6 sm:mb-8 flex justify-center w-full"
-          >
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
-              <motion.div className="w-full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button
-                  onClick={() => navigate('/competitions')}
-                  variant="outline"
-                  className="w-full h-12 border-2 border-purple-200 text-purple-600 hover:bg-purple-50 text-sm font-semibold shadow-lg px-4 py-2 flex items-center justify-center gap-2"
-                >
-                  <Trophy className="w-4 h-4" />
-                  <span>Quiz Dashboard</span>
-                </Button>
-              </motion.div>
-            </div>
-          </motion.div>
+          <h2 className="text-3xl sm:text-5xl font-bold text-gray-900 mb-6">
+            Powerful Study Tools
+          </h2>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            Everything you need to excel in your studies, powered by advanced AI technology
+          </p>
         </motion.div>
 
-        {/* Mode Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
-          {modes.map((mode, index) => (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {studyAids.map((aid, index) => (
             <motion.div
-              key={mode.id}
+              key={aid.path}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.15 }}
-              onHoverStart={() => setHoveredMode(mode.id)}
-              onHoverEnd={() => setHoveredMode(null)}
-              className="group cursor-pointer"
-              onClick={() => navigate('/quiz', { state: { mode: mode.id } })} // Navigate to /quiz with state
+              transition={{ delay: index * 0.1 }} 
+              whileHover={{ 
+                scale: 1.05, 
+                y: -10,
+                rotateY: 5,
+                rotateX: 5
+              }}
+              onClick={() => isLoggedIn ? navigate(aid.path) : navigate('/auth')}
+              className={`group relative overflow-hidden rounded-3xl p-8 transition-all duration-500 transform bg-white border border-gray-100 shadow-xl ${aid.shadowColor} ${aid.hoverShadow} hover:shadow-2xl cursor-pointer`}
+              style={{
+                transformStyle: 'preserve-3d',
+                perspective: '1000px'
+              }}
             >
-              <Card className={`h-full overflow-hidden border-2 transition-all duration-500 transform ${
-                hoveredMode === mode.id
-                  ? `${mode.borderColor} shadow-2xl scale-[1.02] ring-4 ring-opacity-20`
-                  : 'border-slate-200 shadow-lg hover:shadow-xl hover:scale-[1.01]'
-              } bg-white/80 backdrop-blur-sm`}>
-                {/* Gradient Header */}
-                <div className={`h-1 sm:h-2 bg-gradient-to-r ${mode.gradient}`} />
+              {/* Enhanced Badge */}
+              <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-bold text-white ${aid.badgeColor} shadow-lg z-20 transform group-hover:scale-110 transition-transform duration-300`}>
+                {aid.badge}
+              </div>
 
-                {/* Badge */}
-                <div className="relative">
-                  <div className={`absolute top-3 sm:top-4 right-3 sm:right-4 px-2 sm:px-3 py-1 rounded-full text-xs font-bold text-white ${mode.badgeColor} shadow-lg z-10`}>
-                    {mode.badge}
-                  </div>
+              {/* Background Pattern */}
+              <div className={`absolute inset-0 ${aid.pattern} opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
+              
+              {/* Gradient Overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${aid.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+              
+               {/* Floating Particles */}
+            <div className="absolute inset-0 overflow-hidden">
+              {[...Array(6)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 bg-white/30 rounded-full"
+                  initial={{
+                    x: Math.random() * 100 + '%',
+                    y: Math.random() * 100 + '%',
+                  }}
+                  animate={{
+                    y: [null, '-20px', null],
+                    opacity: [0.3, 0.8, 0.3],
+                  }}
+                  transition={{
+                    duration: 3 + Math.random() * 2,
+                    repeat: Infinity,
+                    delay: Math.random() * 2,
+                  }}
+                />
+              ))}
+            </div>
+              
+              <div className="relative z-10">
+                <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-6 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-lg relative overflow-hidden`}>
+                  <aid.icon className="h-8 w-8 text-white relative z-10" />
+                  <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </div>
+                
+                <h3 className="text-2xl font-bold mb-4 text-gray-900 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300">
+                  {aid.title}
+                </h3>
+                
+                <p className="text-gray-600 mb-6 leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                  {aid.description}
+                </p>
 
-                <CardBody className="p-4 sm:p-6 lg:p-8 relative overflow-hidden">
-                  {/* Background Pattern */}
-                  <div className={`absolute inset-0 bg-gradient-to-br ${mode.bgGradient} opacity-30 group-hover:opacity-50 transition-opacity duration-500`} />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-full group-hover:bg-white group-hover:text-gray-700 transition-all duration-300">
+                    {aid.stats}
+                  </span>
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    className="flex items-center text-gray-400 group-hover:text-purple-600 transition-colors duration-300"
+                  >
+                    <span className="mr-2 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      Explore
+                    </span>
+                    <ArrowRight className="w-5 h-5" />
+                  </motion.div>
+                </div>
+              </div>
 
-                  <div className="relative z-10">
-                    {/* Icon and Title */}
-                    <div className="flex items-start space-x-3 sm:space-x-4 mb-4 sm:mb-6">
-                      <motion.div
-                        animate={hoveredMode === mode.id ? {
-                          scale: 1.1,
-                          rotate: 5,
-                          y: -5
-                        } : {
-                          scale: 1,
-                          rotate: 0,
-                          y: 0
-                        }}
-                        transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
-                        className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-r ${mode.gradient} flex items-center justify-center shadow-xl relative flex-shrink-0`}
-                      >
-                        <mode.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                        <div className={`absolute inset-0 bg-gradient-to-r ${mode.gradient} opacity-50 rounded-xl sm:rounded-2xl blur-xl animate-pulse`} />
-                      </motion.div>
-
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 mb-1 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-slate-800 group-hover:to-blue-600 transition-all duration-300">
-                          {mode.title}
-                        </h3>
-                        <p className="text-sm sm:text-base font-semibold text-blue-600 mb-2">{mode.subtitle}</p>
-                        <p className="text-sm sm:text-base text-slate-600 leading-relaxed">{mode.description}</p>
-                      </div>
-                    </div>
-
-                    {/* Features */}
-                    <div className={`p-3 sm:p-4 rounded-xl bg-gradient-to-r ${mode.bgGradient} border ${mode.borderColor} mb-4 sm:mb-6 backdrop-blur-sm`}>
-                      <h4 className="font-bold text-slate-800 mb-2 sm:mb-3 flex items-center text-sm sm:text-base">
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 text-yellow-500" />
-                        Key Features
-                      </h4>
-                      <div className="space-y-1 sm:space-y-2">
-                        {mode.features.map((feature, idx) => (
-                          <motion.div
-                            key={idx}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 + idx * 0.05 }}
-                            className="flex items-center space-x-2"
-                          >
-                            <div className={`w-2 h-2 bg-gradient-to-r ${mode.gradient} rounded-full flex-shrink-0 shadow-sm`} />
-                            <span className="text-xs sm:text-sm text-slate-700 font-medium">{feature}</span>
-                          </motion.div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Stats and Action */}
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-                      <div className="flex items-center space-x-2 text-slate-500">
-                        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="text-xs sm:text-sm font-semibold">{mode.stats}</span>
-                      </div>
-
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-full sm:w-auto"
-                      >
-                        <Button
-                          className={`bg-gradient-to-r ${mode.gradient} hover:opacity-90 transition-all duration-300 shadow-xl px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base font-bold relative overflow-hidden group w-full sm:w-auto`}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                          <div className="relative flex items-center justify-center">
-                            <Rocket className="w-4 h-4 mr-2" />
-                            Start Now
-                            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                          </div>
-                        </Button>
-                      </motion.div>
-                    </div>
-                  </div>
-                </CardBody>
-              </Card>
+              {/* Hover Glow Effect */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${aid.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500 rounded-3xl`} />
             </motion.div>
           ))}
         </div>
 
-        {/* Stats Section */}
+        {/* Stats Section - Moved here after study aids */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="bg-white/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 p-4 sm:p-6 lg:p-8 relative overflow-hidden"
+          transition={{ duration: 0.8, delay: 0.8 }}
+          className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto mt-20"
         >
-          {/* Background decorations */}
-          <div className="absolute top-0 right-0 w-32 sm:w-48 lg:w-64 h-32 sm:h-48 lg:h-64 bg-gradient-to-br from-blue-100/50 to-purple-100/50 rounded-full blur-3xl opacity-50 -translate-y-16 sm:-translate-y-24 lg:-translate-y-32 translate-x-16 sm:translate-x-24 lg:translate-x-32" />
-          <div className="absolute bottom-0 left-0 w-24 sm:w-36 lg:w-48 h-24 sm:h-36 lg:h-48 bg-gradient-to-tr from-green-100/50 to-teal-100/50 rounded-full blur-3xl opacity-50 translate-y-12 sm:translate-y-18 lg:translate-y-24 -translate-x-12 sm:-translate-x-18 lg:-translate-x-24" />
-
-          <div className="relative z-10">
-            <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-slate-800 mb-6 sm:mb-8 lg:mb-12 bg-gradient-to-r from-slate-800 to-blue-600 bg-clip-text text-transparent">
-              Join the Learning Revolution
-            </h3>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 text-center">
-              {[
-                { icon: Users, value: '5M+', label: 'Active Learners', gradient: 'from-blue-500 to-indigo-500' },
-                { icon: Trophy, value: '1M+', label: 'Competitions', gradient: 'from-purple-500 to-pink-500' },
-                { icon: Target, value: '50M+', label: 'Questions Solved', gradient: 'from-green-500 to-emerald-500' },
-                { icon: Award, value: '95%', label: 'Success Rate', gradient: 'from-orange-500 to-red-500' }
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1 + index * 0.1 }}
-                  className="group"
-                >
-                  <motion.div
-                    whileHover={{
-                      scale: 1.1,
-                      rotate: 5,
-                      y: -5
-                    }}
-                    className={`w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-r ${stat.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4 lg:mb-6 shadow-2xl group-hover:shadow-3xl transition-all duration-300 relative`}
-                  >
-                    <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" />
-                    <div className={`absolute inset-0 bg-gradient-to-r ${stat.gradient} opacity-50 rounded-xl sm:rounded-2xl blur-xl animate-pulse`} />
-                  </motion.div>
-                  <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 mb-2 sm:mb-3 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-slate-800 group-hover:to-blue-600 transition-all duration-300">
-                    {stat.value}
-                  </div>
-                  <div className="text-xs sm:text-sm lg:text-base text-slate-600 font-semibold">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
+          {stats.map((stat, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1 + index * 0.1 }}
+              whileHover={{ scale: 1.05, y: -5 }}
+              className="text-center group"
+            >
+              <div className={`w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-r ${stat.gradient} rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:shadow-xl transition-all duration-300 relative overflow-hidden`}>
+                <stat.icon className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white relative z-10" />
+                <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-800 mb-2 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-slate-800 group-hover:to-blue-600 transition-all duration-300">
+                {stat.value}
+              </div>
+              <div className="text-xs sm:text-sm lg:text-base text-gray-600 font-semibold">{stat.label}</div>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
 
-      {/* Features Section */}
+       {/* Features Section */}
       <div className="w-full bg-gradient-to-br from-gray-50 to-purple-50 py-16 sm:py-24">
         <div className="max-w-7xl mx-auto px-4">
           <motion.div
@@ -574,7 +520,7 @@ const HomePage: React.FC = () => {
           <div className="relative z-10 text-center">
             <h2 className="text-3xl sm:text-5xl font-bold mb-6">Ready to Transform Your Learning?</h2>
             <p className="text-purple-100 mb-8 max-w-2xl mx-auto text-lg sm:text-xl leading-relaxed">
-              Join thousands of students who are already experiencing the power of AI-assisted learning.
+              Join thousands of students who are already experiencing the power of AI-assisted learning. 
               Start your journey today and unlock your full potential.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -587,4 +533,3 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
-

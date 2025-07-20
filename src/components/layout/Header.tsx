@@ -54,19 +54,18 @@ const Header: React.FC = () => {
 
   const studyAids = [
     { path: '/quiz', icon: Brain, label: 'AI Quiz' },
-    // Removed other study aid entries
-    // { path: '/ai-tutorial', icon: Lightbulb, label: 'AI Tutorial' },
-    // { path: '/question-bank', icon: FileQuestion, label: 'Question Bank' },
-    // { path: '/answer-evaluation', icon: PenTool, label: 'Answer Evaluation' },
-    // { path: '/notes', icon: NotebookText, label: 'Smart Notes' },
-    // { path: '/study-plan', icon: Calendar, label: 'Study Planner' },
+    { path: '/ai-tutorial', icon: Lightbulb, label: 'AI Tutorial' }, // New entry
+    { path: '/question-bank', icon: FileQuestion, label: 'Question Bank' },
+    { path: '/answer-evaluation', icon: PenTool, label: 'Answer Evaluation' },
+    { path: '/notes', icon: NotebookText, label: 'Smart Notes' },
+    { path: '/study-plan', icon: Calendar, label: 'Study Planner' },
+    // Removed Progress Tracker: { path: '/progress', icon: LineChart, label: 'Progress' },
   ];
 
-    // Removed profileMenuItems as per request
-    // const profileMenuItems = [
-    //   { path: '/profile', icon: User, label: 'My Profile' },
-    //   { path: '/api-settings', icon: Key, label: 'API Settings' },
-    // ];
+    const profileMenuItems = [
+      { path: '/profile', icon: User, label: 'My Profile' },
+      { path: '/api-settings', icon: Key, label: 'API Settings' },
+    ];
 
   return (
     <header className="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
@@ -182,8 +181,7 @@ const Header: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">{user?.email}</div>
                       </div>
 
-                      {/* Removed profileMenuItems mapping */}
-                      {/* {profileMenuItems.map((item) => (
+                      {profileMenuItems.map((item) => (
                         <Link
                           key={item.path}
                           to={item.path}
@@ -193,7 +191,7 @@ const Header: React.FC = () => {
                           <item.icon className="w-4 h-4" />
                           <span>{item.label}</span>
                         </Link>
-                      ))} */}
+                      ))}
 
                       <button
                         onClick={handleLogout}
@@ -230,4 +228,3 @@ const Header: React.FC = () => {
 };
 
 export default Header;
-

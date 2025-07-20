@@ -7,17 +7,17 @@ import MainLayout from './components/layout/MainLayout';
 import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import QuizPage from './pages/QuizPage';
-// Removed imports for other study aid pages:
-// import PreferencesPage from './pages/PreferencesPage';
-// import ApiSettingsPage from './pages/ApiSettingsPage';
-// import QuestionBankPage from './pages/QuestionBankPage';
-// import AnswerEvaluationPage from './pages/AnswerEvaluationPage';
-// import NotesGeneratorPage from './pages/NotesGeneratorPage';
-// import StudyPlannerPage from './pages/StudyPlannerPage';
-// import ProgressTrackerPage from './pages/ProgressTrackerPage';
-// import ChatPage from './pages/ChatPage';
-// import ProfilePage from './pages/ProfilePage';
-// import AiTutorialPage from './pages/AiTutorialPage';
+import PreferencesPage from './pages/PreferencesPage';
+import ApiSettingsPage from './pages/ApiSettingsPage';
+import QuestionBankPage from './pages/QuestionBankPage';
+import AnswerEvaluationPage from './pages/AnswerEvaluationPage';
+import NotesGeneratorPage from './pages/NotesGeneratorPage';
+import StudyPlannerPage from './pages/StudyPlannerPage';
+import ProgressTrackerPage from './pages/ProgressTrackerPage';
+import ChatPage from './pages/ChatPage';
+import ProfilePage from './pages/ProfilePage';
+import CompetitionPage from './pages/CompetitionPage';
+import AiTutorialPage from './pages/AiTutorialPage';
 import AuthRedirectPage from './pages/AuthRedirectPage';
 import EmailConfirmationPage from './pages/EmailConfirmationPage';
 import SharedQuizResultPage from './pages/SharedQuizResultPage';
@@ -39,7 +39,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const QuizRoute: React.FC = () => {
   const { apiKey, loadApiKey, preferences, loadPreferences } = useQuizStore();
   const { user, isLoggedIn } = useAuthStore();
-  const location = useLocation(); // Get location to pass state
+  const location = useLocation();
 
   useEffect(() => {
     if (user) {
@@ -52,8 +52,7 @@ const QuizRoute: React.FC = () => {
     return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
-  // Pass location.state directly to QuizPage
-  return <QuizPage locationState={location.state} />;
+  return <QuizPage />;
 };
 
 const App: React.FC = () => {
@@ -74,19 +73,18 @@ const App: React.FC = () => {
         <Route index element={<HomePage />} />
         <Route path="auth" element={<AuthPage />} />
         <Route path="auth-redirect" element={<AuthRedirectPage />} />
-        <Route path="EmailConfirmationPage" element={<EmailConfirmationPage />} /> {/* Corrected typo */}
+        <Route path="EmailConfirmationPage" element={<EmailConfirmationPage />} />
         <Route path="quiz" element={<ProtectedRoute><QuizRoute /></ProtectedRoute>} />
-        {/* Removed routes for other study aid pages */}
-        {/* <Route path="api-settings" element={<ProtectedRoute><ApiSettingsPage /></ProtectedRoute>} /> */}
-        {/* <Route path="question-bank" element={<ProtectedRoute><QuestionBankPage /></ProtectedRoute>} /> */}
-        {/* <Route path="answer-evaluation" element={<ProtectedRoute><AnswerEvaluationPage /></ProtectedRoute>} /> */}
-        {/* <Route path="notes" element={<ProtectedRoute><NotesGeneratorPage /></ProtectedRoute>} /> */}
-        {/* <Route path="study-plan" element={<ProtectedRoute><StudyPlannerPage /></ProtectedRoute>} /> */}
-        {/* <Route path="progress" element={<ProtectedRoute><ProgressTrackerPage /></ProtectedRoute>} /> */}
-        {/* <Route path="chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} /> */}
-        {/* <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} /> */}
-        {/* <Route path="ai-tutorial" element={<ProtectedRoute><AiTutorialPage /></ProtectedRoute>} /> */}
-        {/* <Route path="preferences" element={<ProtectedRoute><PreferencesPage /></ProtectedRoute>} /> */}
+        <Route path="api-settings" element={<ProtectedRoute><ApiSettingsPage /></ProtectedRoute>} />
+        <Route path="question-bank" element={<ProtectedRoute><QuestionBankPage /></ProtectedRoute>} />
+        <Route path="answer-evaluation" element={<ProtectedRoute><AnswerEvaluationPage /></ProtectedRoute>} />
+        <Route path="notes" element={<ProtectedRoute><NotesGeneratorPage /></ProtectedRoute>} />
+        <Route path="study-plan" element={<ProtectedRoute><StudyPlannerPage /></ProtectedRoute>} />
+        <Route path="progress" element={<ProtectedRoute><ProgressTrackerPage /></ProtectedRoute>} />
+        <Route path="chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path="profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        <Route path="competitions" element={<ProtectedRoute><CompetitionPage /></ProtectedRoute>} />
+        <Route path="ai-tutorial" element={<ProtectedRoute><AiTutorialPage /></ProtectedRoute>} />
         {/* New route for shared quiz results - accessible without authentication */}
         <Route path="/shared-quiz-result/:resultId" element={<SharedQuizResultPage />} />
         {/* New route for shared competition results - accessible without authentication */}
@@ -98,4 +96,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-
