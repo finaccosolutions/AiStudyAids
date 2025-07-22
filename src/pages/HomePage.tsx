@@ -241,14 +241,40 @@ const HomePage: React.FC = () => {
                 rotateX: 1
               }}
               onClick={() => isLoggedIn ? navigate(aid.path) : navigate('/auth')}
-              className={`group relative overflow-hidden rounded-3xl p-8 sm:p-10 lg:p-12 transition-all duration-500 transform bg-white border border-gray-100 shadow-xl ${aid.shadowColor} ${aid.hoverShadow} hover:shadow-2xl cursor-pointer`}
+              className={`group relative overflow-hidden rounded-3xl p-8 sm:p-10 lg:p-12 transition-all duration-500 transform bg-gradient-to-br from-white to-gray-50 border-2 border-gray-200 shadow-lg hover:shadow-2xl cursor-pointer shadow-inner`}
               style={{
                 transformStyle: 'preserve-3d',
                 perspective: '1000px'
               }}
             >
+              {/* Background Watermark Shapes */}
+              <motion.div
+                className="absolute -top-10 -left-10 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply blur-3xl opacity-25 group-hover:opacity-0 transition-opacity duration-500"
+                initial={{ x: -20, y: -20 }}
+                animate={{ x: 0, y: 0, rotate: 360 }}
+                transition={{ duration: 10, repeat: Infinity, ease: "linear", repeatType: "loop" }}
+              />
+              <motion.div
+                className="absolute top-20 -right-20 w-60 h-60 bg-blue-200 rounded-full mix-blend-multiply blur-3xl opacity-30 group-hover:opacity-0 transition-opacity duration-500"
+                initial={{ x: 20, y: 20 }}
+                animate={{ x: 0, y: 0, rotate: -360 }}
+                transition={{ duration: 12, repeat: Infinity, ease: "linear", delay: 0.5, repeatType: "loop" }}
+              />
+              <motion.div
+                className="absolute bottom-0 left-1/4 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply blur-3xl opacity-20 group-hover:opacity-0 transition-opacity duration-500"
+                initial={{ x: -10, y: 10 }}
+                animate={{ x: 0, y: 0, rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear", delay: 1, repeatType: "loop" }}
+              />
+              <motion.div
+                className="absolute -bottom-10 -right-10 w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply blur-3xl opacity-15 group-hover:opacity-0 transition-opacity duration-500"
+                initial={{ x: 10, y: -10 }}
+                animate={{ x: 0, y: 0, rotate: -360 }}
+                transition={{ duration: 14, repeat: Infinity, ease: "linear", delay: 1.5, repeatType: "loop" }}
+              />
+
               {/* Background Pattern */}
-              <div className={`absolute inset-0 ${aid.pattern} opacity-50 group-hover:opacity-70 transition-opacity duration-500`} />
+              <div className={`absolute inset-0 ${aid.pattern} opacity-20 group-hover:opacity-50 transition-opacity duration-500`} />
 
               {/* Gradient Overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${aid.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
@@ -279,12 +305,12 @@ const HomePage: React.FC = () => {
               <div className="relative z-10 flex flex-col lg:flex-row lg:items-start lg:space-x-8">
                 {/* Left Column: Icon, Title, Description */}
                 <div className="lg:w-2/3">
-                  <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-6 group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 shadow-lg relative overflow-hidden`}>
+                  <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-6 group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 shadow-lg relative overflow-hidden`}> {/* Adjusted mb to mb-6 */}
                     <aid.icon className="h-10 w-10 text-white relative z-10" />
                     <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   </div>
 
-                  <h3 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300">
+                  <h3 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300"> {/* Adjusted mb to mb-4 */}
                     {aid.title}
                   </h3>
 
@@ -298,8 +324,8 @@ const HomePage: React.FC = () => {
                 </div>
 
                 {/* Right Column: Key Benefits */}
-                <div className="lg:w-1/3 lg:pl-4 lg:border-l lg:border-gray-200">
-                  <h4 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                <div className="lg:w-1/3 lg:pl-4 lg:border-l lg:border-gray-200 p-4 rounded-xl bg-gray-50 border border-gray-100"> {/* Added padding, background, border */}
+                  <h4 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 flex items-center"> {/* Adjusted mb to mb-3 */}
                     <CheckCircle className="w-6 h-6 mr-2 text-green-500" />
                     Key Benefits
                   </h4>
