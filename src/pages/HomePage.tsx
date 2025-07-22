@@ -302,57 +302,67 @@ const HomePage: React.FC = () => {
               ))}
             </div>
 
-              <div className="relative z-10 flex flex-col lg:flex-row lg:items-start lg:space-x-8">
-                {/* Left Column: Icon, Title, Description */}
-                <div className="lg:w-2/3">
-                  <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-6 group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 shadow-lg relative overflow-hidden`}> {/* Adjusted mb to mb-6 */}
-                    <aid.icon className="h-10 w-10 text-white relative z-10" />
-                    <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              {/* NEW: Content Arrangement */}
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex-1"> {/* This div will push the action button to the bottom */}
+                  {/* Icon and Title Section */}
+                  <div className="mb-6">
+                    <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-4 group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 shadow-lg relative overflow-hidden`}>
+                      <aid.icon className="h-10 w-10 text-white relative z-10" />
+                      <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </div>
+
+                    <h3 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300">
+                      {aid.title}
+                    </h3>
                   </div>
 
-                  <h3 className="text-3xl sm:text-4xl font-bold mb-4 text-gray-900 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:bg-clip-text group-hover:from-purple-600 group-hover:to-indigo-600 transition-all duration-300"> {/* Adjusted mb to mb-4 */}
-                    {aid.title}
-                  </h3>
-
-                  <p className="text-gray-700 mb-6 leading-relaxed text-lg sm:text-xl">
+                  {/* Description Hierarchy */}
+                  <p className="text-gray-700 mb-4 leading-relaxed text-lg sm:text-xl">
                     {aid.description}
                   </p>
 
-                  <p className="text-gray-600 mb-6 leading-relaxed text-base sm:text-lg">
+                  <p className="text-gray-600 pt-4 mt-4 border-t border-gray-200 leading-relaxed text-base sm:text-lg">
                     {aid.detailedDescription}
                   </p>
+
+                  {/* Enhanced Key Benefits Section */}
+                  <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 mt-6">
+                    <h4 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 flex items-center">
+                      <CheckCircle className="w-6 h-6 mr-2 text-green-500" />
+                      Key Benefits
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {aid.keyBenefits?.map((benefit, i) => (
+                        <motion.div
+                          key={i}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.05 }}
+                          className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-start space-x-2"
+                        >
+                          <span className="text-purple-500 flex-shrink-0 mt-1">
+                            <Zap className="w-5 h-5" />
+                          </span>
+                          <span className="text-gray-700 text-base flex-1">{benefit}</span>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Right Column: Key Benefits */}
-                <div className="lg:w-1/3 lg:pl-4 lg:border-l lg:border-gray-200 p-4 rounded-xl bg-gray-50 border border-gray-100"> {/* Added padding, background, border */}
-                  <h4 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 flex items-center"> {/* Adjusted mb to mb-3 */}
-                    <CheckCircle className="w-6 h-6 mr-2 text-green-500" />
-                    Key Benefits
-                  </h4>
-                  <ul className="space-y-3 text-gray-700 text-base sm:text-lg">
-                    {aid.keyBenefits?.map((benefit, i) => (
-                      <li key={i} className="flex items-start">
-                        <span className="text-purple-500 mr-3 mt-1">
-                          <Zap className="w-5 h-5" />
-                        </span>
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
+                {/* Action Button at the bottom */}
+                <div className="relative z-10 mt-8 flex justify-end">
+                  <motion.div
+                    whileHover={{ x: 5 }}
+                    className="flex items-center text-purple-600 group-hover:text-purple-700 transition-colors duration-300"
+                  >
+                    <span className="mr-2 text-lg font-medium">
+                      Start Your AI Quiz
+                    </span>
+                    <ArrowRight className="w-6 h-6" />
+                  </motion.div>
                 </div>
-              </div>
-
-              {/* Action Button at the bottom */}
-              <div className="relative z-10 mt-8 flex justify-end">
-                <motion.div
-                  whileHover={{ x: 5 }}
-                  className="flex items-center text-purple-600 group-hover:text-purple-700 transition-colors duration-300"
-                >
-                  <span className="mr-2 text-lg font-medium">
-                    Start Your AI Quiz
-                  </span>
-                  <ArrowRight className="w-6 h-6" />
-                </motion.div>
               </div>
 
               {/* Hover Glow Effect */}
