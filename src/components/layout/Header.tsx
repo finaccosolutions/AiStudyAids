@@ -14,22 +14,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Header: React.FC = () => {
   const { user, logout, isLoggedIn } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  // Removed showMenu state as it's no longer needed for Study Aids dropdown
   const dropdownRef = useRef<HTMLDivElement>(null);
-  // Removed menuRef as it's no longer needed for Study Aids dropdown
   const navigate = useNavigate();
   const location = useLocation();
+
+  // New state for mobile detection
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
-      // Removed menuRef check
     };
 
+    // Function to check if the screen is mobile
+    const checkIsMobile = () => {
+      // Tailwind's 'md' breakpoint is typically 768px
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    // Set initial mobile state
+    checkIsMobile();
+
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('resize', checkIsMobile); // Listen for resize events
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('resize', checkIsMobile); // Clean up event listener
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -50,12 +64,12 @@ const Header: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Removed studyAids array as it's no longer used in the header
-
-    const profileMenuItems = [
-      { path: '/profile', icon: User, label: 'My Profile' },
-      { path: '/api-settings', icon: Key, label: 'API Settings' },
-    ];
+  // Define all menu items. The conditional rendering will happen in the map.
+  const allProfileMenuItems = [
+    { path: '/profile', icon: User, label: 'My Profile' },
+    { path: '/api-settings', icon: Key, label: 'API Settings' },
+    { path: '/competitions', icon: Rocket, label: 'Quiz Dashboard' },
+  ];
 
   return (
     <header className="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
@@ -74,7 +88,7 @@ const Header: React.FC = () => {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-6">
+          <nav className="hidden md:flex items-center space-x-6"> {/* This nav is hidden on mobile */}
             {isLoggedIn && (
               <>
                 <Link
@@ -89,11 +103,13 @@ const Header: React.FC = () => {
                   <span>Home</span>
                 </Link>
 
-                {/* Directly placed Quiz Dashboard link */}
+                {/* Quiz Dashboard link for desktop view */}
                 <Link
                   to="/competitions"
                   className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 text-gray-700 hover:text-purple-700 hover:bg-purple-50 ${
-                    isActive('/competitions') ? 'text-purple-700 bg-purple-50 font-semibold' : ''
+                    isActive('/competitions')
+                      ? 'text-purple-700 bg-purple-50 font-semibold'
+                      : ''
                   }`}
                 >
                   <Rocket className="w-4 h-4" />
@@ -133,17 +149,23 @@ const Header: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">{user?.email}</div>
                       </div>
 
-                      {profileMenuItems.map((item) => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
-                          onClick={() => setShowDropdown(false)}
-                        >
-                          <item.icon className="w-4 h-4" />
-                          <span>{item.label}</span>
-                        </Link>
-                      ))}
+                      {allProfileMenuItems.map((item) => {
+                        // Conditionally render Quiz Dashboard only on mobile
+                        if (item.path === '/competitions' && !isMobile) {
+                          return null;
+                        }
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                            onClick={() => setShowDropdown(false)}
+                          >
+                            <item.icon className="w-4 h-4" />
+                            <span>{item.label}</span>
+                          </Link>
+                        );
+                      })}
 
                       <button
                         onClick={handleLogout}
