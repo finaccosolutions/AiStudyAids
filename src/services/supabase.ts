@@ -326,7 +326,9 @@ export const signUp = async (
           registration_status: 'pending_verification',
           registration_date: new Date().toISOString(),
         },
-        emailRedirectTo: `${window.location.origin}/auth-redirect`, // Updated redirect URL
+        // START MODIFICATION
+        emailRedirectTo: `${window.location.origin}/EmailConfirmationPage`, // Updated redirect URL
+        // END MODIFICATION
       }
     });
 
@@ -836,4 +838,3 @@ export const deleteQuizResult = async (quizResultId: string) => {
     throw error;
   }
 };
-

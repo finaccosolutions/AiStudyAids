@@ -36,11 +36,11 @@ const HomePage: React.FC = () => {
       description: 'Generate personalized quizzes with intelligent question generation and adaptive difficulty. Dive deep into any subject, get instant feedback, and track your progress to master new concepts efficiently.',
       icon: Brain,
       path: '/quiz',
+      // START MODIFICATION
       gradient: 'from-violet-500 via-purple-500 to-indigo-600',
       hoverGradient: 'hover:from-violet-600 hover:via-purple-600 hover:to-indigo-700',
       shadowColor: 'shadow-violet-500/25',
       hoverShadow: 'hover:shadow-violet-500/40',
-      // Removed 'stats' and 'badge' properties as they are no longer needed
       pattern: 'bg-gradient-to-br from-violet-100/50 to-purple-100/30',
       iconBg: 'bg-gradient-to-br from-violet-400 to-purple-500',
       detailedDescription: 'Our AI Quiz adapts to your learning style, providing questions tailored to your strengths and weaknesses. Experience dynamic difficulty adjustments, comprehensive explanations for every answer, and detailed performance analytics to guide your study journey. Perfect for exam preparation, quick knowledge checks, or deep dives into complex topics.',
@@ -52,6 +52,7 @@ const HomePage: React.FC = () => {
         'Track progress and identify areas for improvement',
         'Supports various languages for diverse learners'
       ]
+      // END MODIFICATION
     },
   ];
 
@@ -307,7 +308,7 @@ const HomePage: React.FC = () => {
                 <div className="flex-1"> {/* This div will push the action button to the bottom */}
                   {/* Icon and Title Section */}
                   <div className="mb-6">
-                    <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-4 group-hover:scale-105 group-hover:rotate-3 transition-all duration-500 shadow-lg relative overflow-hidden`}>
+                    <div className={`${aid.iconBg} p-4 rounded-2xl w-fit mb-4 group-hover:scale-105 group-hover:rotate-3 transition-all duration-300 shadow-lg relative overflow-hidden`}>
                       <aid.icon className="h-10 w-10 text-white relative z-10" />
                       <div className="absolute inset-0 bg-white/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
