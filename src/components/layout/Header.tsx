@@ -14,36 +14,24 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Header: React.FC = () => {
   const { user, logout, isLoggedIn } = useAuthStore();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // New state for mobile detection
-  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
     };
-
-    // Function to check if the screen is mobile
-    const checkIsMobile = () => {
-      // Tailwind's 'md' breakpoint is typically 768px
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // Set initial mobile state
-    checkIsMobile();
 
     document.addEventListener('mousedown', handleClickOutside);
-    window.addEventListener('resize', checkIsMobile); // Listen for resize events
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      window.removeEventListener('resize', checkIsMobile); // Clean up event listener
-    };
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -64,12 +52,20 @@ const Header: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Define all menu items. The conditional rendering will happen in the map.
-  const allProfileMenuItems = [
-    { path: '/profile', icon: User, label: 'My Profile' },
-    { path: '/api-settings', icon: Key, label: 'API Settings' },
-    { path: '/competitions', icon: Rocket, label: 'Quiz Dashboard' },
+  const studyAids = [
+    { path: '/quiz', icon: Brain, label: 'AI Quiz' },
+    { path: '/ai-tutorial', icon: Lightbulb, label: 'AI Tutorial' }, // New entry
+    { path: '/question-bank', icon: FileQuestion, label: 'Question Bank' },
+    { path: '/answer-evaluation', icon: PenTool, label: 'Answer Evaluation' },
+    { path: '/notes', icon: NotebookText, label: 'Smart Notes' },
+    { path: '/study-plan', icon: Calendar, label: 'Study Planner' },
+    // Removed Progress Tracker: { path: '/progress', icon: LineChart, label: 'Progress' },
   ];
+
+    const profileMenuItems = [
+      { path: '/profile', icon: User, label: 'My Profile' },
+      { path: '/api-settings', icon: Key, label: 'API Settings' },
+    ];
 
   return (
     <header className="bg-white sticky top-0 z-50 border-b border-gray-200 shadow-sm">
@@ -88,7 +84,7 @@ const Header: React.FC = () => {
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center space-x-6"> {/* This nav is hidden on mobile */}
+          <nav className="hidden md:flex items-center space-x-6">
             {isLoggedIn && (
               <>
                 <Link
@@ -103,18 +99,54 @@ const Header: React.FC = () => {
                   <span>Home</span>
                 </Link>
 
-                {/* Quiz Dashboard link for desktop view */}
-                <Link
-                  to="/competitions"
-                  className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 text-gray-700 hover:text-purple-700 hover:bg-purple-50 ${
-                    isActive('/competitions')
-                      ? 'text-purple-700 bg-purple-50 font-semibold'
-                      : ''
-                  }`}
-                >
-                  <Rocket className="w-4 h-4" />
-                  <span>Quiz Dashboard</span>
-                </Link>
+                <div className="relative" ref={menuRef}>
+                  <button
+                    onClick={() => setShowMenu(!showMenu)}
+                    className={`nav-link px-3 py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 text-gray-700 hover:text-purple-700 hover:bg-purple-50 ${
+                      showMenu ? 'text-purple-700 bg-purple-50 font-semibold' : ''
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span>Study Aids</span>
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${showMenu ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  <AnimatePresence>
+                    {showMenu && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg py-2 border border-purple-100"
+                      >
+                        {studyAids.map((item) => (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            className={`flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 transition-colors text-gray-700 hover:text-purple-700 ${
+                              isActive(item.path) ? 'text-purple-700 bg-purple-50 font-semibold' : ''
+                            }`}
+                            onClick={() => setShowMenu(false)}
+                          >
+                            <item.icon className="w-4 h-4" />
+                            <span>{item.label}</span>
+                          </Link>
+                        ))}
+                        {/* New link to Quiz Dashboard */}
+                        <Link
+                          to="/competitions"
+                          className={`flex items-center space-x-2 px-4 py-2 hover:bg-purple-50 transition-colors text-gray-700 hover:text-purple-700 ${
+                            isActive('/competitions') ? 'text-purple-700 bg-purple-50 font-semibold' : ''
+                          }`}
+                          onClick={() => setShowMenu(false)}
+                        >
+                          <Rocket className="w-4 h-4" />
+                          <span>Quiz Dashboard</span>
+                        </Link>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </>
             )}
           </nav>
@@ -149,23 +181,17 @@ const Header: React.FC = () => {
                         <div className="text-sm font-medium text-gray-900">{user?.email}</div>
                       </div>
 
-                      {allProfileMenuItems.map((item) => {
-                        // Conditionally render Quiz Dashboard only on mobile
-                        if (item.path === '/competitions' && !isMobile) {
-                          return null;
-                        }
-                        return (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
-                            onClick={() => setShowDropdown(false)}
-                          >
-                            <item.icon className="w-4 h-4" />
-                            <span>{item.label}</span>
-                          </Link>
-                        );
-                      })}
+                      {profileMenuItems.map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+                          onClick={() => setShowDropdown(false)}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      ))}
 
                       <button
                         onClick={handleLogout}

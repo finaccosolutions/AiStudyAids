@@ -112,6 +112,43 @@ const QuizModeSelector: React.FC<QuizModeSelectorProps> = ({ onSelectMode, onSho
             </div>
           </div>
 
+          {/* Competition Management & Competitions Buttons */}
+         {onShowCompetitionManagement && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mb-6 sm:mb-8 flex justify-center w-full"
+          >
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
+              {/* Competitions Button */}
+              <motion.div className="w-full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  onClick={() => navigate('/competitions')}
+                  variant="outline"
+                  className="w-full h-12 border-2 border-purple-200 text-purple-600 hover:bg-purple-50 text-sm font-semibold shadow-lg px-4 py-2 flex items-center justify-center gap-2"
+                >
+                  <Trophy className="w-4 h-4" />
+                  <span>Quiz Dashboard</span>
+                </Button>
+              </motion.div>
+        
+              {/* Manage My Competitions Button */}
+              <motion.div className="w-full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  onClick={onShowCompetitionManagement}
+                  variant="outline"
+                  className="w-full h-12 border-2 border-purple-200 text-purple-600 hover:bg-purple-50 text-sm font-semibold shadow-lg px-4 py-2 flex items-center justify-center gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Manage Quiz</span>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+
+
 
         </motion.div> 
 

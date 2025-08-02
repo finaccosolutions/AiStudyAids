@@ -65,7 +65,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [location.pathname]); 
+  }, [location.pathname]);
 
   return (
     <Routes>
