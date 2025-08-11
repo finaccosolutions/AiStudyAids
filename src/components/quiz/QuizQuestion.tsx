@@ -44,7 +44,6 @@ const QuizQuestion: React.FC<QuizQuestionProps> = ({
   questionNumber,
   totalQuestions,
   userAnswer = '',
-  onNext,
   isLastQuestion, 
   language = 'en',
   timeLimitEnabled = false,
@@ -985,7 +984,7 @@ useEffect(() => {
                   {/* Skip Button for Practice Mode */}
                   {mode === 'practice' && (
                     <Button
-                      onClick={handleNextQuestion}
+                      onClick={() => onQuestionSubmit(selectedAnswer)}
                       variant="outline"
                       className="px-4 sm:px-6 py-2 sm:py-3 text-gray-600 hover:text-gray-800"
                     >
@@ -1037,7 +1036,7 @@ useEffect(() => {
               className="bg-white rounded-2xl p-6 sm:p-8 max-w-md mx-4 shadow-2xl w-full"
             >
               <div className="text-center">
-                <AlertTriangle className="w-12 h-12 sm:w-16 h-16 text-orange-500 mx-auto mb-4" />
+                <AlertTriangle className="w-12 h-12 sm:w-16 sm:h-16 text-orange-500 mx-auto mb-4" />
                 <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Leave Quiz?</h3>
                 <p className="text-gray-600 mb-6 text-sm sm:text-base">
                   Are you sure you want to leave this quiz? Your progress will be lost.
